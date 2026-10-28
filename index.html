@@ -1,0 +1,3108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2D 마인크래프트 온라인 - 1,000x1,000 글로벌 오픈월드</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PeerJS for WebRTC Serverless Global World Auto-Matchmaking on GitHub Pages -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0f19;
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            cursor: crosshair;
+        }
+        /* Minecraft-style Beveled UI Panels */
+        .mc-panel {
+            background: rgba(17, 24, 39, 0.92);
+            border: 3px solid #4b5563;
+            box-shadow: inset -3px -3px 0px #111827, inset 3px 3px 0px #9ca3af, 0 10px 25px rgba(0,0,0,0.65);
+            border-radius: 8px;
+        }
+        .mc-btn {
+            background: #4b5563;
+            border: 2px solid #111827;
+            box-shadow: inset -2px -2px 0px #1f2937, inset 2px 2px 0px #9ca3af;
+            color: #f9fafb;
+            font-weight: 700;
+            transition: transform 0.08s, background-color 0.15s;
+            border-radius: 6px;
+        }
+        .mc-btn:hover {
+            background: #6b7280;
+        }
+        .mc-btn:active {
+            transform: translateY(2px);
+            box-shadow: inset 2px 2px 0px #1f2937;
+        }
+        .mc-btn-green {
+            background: #16a34a;
+            box-shadow: inset -2px -2px 0px #14532d, inset 2px 2px 0px #4ade80;
+        }
+        .mc-btn-green:hover {
+            background: #22c55e;
+        }
+        .mc-btn-blue {
+            background: #2563eb;
+            box-shadow: inset -2px -2px 0px #1e3a8a, inset 2px 2px 0px #60a5fa;
+        }
+        .mc-btn-blue:hover {
+            background: #3b82f6;
+        }
+        .mc-btn-amber {
+            background: #d97706;
+            box-shadow: inset -2px -2px 0px #78350f, inset 2px 2px 0px #fbbf24;
+        }
+        .mc-btn-amber:hover {
+            background: #f59e0b;
+        }
+        .mc-btn-purple {
+            background: #7c3aed;
+            box-shadow: inset -2px -2px 0px #4c1d95, inset 2px 2px 0px #a78bfa;
+        }
+        .mc-btn-purple:hover {
+            background: #8b5cf6;
+        }
+        .hotbar-slot {
+            width: 52px;
+            height: 52px;
+            background: rgba(31, 41, 55, 0.92);
+            border: 3px solid #4b5563;
+            box-shadow: inset -2px -2px 0px #111827, inset 2px 2px 0px #6b7280;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .hotbar-slot.active {
+            border-color: #facc15;
+            background: rgba(55, 65, 81, 0.98);
+            transform: translateY(-4px) scale(1.06);
+            box-shadow: 0 0 14px rgba(250, 204, 21, 0.65), inset -2px -2px 0px #854d0e, inset 2px 2px 0px #fef08a;
+        }
+        @media (max-width: 640px) {
+            .hotbar-slot {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="relative select-none text-white">
+
+    <!-- Main 2D Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ==================== ENTRY MODAL: ZERO-CODE AUTOMATIC GLOBAL WORLD ==================== -->
+    <div id="lobbyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="mc-panel max-w-lg w-full p-6 text-center relative my-auto">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-400/50 text-emerald-300 text-xs font-bold mb-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>단일 글로벌 오픈월드 서버리스 자동 매칭 · 1,000 × 1,000 월드</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-emerald-300 via-green-400 to-emerald-600 drop-shadow mb-1">
+                MINECRAFT 2D WORLD
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-300 mb-5">
+                방 코드 입력 없이 접속자 전원이 <strong>하나의 거대한 공유 월드(1,000,000 블록)</strong>에서 자동으로 만납니다!
+            </p>
+
+            <!-- Player Customization -->
+            <div class="bg-gray-900/85 border border-gray-700 rounded-lg p-4 mb-5 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1.5">플레이어 닉네임</label>
+                    <input id="playerNameInput" type="text" maxlength="12" value="스티브" placeholder="닉네임을 입력하세요"
+                        class="w-full px-3.5 py-2.5 rounded bg-gray-800 border border-gray-600 text-white font-bold text-base focus:outline-none focus:border-emerald-400">
+                </div>
+                <div class="mt-3.5">
+                    <label class="block text-xs font-bold text-gray-300 mb-1.5">캐릭터 옷 색상</label>
+                    <div id="colorPickerRow" class="flex items-center gap-2.5 flex-wrap">
+                        <button type="button" data-color="#06b6d4" class="color-swatch w-8 h-8 rounded-full border-2 border-white ring-2 ring-emerald-400" style="background:#06b6d4"></button>
+                        <button type="button" data-color="#ef4444" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#ef4444"></button>
+                        <button type="button" data-color="#22c55e" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#22c55e"></button>
+                        <button type="button" data-color="#eab308" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#eab308"></button>
+                        <button type="button" data-color="#a855f7" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#a855f7"></button>
+                        <button type="button" data-color="#ec4899" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#ec4499"></button>
+                        <button type="button" data-color="#f97316" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#f97316"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single Instant Auto-Join Button -->
+            <button id="btnEnterGlobalWorld" class="mc-btn mc-btn-green w-full py-4 px-5 flex items-center justify-between text-left shadow-lg">
+                <div>
+                    <div class="text-lg font-black flex items-center gap-2">
+                        <span>🌍 글로벌 공유 월드 입장하기 (자동 합류)</span>
+                    </div>
+                    <div class="text-xs text-emerald-100 font-normal mt-0.5">
+                        중앙 스폰 광장(X:500, Y:500)으로 즉시 입장하며 접속 중인 모든 유저와 자동 연결됩니다
+                    </div>
+                </div>
+                <span class="text-2xl font-black">▶</span>
+            </button>
+
+            <!-- World Specs Highlights -->
+            <div class="grid grid-cols-3 gap-2 mt-4 text-left">
+                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
+                    <div class="text-[11px] font-black text-emerald-400">🗺️ 100배 초대형 맵</div>
+                    <div class="text-[10px] text-gray-300 mt-0.5">1,000 × 1,000 타일 (총 100만 블록, 6대 바이옴)</div>
+                </div>
+                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
+                    <div class="text-[11px] font-black text-amber-400">⛏️ 곡괭이 채굴/건축</div>
+                    <div class="text-[10px] text-gray-300 mt-0.5">5단계 곡괭이 진화, 광물 채굴 및 수상 다리/집 건축</div>
+                </div>
+                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
+                    <div class="text-[11px] font-black text-blue-400">⚡ 코드 없는 멀티</div>
+                    <div class="text-[10px] text-gray-300 mt-0.5">입장 즉시 자동 매칭 & 친구 위치로 순간이동 지원</div>
+                </div>
+            </div>
+
+            <!-- Footer Info & GitHub Guide Button -->
+            <div class="mt-5 pt-3 border-t border-gray-700/80 flex items-center justify-between text-xs text-gray-400">
+                <span>조작: WASD 이동 / 좌클릭 채굴 / 우클릭 건설 / E 제작 / M 전체지도</span>
+                <button id="btnOpenGithubGuide" class="text-emerald-400 hover:underline font-bold">
+                    📘 깃허브 배포 안내
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== GITHUB PAGES GUIDE MODAL ==================== -->
+    <div id="githubGuideModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div class="mc-panel max-w-md w-full p-5 text-left">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                <h2 class="text-base font-black text-emerald-400">📘 GitHub 무료 홈페이지 배포 가이드</h2>
+                <button id="btnCloseGithubGuide" class="text-gray-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+            <ol class="text-xs text-gray-200 space-y-2.5 leading-relaxed list-decimal list-inside">
+                <li><strong>GitHub 저장소(Repository) 생성:</strong> GitHub에 로그인 후 새 Public 저장소를 만듭니다.</li>
+                <li><strong>파일 업로드:</strong> 이 코드 파일을 <code class="px-1.5 py-0.5 bg-gray-800 rounded text-emerald-300">index.html</code> 이름으로 저장소 루트에 업로드(Commit)합니다.</li>
+                <li><strong>GitHub Pages 활성화:</strong> 저장소의 <code class="px-1 py-0.5 bg-gray-800 rounded">Settings → Pages</code> 메뉴에서 Branch를 <code class="px-1 py-0.5 bg-gray-800 rounded text-amber-300">main</code>으로 선택하고 Save를 누릅니다.</li>
+                <li><strong>자동 글로벌 월드 공유:</strong> 생성된 <code class="px-1 py-0.5 bg-gray-800 rounded text-blue-300">https://아이디.github.io/저장소명/</code> 링크에 접속하는 모든 사람은 <strong>별도의 방 코드 없이도 자동으로 하나의 공유 월드(X:500, Y:500 광장)</strong>에서 즉시 만나 함께 채굴하고 건축할 수 있습니다!</li>
+            </ol>
+            <div class="mt-4 text-right">
+                <button id="btnConfirmGithubGuide" class="mc-btn mc-btn-green px-4 py-1.5 text-xs">확인했습니다</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOP-LEFT HUD: GLOBAL STATUS, TOOLS & RESOURCES ==================== -->
+    <div class="fixed top-3 left-3 z-20 flex flex-col gap-2 max-w-[350px] sm:max-w-md pointer-events-none">
+        <!-- Global Server Status & Quick Actions -->
+        <div class="mc-panel p-2.5 pointer-events-auto flex flex-col gap-1.5">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                    <span id="netStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="netModeBadge" class="text-xs font-black text-emerald-300">글로벌 공유 월드 동기화 중...</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span id="biomeBadge" class="text-[11px] font-bold bg-gray-900 px-2 py-0.5 rounded border border-gray-700 text-amber-300">🏛️ 중앙 스폰 광장</span>
+                    <button id="btnReturnSpawn" class="mc-btn mc-btn-purple px-2 py-0.5 text-[11px]" title="중앙 스폰 광장(500, 500)으로 즉시 귀환 (단축키 H)">
+                        🏠 광장 귀환(H)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Utility Buttons -->
+            <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-gray-700/80">
+                <button id="btnToggleCraft" class="mc-btn mc-btn-amber px-2.5 py-1 text-xs flex items-center gap-1">
+                    <span>⚒️ 제작/업그레이드 (E)</span>
+                </button>
+                <button id="btnToggleWorldMap" class="mc-btn mc-btn-blue px-2.5 py-1 text-xs flex items-center gap-1">
+                    <span>🗺️ 전체 지도/순간이동 (M)</span>
+                </button>
+                <button id="btnToggleActionMode" class="mc-btn px-2 py-1 text-xs flex items-center gap-1" title="좌클릭 동작 전환">
+                    <span id="actionModeLabel">🖱️ 좌:채굴/우:건설</span>
+                </button>
+                <button id="btnToggleDayNight" class="mc-btn px-2 py-1 text-xs" title="낮/밤 전환">
+                    <span id="timeOfDayLabel">☀️ 낮</span>
+                </button>
+                <button id="btnSoundToggle" class="mc-btn px-2 py-1 text-xs" title="효과음 켜기/끄기">
+                    🔊
+                </button>
+            </div>
+        </div>
+
+        <!-- Resource Bag (Raw Materials Counter) -->
+        <div class="mc-panel px-2.5 py-2 pointer-events-auto">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-bold text-gray-400">🎒 보유 자원 (채굴 획득)</span>
+                <span id="pickaxeBadge" class="text-[11px] font-black text-amber-300">⛏️ 나무 곡괭이 (x1.0)</span>
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-8 gap-1 text-center text-xs">
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="원목 (나무 채굴)">
+                    <div class="text-[10px] text-amber-400">🪵원목</div>
+                    <div id="res_wood" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="조약돌 (바위 채굴)">
+                    <div class="text-[10px] text-gray-300">🪨돌</div>
+                    <div id="res_cobble" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="석탄 (석탄 광석 채굴)">
+                    <div class="text-[10px] text-gray-400">⚫석탄</div>
+                    <div id="res_coal" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="철광석 (돌 곡괭이 이상)">
+                    <div class="text-[10px] text-orange-200">🥈철</div>
+                    <div id="res_iron" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="금광석 (철 곡괭이 이상)">
+                    <div class="text-[10px] text-yellow-400">🥇금</div>
+                    <div id="res_gold" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="다이아몬드 (철 곡괭이 이상)">
+                    <div class="text-[10px] text-cyan-300">💎다이아</div>
+                    <div id="res_diamond" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="흑요석 (다이아 곡괭이 전용)">
+                    <div class="text-[10px] text-purple-300">🟪흑요석</div>
+                    <div id="res_obsidian" class="font-black text-white">0</div>
+                </div>
+                <div class="bg-gray-900/90 rounded p-1 border border-gray-700" title="모래 (사막/해변 채굴)">
+                    <div class="text-[10px] text-yellow-200">🏖️모래</div>
+                    <div id="res_sand" class="font-black text-white">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Block Info Indicator -->
+        <div id="targetBlockHud" class="mc-panel px-3 py-1.5 text-xs flex items-center justify-between gap-2 opacity-95">
+            <span id="targetBlockName" class="font-bold text-emerald-300 truncate">🎯 타겟: 스폰 광장 석재 바닥</span>
+            <span id="targetBlockHint" class="text-[11px] text-gray-300 shrink-0">좌:채굴 / 우:건설</span>
+        </div>
+    </div>
+
+    <!-- ==================== TOP-RIGHT HUD: RADAR MINIMAP & TELEPORTABLE PLAYER LIST ==================== -->
+    <div class="fixed top-3 right-3 z-20 flex flex-col items-end gap-2 pointer-events-none">
+        <div class="mc-panel p-2.5 pointer-events-auto flex flex-col items-center w-44 sm:w-52">
+            <div class="w-full flex items-center justify-between text-[11px] text-gray-300 font-bold mb-1">
+                <span>📡 주변 레이더 맵</span>
+                <span id="coordsDisplay" class="font-mono text-emerald-300">X:500 Y:500</span>
+            </div>
+            <div class="relative">
+                <canvas id="minimapCanvas" width="160" height="160" class="rounded border border-gray-600 bg-gray-950 w-36 h-36 sm:w-44 sm:h-44 cursor-pointer" title="클릭하면 1,000x1,000 전체 월드 지도를 엽니다 (단축키 M)"></canvas>
+                <div class="absolute bottom-1 right-1 bg-black/75 px-1.5 py-0.5 rounded text-[9px] text-gray-300 pointer-events-none">
+                    1,000 × 1,000 월드 (클릭:확대)
+                </div>
+            </div>
+
+            <!-- Online Players & 1-Click Teleport -->
+            <div class="w-full mt-2 pt-1.5 border-t border-gray-700">
+                <div class="text-[10px] text-gray-400 font-bold mb-1 flex justify-between items-center">
+                    <span>👥 월드 접속자 (클릭 시 이동)</span>
+                    <span id="playerCountBadge" class="text-emerald-400 font-black">1명</span>
+                </div>
+                <div id="playerListContainer" class="max-h-28 overflow-y-auto space-y-1 text-[11px]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 1,000 x 1,000 FULL WORLD MAP & TELEPORT MODAL (PRESS M) ==================== -->
+    <div id="worldMapModal" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-black/75 p-4">
+        <div class="mc-panel max-w-2xl w-full p-5 flex flex-col gap-3">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-700">
+                <div>
+                    <h2 class="text-lg font-black text-emerald-300 flex items-center gap-2">
+                        <span>🗺️ 1,000 × 1,000 글로벌 월드 전체 지도 (1,000,000 블록)</span>
+                    </h2>
+                    <p class="text-xs text-gray-300">지도에서 원하는 위치를 클릭하거나 우측 접속자 목록을 눌러 즉시 순간이동(만나기)할 수 있습니다.</p>
+                </div>
+                <button id="btnCloseWorldMap" class="mc-btn px-3 py-1 text-xs">닫기 (M)</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Interactive 1,000x1,000 World Overview Canvas -->
+                <div class="md:col-span-2 flex flex-col items-center">
+                    <div class="relative border-2 border-gray-600 rounded overflow-hidden shadow-lg bg-gray-950">
+                        <canvas id="fullWorldMapCanvas" width="400" height="400" class="w-72 h-72 sm:w-96 sm:h-96 cursor-crosshair"></canvas>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 mt-2 text-[11px] text-gray-300">
+                        <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-700">🏛️ 중앙(500,500): 스폰 광장</span>
+                        <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-700">❄️ 북쪽: 설원 툰드라</span>
+                        <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-700">🌵 남동쪽: 황금 사막</span>
+                        <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-700">🌋 남서쪽: 화산 지대</span>
+                        <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-700">⛰️ 동/서: 광산 산맥</span>
+                    </div>
+                </div>
+
+                <!-- Quick Teleport Landmarks & Online Players -->
+                <div class="flex flex-col gap-2.5 h-full justify-between bg-gray-900/90 p-3 rounded-lg border border-gray-700">
+                    <div>
+                        <div class="text-xs font-black text-amber-300 mb-2">⚡ 주요 바이옴 순간이동</div>
+                        <div class="grid grid-cols-1 gap-1.5 text-xs">
+                            <button data-tp="500,500,중앙 스폰 광장" class="landmark-tp-btn mc-btn mc-btn-purple py-1.5 px-2.5 text-left flex justify-between">
+                                <span>🏛️ 중앙 스폰 광장</span><span class="font-mono text-[10px]">500, 500</span>
+                            </button>
+                            <button data-tp="500,160,북부 설원 툰드라" class="landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between">
+                                <span>❄️ 북부 설원 툰드라</span><span class="font-mono text-[10px]">500, 160</span>
+                            </button>
+                            <button data-tp="820,820,남동 황금 사막" class="landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between">
+                                <span>🌵 남동 황금 사막</span><span class="font-mono text-[10px]">820, 820</span>
+                            </button>
+                            <button data-tp="180,820,남서 화산 지대" class="landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between">
+                                <span>🌋 남서 화산 지대</span><span class="font-mono text-[10px]">180, 820</span>
+                            </button>
+                            <button data-tp="800,320,동부 다이아 광산" class="landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between">
+                                <span>💎 동부 다이아 산맥</span><span class="font-mono text-[10px]">800, 320</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-700 pt-2">
+                        <div class="text-xs font-black text-emerald-300 mb-1">👥 접속 중인 플레이어에게 이동</div>
+                        <div id="mapModalPlayerList" class="max-h-32 overflow-y-auto space-y-1 text-xs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CRAFTING & UPGRADE MODAL (PRESS E) ==================== -->
+    <div id="craftModal" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-black/65 p-4">
+        <div class="mc-panel max-w-lg w-full p-5">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-700">
+                <div>
+                    <h2 class="text-lg font-black text-amber-300 flex items-center gap-2">
+                        <span>⚒️ 제작대 & 곡괭이 업그레이드</span>
+                    </h2>
+                    <p class="text-xs text-gray-400">채굴한 원목과 광물로 더 강력한 곡괭이와 건축 블록을 제작하세요</p>
+                </div>
+                <button id="btnCloseCraft" class="mc-btn px-3 py-1 text-xs">닫기 (E)</button>
+            </div>
+
+            <div id="craftRecipeList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[62vh] overflow-y-auto pr-1">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== BOTTOM-LEFT: MULTIPLAYER LIVE CHAT ==================== -->
+    <div class="fixed bottom-20 sm:bottom-24 left-3 z-20 w-64 sm:w-80 pointer-events-none flex flex-col gap-1.5">
+        <div id="chatMessages" class="max-h-36 overflow-y-auto space-y-1 pr-1 text-xs drop-shadow pointer-events-auto"></div>
+        <div class="flex gap-1 pointer-events-auto">
+            <input id="chatInput" type="text" maxlength="80" placeholder="Enter 키로 전체 월드 채팅..."
+                class="flex-1 px-2.5 py-1.5 rounded bg-gray-900/85 border border-gray-600 text-xs text-white focus:outline-none focus:border-emerald-400">
+            <button id="btnSendChat" class="mc-btn px-3 py-1 text-xs">전송</button>
+        </div>
+    </div>
+
+    <!-- ==================== MOBILE TOUCH CONTROLS (VISIBLE ON TOUCH/MOBILE) ==================== -->
+    <div id="mobileControls" class="fixed bottom-24 right-4 z-20 flex sm:hidden flex-col gap-2">
+        <div class="grid grid-cols-3 gap-1 w-32 h-32">
+            <div></div>
+            <button data-dir="up" class="touch-dpad mc-btn flex items-center justify-center text-lg">▲</button>
+            <div></div>
+            <button data-dir="left" class="touch-dpad mc-btn flex items-center justify-center text-lg">◀</button>
+            <button data-dir="mine" class="touch-dpad mc-btn mc-btn-amber flex items-center justify-center text-xs font-black">⛏️</button>
+            <button data-dir="right" class="touch-dpad mc-btn flex items-center justify-center text-lg">▶</button>
+            <div></div>
+            <button data-dir="down" class="touch-dpad mc-btn flex items-center justify-center text-lg">▼</button>
+            <div></div>
+        </div>
+    </div>
+
+    <!-- ==================== BOTTOM CENTER: 9-SLOT MINECRAFT HOTBAR ==================== -->
+    <div class="fixed bottom-3 inset-x-0 z-20 flex flex-col items-center pointer-events-none">
+        <div id="selectedItemBanner" class="mb-1.5 px-3 py-0.5 rounded-full bg-gray-900/90 border border-gray-600 text-xs font-bold text-amber-300 shadow">
+            [1] 나무 곡괭이 (좌클릭 채굴)
+        </div>
+        <div id="hotbarContainer" class="flex items-center gap-1.5 sm:gap-2 px-3 py-2 mc-panel pointer-events-auto">
+            <!-- Populated by JS (Slots 1-9) -->
+        </div>
+    </div>
+
+    <!-- ==================== TOAST NOTIFICATION BOX ==================== -->
+    <div id="toastContainer" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+    <script>
+    /***************************************************************************
+     * 2D MINECRAFT ONLINE MULTIPLAYER - 1,000 x 1,000 SHARED GLOBAL WORLD
+     * - Zero-Code Automatic Matchmaking via PeerJS Hub Election + Failover
+     * - Instant local multi-tab sync via BroadcastChannel
+     * - 1,000 x 1,000 Tiles (1,000,000 Blocks, 100x area) with 6 Biomes
+     * - Sparse Delta Synchronization (only mined/built blocks sent over network)
+     ***************************************************************************/
+
+    // ==================== 1. SOUND SYNTHESIZER (WEB AUDIO API) ====================
+    class SoundFX {
+        constructor() {
+            this.ctx = null;
+            this.enabled = true;
+        }
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        }
+        playHit(type = 'stone') {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                if (type === 'wood') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160 + Math.random() * 40, now);
+                    osc.frequency.exponentialRampToValueAtTime(75, now + 0.07);
+                } else if (type === 'ore') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(540 + Math.random() * 120, now);
+                    osc.frequency.exponentialRampToValueAtTime(250, now + 0.08);
+                } else {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(210 + Math.random() * 50, now);
+                    osc.frequency.exponentialRampToValueAtTime(90, now + 0.06);
+                }
+
+                gain.gain.setValueAtTime(0.11, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } catch (e) {}
+        }
+        playBreak() {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const bufferSize = this.ctx.sampleRate * 0.14;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 520;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.26, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start(now);
+            } catch (e) {}
+        }
+        playPlace() {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(145, now);
+                osc.frequency.exponentialRampToValueAtTime(270, now + 0.07);
+                gain.gain.setValueAtTime(0.17, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } catch (e) {}
+        }
+        playCraft() {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 554.37, 659.25].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                    gain.gain.setValueAtTime(0.14, now + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.16);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.06);
+                    osc.stop(now + idx * 0.06 + 0.16);
+                });
+            } catch (e) {}
+        }
+    }
+    const sfx = new SoundFX();
+
+    // ==================== 2. 1,000 x 1,000 WORLD CONSTANTS & BLOCK DEFINITIONS ====================
+    const WORLD_SIZE = 1000; // 1,000 x 1,000 = 1,000,000 blocks (100x area!)
+    const SPAWN_X = 500;
+    const SPAWN_Y = 500;
+    const GLOBAL_WORLD_SEED = 20261027;
+    const TILE_SIZE = 48;
+    const REACH_TILES = 4.8;
+
+    // Ground/Floor Layer IDs
+    const FLOOR = {
+        DEEP_WATER: 0,
+        WATER: 1,
+        SAND: 2,
+        GRASS: 3,
+        STONE_GROUND: 4,
+        WOOD_BRIDGE: 5,
+        SNOW: 6,
+        ICE: 7,
+        BASALT: 8,
+        LAVA: 9,
+        PLAZA_FLOOR: 10,
+        COBBLE_BRIDGE: 11
+    };
+
+    const FLOOR_INFO = {
+        [FLOOR.DEEP_WATER]:    { name: '깊은 바다 (판자/돌로 다리 건설 가능)', walkable: false, color: '#1d4ed8' },
+        [FLOOR.WATER]:         { name: '강과 호수 (판자/돌로 다리 건설 가능)', walkable: false, color: '#3b82f6' },
+        [FLOOR.SAND]:          { name: '황금 모래사장 (채굴 시 모래 획득)', walkable: true,  color: '#eab308' },
+        [FLOOR.GRASS]:         { name: '초원 잔디 땅', walkable: true,  color: '#22c55e' },
+        [FLOOR.STONE_GROUND]:  { name: '암석 지대 바닥', walkable: true,  color: '#6b7280' },
+        [FLOOR.WOOD_BRIDGE]:   { name: '나무 판자 다리/바닥', walkable: true,  color: '#b45309' },
+        [FLOOR.SNOW]:          { name: '설원 눈밭', walkable: true,  color: '#f1f5f9' },
+        [FLOOR.ICE]:           { name: '얼어붙은 빙판 호수', walkable: true,  color: '#7dd3fc' },
+        [FLOOR.BASALT]:        { name: '화산 현무암 대지', walkable: true,  color: '#334155' },
+        [FLOOR.LAVA]:          { name: '용암 지대 (조약돌로 다리 건설 가능)', walkable: false, color: '#ea580c' },
+        [FLOOR.PLAZA_FLOOR]:   { name: '중앙 스폰 광장 포장석', walkable: true,  color: '#94a3b8' },
+        [FLOOR.COBBLE_BRIDGE]: { name: '조약돌 돌다리', walkable: true,  color: '#64748b' }
+    };
+
+    // Object/Block Layer IDs
+    const BLOCK = {
+        AIR: 0,
+        TREE: 1,
+        STONE: 2,
+        COAL_ORE: 3,
+        IRON_ORE: 4,
+        GOLD_ORE: 5,
+        DIAMOND_ORE: 6,
+        PLANKS_WALL: 7,
+        COBBLE_WALL: 8,
+        STONE_BRICKS: 9,
+        GLASS: 10,
+        TORCH: 11,
+        CRAFT_TABLE: 12,
+        DOOR_CLOSED: 13,
+        DOOR_OPEN: 14,
+        GOLD_BLOCK: 15,
+        PINE_TREE: 16,
+        CACTUS: 17,
+        OBSIDIAN: 18
+    };
+
+    // Detailed Block Metadata (Hardness, required pickaxe tier, drops)
+    const BLOCK_INFO = {
+        [BLOCK.AIR]:          { name: '빈 공간', hp: 0, solid: false, minTier: 0 },
+        [BLOCK.TREE]:         { name: '참나무 (원목 획득)', hp: 55, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#15803d', particleColor: '#854d0e' },
+        [BLOCK.PINE_TREE]:    { name: '설원 가문비나무 (원목 획득)', hp: 60, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#065f46', particleColor: '#064e3b' },
+        [BLOCK.CACTUS]:       { name: '사막 선인장 (원목 섬유 획득)', hp: 45, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#16a34a', particleColor: '#4ade80' },
+        [BLOCK.STONE]:        { name: '바위 블록 (조약돌 획득)', hp: 85, solid: true, minTier: 0, dropType: 'res', dropKey: 'cobble', dropCount: 2, dropLabel: '조약돌', sfx: 'stone', minColor: '#9ca3af', particleColor: '#9ca3af' },
+        [BLOCK.COAL_ORE]:     { name: '석탄 광석', hp: 110, solid: true, minTier: 0, dropType: 'res', dropKey: 'coal', dropCount: 2, dropLabel: '석탄', sfx: 'ore', minColor: '#374151', particleColor: '#1f2937' },
+        [BLOCK.IRON_ORE]:     { name: '철 광석 (돌 곡괭이 이상)', hp: 140, solid: true, minTier: 1, dropType: 'res', dropKey: 'iron', dropCount: 2, dropLabel: '철광석', sfx: 'ore', minColor: '#fdba74', particleColor: '#fed7aa' },
+        [BLOCK.GOLD_ORE]:     { name: '금 광석 (철 곡괭이 이상)', hp: 175, solid: true, minTier: 2, dropType: 'res', dropKey: 'gold', dropCount: 2, dropLabel: '금광석', sfx: 'ore', minColor: '#facc15', particleColor: '#fef08a' },
+        [BLOCK.DIAMOND_ORE]:  { name: '다이아몬드 광석 (철 곡괭이 이상)', hp: 220, solid: true, minTier: 2, dropType: 'res', dropKey: 'diamond', dropCount: 1, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#22d3ee', particleColor: '#67e8f9' },
+        [BLOCK.OBSIDIAN]:     { name: '흑요석 (다이아 곡괭이 전용)', hp: 320, solid: true, minTier: 4, dropType: 'res', dropKey: 'obsidian', dropCount: 1, dropLabel: '흑요석', sfx: 'ore', minColor: '#581c87', particleColor: '#a855f7' },
+        [BLOCK.PLANKS_WALL]:  { name: '나무 판자 벽', hp: 65, solid: true, minTier: 0, dropType: 'item', dropKey: 'planks', dropCount: 1, dropLabel: '나무 판자', sfx: 'wood', minColor: '#d97706', particleColor: '#b45309' },
+        [BLOCK.COBBLE_WALL]:  { name: '조약돌 성벽', hp: 105, solid: true, minTier: 0, dropType: 'item', dropKey: 'cobbleWall', dropCount: 1, dropLabel: '조약돌 벽', sfx: 'stone', minColor: '#6b7280', particleColor: '#6b7280' },
+        [BLOCK.STONE_BRICKS]: { name: '석재 벽돌 블록', hp: 125, solid: true, minTier: 0, dropType: 'item', dropKey: 'bricks', dropCount: 1, dropLabel: '석재 벽돌', sfx: 'stone', minColor: '#94a3b8', particleColor: '#cbd5e1' },
+        [BLOCK.GLASS]:        { name: '유리 블록', hp: 35, solid: true, minTier: 0, dropType: 'item', dropKey: 'glass', dropCount: 1, dropLabel: '유리 블록', sfx: 'ore', minColor: '#bae6fd', particleColor: '#e0f2fe' },
+        [BLOCK.TORCH]:        { name: '횃불 (광원)', hp: 15, solid: false, minTier: 0, light: 215, dropType: 'item', dropKey: 'torch', dropCount: 1, dropLabel: '횃불', sfx: 'wood', minColor: '#fbbf24', particleColor: '#f59e0b' },
+        [BLOCK.CRAFT_TABLE]:  { name: '제작대 (우클릭 또는 E키)', hp: 70, solid: true, minTier: 0, dropType: 'item', dropKey: 'craftTable', dropCount: 1, dropLabel: '제작대', sfx: 'wood', minColor: '#b45309', particleColor: '#92400e' },
+        [BLOCK.DOOR_CLOSED]:  { name: '나무 문 (우클릭 개폐)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.DOOR_OPEN]:    { name: '열린 나무 문', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.GOLD_BLOCK]:   { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde047' }
+    };
+
+    // 5 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond)
+    const PICKAXE_TIERS = [
+        { level: 0, name: '나무 곡괭이',   speed: 1.0,  color: '#a16207', headColor: '#b45309' },
+        { level: 1, name: '돌 곡괭이',     speed: 1.8,  color: '#9ca3af', headColor: '#9ca3af' },
+        { level: 2, name: '철 곡괭이',     speed: 2.8,  color: '#e5e7eb', headColor: '#f3f4f6' },
+        { level: 3, name: '황금 곡괭이',   speed: 4.0,  color: '#eab308', headColor: '#facc15' },
+        { level: 4, name: '다이아 곡괭이', speed: 5.5,  color: '#22d3ee', headColor: '#67e8f9' }
+    ];
+
+    // 9 Hotbar Slots
+    const HOTBAR_SLOTS = [
+        { slot: 0, key: 'pickaxe',    type: 'tool',  name: '곡괭이 (채굴 도구)' },
+        { slot: 1, key: 'planks',     type: 'block', blockId: BLOCK.PLANKS_WALL, name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
+        { slot: 2, key: 'cobbleWall', type: 'block', blockId: BLOCK.COBBLE_WALL, name: '조약돌 성벽 (물/용암 위: 돌다리 / 땅: 성벽)' },
+        { slot: 3, key: 'bricks',     type: 'block', blockId: BLOCK.STONE_BRICKS, name: '석재 벽돌 블록' },
+        { slot: 4, key: 'glass',      type: 'block', blockId: BLOCK.GLASS,       name: '유리 블록' },
+        { slot: 5, key: 'torch',      type: 'block', blockId: BLOCK.TORCH,       name: '횃불 (밤 조명)' },
+        { slot: 6, key: 'door',       type: 'block', blockId: BLOCK.DOOR_CLOSED, name: '나무 문 (출입문)' },
+        { slot: 7, key: 'craftTable', type: 'block', blockId: BLOCK.CRAFT_TABLE, name: '제작대 블록' },
+        { slot: 8, key: 'goldBlock',  type: 'block', blockId: BLOCK.GOLD_BLOCK,  name: '황금 보물 블록' }
+    ];
+
+    // Crafting Recipes
+    const CRAFT_RECIPES = [
+        {
+            id: 'upgrade_stone_pick',
+            name: '돌 곡괭이 업그레이드',
+            desc: '채굴 속도 x1.8배 · 철광석 채굴 가능',
+            type: 'pickaxe',
+            tier: 1,
+            cost: { wood: 2, cobble: 3 }
+        },
+        {
+            id: 'upgrade_iron_pick',
+            name: '철 곡괭이 업그레이드',
+            desc: '채굴 속도 x2.8배 · 금/다이아몬드 채굴 가능',
+            type: 'pickaxe',
+            tier: 2,
+            cost: { wood: 2, iron: 3 }
+        },
+        {
+            id: 'upgrade_gold_pick',
+            name: '황금 곡괭이 업그레이드',
+            desc: '채굴 속도 x4.0배 고속 채굴',
+            type: 'pickaxe',
+            tier: 3,
+            cost: { wood: 2, gold: 3 }
+        },
+        {
+            id: 'upgrade_diamond_pick',
+            name: '다이아몬드 곡괭이 업그레이드',
+            desc: '최고 등급! 채굴 속도 x5.5배 · 흑요석 채굴 가능',
+            type: 'pickaxe',
+            tier: 4,
+            cost: { wood: 2, diamond: 3 }
+        },
+        {
+            id: 'craft_planks',
+            name: '나무 판자 x4',
+            desc: '물 위에 다리를 놓거나 나무 벽을 세웁니다',
+            type: 'item',
+            itemKey: 'planks',
+            amount: 4,
+            cost: { wood: 1 }
+        },
+        {
+            id: 'craft_cobble_wall',
+            name: '조약돌 성벽 x4',
+            desc: '물/용암 위 돌다리 건설 및 단단한 방어벽',
+            type: 'item',
+            itemKey: 'cobbleWall',
+            amount: 4,
+            cost: { cobble: 2 }
+        },
+        {
+            id: 'craft_bricks',
+            name: '석재 벽돌 x4',
+            desc: '정교하고 튼튼한 성채 벽돌 블록',
+            type: 'item',
+            itemKey: 'bricks',
+            amount: 4,
+            cost: { cobble: 3 }
+        },
+        {
+            id: 'craft_torch',
+            name: '횃불 x4',
+            desc: '어두운 밤에 주변을 환하게 비추는 광원',
+            type: 'item',
+            itemKey: 'torch',
+            amount: 4,
+            cost: { wood: 1, coal: 1 }
+        },
+        {
+            id: 'craft_glass',
+            name: '유리 블록 x2',
+            desc: '모래를 제련해 만드는 투명한 유리창',
+            type: 'item',
+            itemKey: 'glass',
+            amount: 2,
+            cost: { sand: 2 }
+        },
+        {
+            id: 'craft_door',
+            name: '나무 문 x2',
+            desc: '집 입구에 설치하는 개폐형 출입문',
+            type: 'item',
+            itemKey: 'door',
+            amount: 2,
+            cost: { wood: 2 }
+        },
+        {
+            id: 'craft_gold_block',
+            name: '황금 보물 블록 x1',
+            desc: '빛을 내는 화려한 황금 장식 블록',
+            type: 'item',
+            itemKey: 'goldBlock',
+            amount: 1,
+            cost: { gold: 2 }
+        }
+    ];
+
+    const RESOURCE_LABELS = {
+        wood: '🪵원목',
+        cobble: '🪨돌',
+        coal: '⚫석탄',
+        iron: '🥈철',
+        gold: '🥇금',
+        diamond: '💎다이아',
+        obsidian: '🟪흑요석',
+        sand: '🏖️모래'
+    };
+
+    // ==================== 3. PROCEDURAL PIXEL-ART SPRITE CACHE ====================
+    const tileSprites = {};
+    const crackSprites = [];
+    const iconSprites = {};
+
+    function createOffscreenCanvas(w = TILE_SIZE, h = TILE_SIZE) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        return c;
+    }
+
+    function generateAllSprites() {
+        const makeNoisyTile = (baseHex, speckles) => {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = baseHex;
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            const p = TILE_SIZE / 8;
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x < 8; x++) {
+                    const r = ((x * 37 + y * 13) % 17) / 17;
+                    for (const sp of speckles) {
+                        if (r < sp.prob) {
+                            g.fillStyle = sp.color;
+                            g.fillRect(x * p, y * p, p, p);
+                            break;
+                        }
+                    }
+                }
+            }
+            return c;
+        };
+
+        tileSprites['floor_' + FLOOR.DEEP_WATER]   = makeNoisyTile('#1e40af', [{ prob: 0.2, color: '#1d4ed8' }, { prob: 0.35, color: '#1e3a8a' }]);
+        tileSprites['floor_' + FLOOR.WATER]        = makeNoisyTile('#2563eb', [{ prob: 0.2, color: '#3b82f6' }, { prob: 0.3, color: '#60a5fa' }]);
+        tileSprites['floor_' + FLOOR.SAND]         = makeNoisyTile('#facc15', [{ prob: 0.25, color: '#fde047' }, { prob: 0.45, color: '#eab308' }]);
+        tileSprites['floor_' + FLOOR.GRASS]        = makeNoisyTile('#22c55e', [{ prob: 0.22, color: '#16a34a' }, { prob: 0.40, color: '#4ade80' }]);
+        tileSprites['floor_' + FLOOR.STONE_GROUND] = makeNoisyTile('#4b5563', [{ prob: 0.25, color: '#374151' }, { prob: 0.45, color: '#6b7280' }]);
+        tileSprites['floor_' + FLOOR.SNOW]         = makeNoisyTile('#f8fafc', [{ prob: 0.25, color: '#e2e8f0' }, { prob: 0.4, color: '#cbd5e1' }]);
+        tileSprites['floor_' + FLOOR.ICE]          = makeNoisyTile('#38bdf8', [{ prob: 0.25, color: '#7dd3fc' }, { prob: 0.4, color: '#bae6fd' }]);
+        tileSprites['floor_' + FLOOR.BASALT]       = makeNoisyTile('#1e293b', [{ prob: 0.25, color: '#334155' }, { prob: 0.45, color: '#0f172a' }]);
+        tileSprites['floor_' + FLOOR.LAVA]         = makeNoisyTile('#ea580c', [{ prob: 0.25, color: '#f97316' }, { prob: 0.45, color: '#facc15' }]);
+
+        // Central Spawn Plaza Tile
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#475569';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#94a3b8';
+            g.fillRect(2, 2, 21, 21);
+            g.fillRect(25, 25, 21, 21);
+            g.fillStyle = '#cbd5e1';
+            g.fillRect(25, 2, 21, 21);
+            g.fillRect(2, 25, 21, 21);
+            tileSprites['floor_' + FLOOR.PLAZA_FLOOR] = c;
+        }
+
+        // Wood Bridge Floor
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#92400e';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            for (let i = 0; i < 4; i++) {
+                g.fillStyle = i % 2 === 0 ? '#b45309' : '#a16207';
+                g.fillRect(2, i * 12 + 1, TILE_SIZE - 4, 10);
+                g.fillStyle = '#451a03';
+                g.fillRect(5, i * 12 + 4, 3, 3);
+                g.fillRect(TILE_SIZE - 8, i * 12 + 4, 3, 3);
+            }
+            tileSprites['floor_' + FLOOR.WOOD_BRIDGE] = c;
+        }
+
+        // Cobble Bridge Floor
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#334155';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#64748b';
+            g.fillRect(3, 3, 19, 19);
+            g.fillRect(26, 3, 19, 19);
+            g.fillRect(3, 26, 19, 19);
+            g.fillRect(26, 26, 19, 19);
+            tileSprites['floor_' + FLOOR.COBBLE_BRIDGE] = c;
+        }
+
+        // Helper for stone & ore blocks
+        const makeOreBlock = (veinColor, shineColor, baseCol = '#6b7280') => {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#374151';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = baseCol;
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 6);
+            g.fillStyle = '#9ca3af';
+            g.fillRect(2, 2, TILE_SIZE - 4, 4);
+            g.fillStyle = '#4b5563';
+            g.fillRect(8, 10, 10, 8);
+            g.fillRect(26, 22, 12, 10);
+            g.fillRect(10, 28, 12, 8);
+
+            if (veinColor) {
+                const coords = [[10, 10], [28, 10], [18, 20], [12, 30], [30, 28]];
+                coords.forEach(([vx, vy]) => {
+                    g.fillStyle = veinColor;
+                    g.fillRect(vx, vy, 7, 7);
+                    if (shineColor) {
+                        g.fillStyle = shineColor;
+                        g.fillRect(vx + 1, vy + 1, 3, 3);
+                    }
+                });
+            }
+            g.strokeStyle = '#1f2937';
+            g.lineWidth = 2;
+            g.strokeRect(1, 1, TILE_SIZE - 2, TILE_SIZE - 2);
+            return c;
+        };
+
+        tileSprites['block_' + BLOCK.STONE]       = makeOreBlock(null, null);
+        tileSprites['block_' + BLOCK.COAL_ORE]    = makeOreBlock('#111827', '#374151');
+        tileSprites['block_' + BLOCK.IRON_ORE]    = makeOreBlock('#fdba74', '#ffedd5');
+        tileSprites['block_' + BLOCK.GOLD_ORE]    = makeOreBlock('#eab308', '#fef08a');
+        tileSprites['block_' + BLOCK.DIAMOND_ORE] = makeOreBlock('#06b6d4', '#a5f3fc');
+        tileSprites['block_' + BLOCK.OBSIDIAN]    = makeOreBlock('#581c87', '#a855f7', '#1e1b4b');
+
+        // Oak Tree Sprite
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = 'rgba(0,0,0,0.35)';
+            g.beginPath();
+            g.arc(24, 27, 20, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#78350f';
+            g.fillRect(18, 18, 12, 16);
+            g.fillStyle = '#14532d';
+            g.fillRect(4, 6, 40, 36);
+            g.fillStyle = '#15803d';
+            g.fillRect(6, 4, 36, 34);
+            g.fillStyle = '#22c55e';
+            g.fillRect(10, 8, 28, 24);
+            g.fillStyle = '#4ade80';
+            g.fillRect(14, 10, 10, 10);
+            tileSprites['block_' + BLOCK.TREE] = c;
+        }
+
+        // Snowy Pine Tree Sprite
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#064e3b';
+            g.fillRect(6, 6, 36, 36);
+            g.fillStyle = '#047857';
+            g.fillRect(10, 10, 28, 28);
+            g.fillStyle = '#f8fafc';
+            g.fillRect(12, 8, 10, 8);
+            g.fillRect(24, 14, 10, 8);
+            tileSprites['block_' + BLOCK.PINE_TREE] = c;
+        }
+
+        // Desert Cactus Sprite
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#15803d';
+            g.fillRect(14, 6, 20, 36);
+            g.fillStyle = '#22c55e';
+            g.fillRect(17, 8, 14, 32);
+            g.fillStyle = '#dcfce7';
+            g.fillRect(12, 12, 2, 3);
+            g.fillRect(34, 16, 2, 3);
+            g.fillRect(12, 28, 2, 3);
+            tileSprites['block_' + BLOCK.CACTUS] = c;
+        }
+
+        // Wood Planks Wall
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#78350f';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#d97706';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 8);
+            g.fillStyle = '#f59e0b';
+            g.fillRect(2, 2, TILE_SIZE - 4, 4);
+            g.strokeStyle = '#92400e';
+            g.lineWidth = 2;
+            for (let y = 12; y < TILE_SIZE - 8; y += 10) {
+                g.beginPath();
+                g.moveTo(2, y);
+                g.lineTo(TILE_SIZE - 2, y);
+                g.stroke();
+            }
+            tileSprites['block_' + BLOCK.PLANKS_WALL] = c;
+        }
+
+        // Cobblestone Wall
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#1f2937';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            const stones = [
+                [2,2,20,14,'#9ca3af'], [24,2,22,14,'#6b7280'],
+                [2,18,14,14,'#6b7280'], [18,18,16,14,'#9ca3af'], [36,18,10,14,'#4b5563'],
+                [2,34,22,10,'#4b5563'], [26,34,20,10,'#6b7280']
+            ];
+            stones.forEach(([x,y,w,h,col]) => {
+                g.fillStyle = col;
+                g.fillRect(x, y, w, h);
+            });
+            tileSprites['block_' + BLOCK.COBBLE_WALL] = c;
+        }
+
+        // Stone Bricks
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#334155';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#94a3b8';
+            g.fillRect(2, 2, 20, 18);
+            g.fillRect(24, 2, 22, 18);
+            g.fillRect(2, 22, 12, 18);
+            g.fillRect(16, 22, 20, 18);
+            g.fillRect(38, 22, 8, 18);
+            tileSprites['block_' + BLOCK.STONE_BRICKS] = c;
+        }
+
+        // Glass Block
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = 'rgba(186, 230, 253, 0.28)';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            g.strokeStyle = '#38bdf8';
+            g.lineWidth = 3;
+            g.strokeRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            tileSprites['block_' + BLOCK.GLASS] = c;
+        }
+
+        // Torch
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = 'rgba(251, 191, 36, 0.28)';
+            g.beginPath();
+            g.arc(24, 24, 16, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#78350f';
+            g.fillRect(21, 20, 6, 16);
+            g.fillStyle = '#f59e0b';
+            g.fillRect(19, 12, 10, 10);
+            g.fillStyle = '#fef08a';
+            g.fillRect(21, 14, 6, 6);
+            tileSprites['block_' + BLOCK.TORCH] = c;
+        }
+
+        // Crafting Table
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#78350f';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#d97706';
+            g.fillRect(3, 3, TILE_SIZE - 6, TILE_SIZE - 9);
+            g.fillStyle = '#451a03';
+            for (let r = 0; r < 3; r++) {
+                for (let col = 0; col < 3; col++) {
+                    g.fillRect(9 + col * 10, 8 + r * 9, 8, 7);
+                }
+            }
+            tileSprites['block_' + BLOCK.CRAFT_TABLE] = c;
+        }
+
+        // Doors
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#78350f';
+            g.fillRect(2, 14, TILE_SIZE - 4, 20);
+            g.fillStyle = '#b45309';
+            g.fillRect(4, 16, TILE_SIZE - 8, 16);
+            g.fillStyle = '#facc15';
+            g.fillRect(34, 22, 5, 5);
+            tileSprites['block_' + BLOCK.DOOR_CLOSED] = c;
+
+            const cOpen = createOffscreenCanvas();
+            const gO = cOpen.getContext('2d');
+            gO.fillStyle = '#78350f';
+            gO.fillRect(2, 2, 14, TILE_SIZE - 4);
+            gO.fillStyle = '#b45309';
+            gO.fillRect(4, 4, 10, TILE_SIZE - 8);
+            tileSprites['block_' + BLOCK.DOOR_OPEN] = cOpen;
+        }
+
+        // Gold Block
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#a16207';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#facc15';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 6);
+            g.fillStyle = '#fef08a';
+            g.fillRect(4, 4, TILE_SIZE - 8, 5);
+            tileSprites['block_' + BLOCK.GOLD_BLOCK] = c;
+        }
+
+        // 10 Stages of Block Mining Cracks
+        for (let stage = 0; stage < 10; stage++) {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+            g.lineWidth = 2.5;
+            const branches = (stage + 1) * 2;
+            for (let b = 0; b < branches; b++) {
+                const angle = (b * 2.39996) % (Math.PI * 2);
+                const len = 4 + ((stage + 1) / 10) * 20;
+                g.beginPath();
+                g.moveTo(24, 24);
+                const mx = 24 + Math.cos(angle) * (len * 0.55);
+                const my = 24 + Math.sin(angle) * (len * 0.55);
+                g.lineTo(mx, my);
+                g.lineTo(24 + Math.cos(angle + 0.35) * len, 24 + Math.sin(angle + 0.35) * len);
+                g.stroke();
+            }
+            crackSprites.push(c);
+        }
+
+        // Pickaxe Icons
+        PICKAXE_TIERS.forEach(tier => {
+            const c = createOffscreenCanvas(40, 40);
+            const g = c.getContext('2d');
+            g.strokeStyle = '#92400e';
+            g.lineWidth = 5;
+            g.lineCap = 'round';
+            g.beginPath();
+            g.moveTo(8, 32);
+            g.lineTo(28, 12);
+            g.stroke();
+            g.strokeStyle = tier.headColor;
+            g.lineWidth = 6;
+            g.beginPath();
+            g.arc(22, 18, 12, -Math.PI * 0.65, Math.PI * 0.15);
+            g.stroke();
+            iconSprites['pickaxe_' + tier.level] = c;
+        });
+    }
+
+    // ==================== 4. 1,000 x 1,000 DETERMINISTIC MULTI-BIOME WORLD ENGINE ====================
+    // Rather than sending 1,000,000 tiles over WebRTC, every client computes any (tx, ty) deterministically
+    // from GLOBAL_WORLD_SEED and caches it in a 1MB Uint8Array, while only modified tiles live in `worldDeltas`.
+    const world = {
+        floors: new Uint8Array(WORLD_SIZE * WORLD_SIZE),
+        blocks: new Uint8Array(WORLD_SIZE * WORLD_SIZE),
+        generatedChunks: new Uint8Array(100 * 100) // 100x100 chunks of 10x10 tiles each
+    };
+
+    // Key: tile index `ty * WORLD_SIZE + tx`, Value: [floorId, blockId]
+    const worldDeltas = new Map();
+
+    function idx(tx, ty) {
+        return ty * WORLD_SIZE + tx;
+    }
+
+    function inBounds(tx, ty) {
+        return tx >= 0 && ty >= 0 && tx < WORLD_SIZE && ty < WORLD_SIZE;
+    }
+
+    function fastHash(x, y, seed) {
+        let n = (x * 374761393 + y * 668265263 + seed * 1442695041) | 0;
+        n = ((n ^ (n >>> 13)) * 1274126177) | 0;
+        return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+    }
+
+    function smoothNoise(x, y, scale, seed) {
+        const sx = x * scale;
+        const sy = y * scale;
+        const ix = Math.floor(sx);
+        const iy = Math.floor(sy);
+        const fx = sx - ix;
+        const fy = sy - iy;
+        const u = fx * fx * (3 - 2 * fx);
+        const v = fy * fy * (3 - 2 * fy);
+        const a = fastHash(ix, iy, seed);
+        const b = fastHash(ix + 1, iy, seed);
+        const c = fastHash(ix, iy + 1, seed);
+        const d = fastHash(ix + 1, iy + 1, seed);
+        return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+    }
+
+    function getBiomeNameAt(tx, ty) {
+        const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
+        if (distSpawn < 16) return '🏛️ 중앙 스폰 광장';
+        if (ty < 270) return '❄️ 북부 설원 툰드라';
+        if (tx > 660 && ty > 620) return '🌵 남동 황금 사막';
+        if (tx < 340 && ty > 620) return '🌋 남서 화산 지대';
+        const elev = smoothNoise(tx, ty, 0.035, GLOBAL_WORLD_SEED);
+        if (elev > 0.66) return '⛰️ 고산 광산 산맥';
+        return '🌲 푸른 숲과 평원';
+    }
+
+    // Generate a 10x10 chunk on demand in microseconds (and pre-warm around player)
+    function ensureChunkGenerated(cx, cy) {
+        if (cx < 0 || cy < 0 || cx >= 100 || cy >= 100) return;
+        const cIdx = cy * 100 + cx;
+        if (world.generatedChunks[cIdx]) return;
+        world.generatedChunks[cIdx] = 1;
+
+        const startX = cx * 10;
+        const startY = cy * 10;
+
+        for (let y = startY; y < startY + 10; y++) {
+            for (let x = startX; x < startX + 10; x++) {
+                const i = idx(x, y);
+                // If modified by a player delta, respect the delta!
+                if (worldDeltas.has(i)) {
+                    const [df, db] = worldDeltas.get(i);
+                    world.floors[i] = df;
+                    world.blocks[i] = db;
+                    continue;
+                }
+
+                const distSpawn = Math.hypot(x - SPAWN_X, y - SPAWN_Y);
+                // 1. Central Spawn Plaza (500, 500) where all players meet
+                if (distSpawn < 8.5) {
+                    world.floors[i] = FLOOR.PLAZA_FLOOR;
+                    world.blocks[i] = BLOCK.AIR;
+                    if ((x === SPAWN_X - 3 || x === SPAWN_X + 3) && (y === SPAWN_Y - 3 || y === SPAWN_Y + 3)) {
+                        world.blocks[i] = BLOCK.TORCH;
+                    } else if (x === SPAWN_X + 2 && y === SPAWN_Y) {
+                        world.blocks[i] = BLOCK.CRAFT_TABLE;
+                    } else if (x === SPAWN_X - 2 && y === SPAWN_Y) {
+                        world.blocks[i] = BLOCK.GOLD_BLOCK;
+                    }
+                    continue;
+                }
+                if (distSpawn < 15) {
+                    world.floors[i] = FLOOR.GRASS;
+                    const r = fastHash(x, y, GLOBAL_WORLD_SEED + 9);
+                    world.blocks[i] = r < 0.08 ? BLOCK.TREE : BLOCK.AIR;
+                    continue;
+                }
+
+                const elev = smoothNoise(x, y, 0.032, GLOBAL_WORLD_SEED) * 0.7 + smoothNoise(x, y, 0.09, GLOBAL_WORLD_SEED + 7) * 0.3;
+                const detail = fastHash(x, y, GLOBAL_WORLD_SEED + 33);
+
+                // River / Lake channels
+                if (elev < 0.19) {
+                    if (y < 260) {
+                        world.floors[i] = FLOOR.ICE;
+                        world.blocks[i] = BLOCK.AIR;
+                    } else {
+                        world.floors[i] = elev < 0.13 ? FLOOR.DEEP_WATER : FLOOR.WATER;
+                        world.blocks[i] = BLOCK.AIR;
+                    }
+                    continue;
+                }
+
+                // Biome 1: Northern Snowy Tundra (y < 270)
+                if (y < 270 + smoothNoise(x, y, 0.05, 99) * 35) {
+                    world.floors[i] = elev > 0.65 ? FLOOR.STONE_GROUND : FLOOR.SNOW;
+                    if (elev > 0.65) {
+                        if (detail < 0.07) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                        else if (detail < 0.22) world.blocks[i] = BLOCK.IRON_ORE;
+                        else if (detail < 0.45) world.blocks[i] = BLOCK.COAL_ORE;
+                        else if (detail < 0.78) world.blocks[i] = BLOCK.STONE;
+                    } else {
+                        if (detail < 0.12) world.blocks[i] = BLOCK.PINE_TREE;
+                        else if (detail < 0.15) world.blocks[i] = BLOCK.STONE;
+                    }
+                    continue;
+                }
+
+                // Biome 2: SE Golden Desert (x > 640, y > 600)
+                if (x > 640 - smoothNoise(x, y, 0.04, 55) * 40 && y > 600) {
+                    world.floors[i] = FLOOR.SAND;
+                    if (detail < 0.07) world.blocks[i] = BLOCK.CACTUS;
+                    else if (detail < 0.11) world.blocks[i] = BLOCK.GOLD_ORE;
+                    else if (detail < 0.15) world.blocks[i] = BLOCK.STONE;
+                    continue;
+                }
+
+                // Biome 3: SW Volcanic Badlands (x < 360, y > 600)
+                if (x < 360 + smoothNoise(x, y, 0.04, 77) * 40 && y > 600) {
+                    if (elev < 0.27) {
+                        world.floors[i] = FLOOR.LAVA;
+                        world.blocks[i] = BLOCK.AIR;
+                    } else {
+                        world.floors[i] = FLOOR.BASALT;
+                        if (detail < 0.06) world.blocks[i] = BLOCK.OBSIDIAN;
+                        else if (detail < 0.14) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                        else if (detail < 0.26) world.blocks[i] = BLOCK.GOLD_ORE;
+                        else if (detail < 0.48) world.blocks[i] = BLOCK.STONE;
+                    }
+                    continue;
+                }
+
+                // Biome 4: Rocky Mountains & Ore Ridges
+                if (elev > 0.63) {
+                    world.floors[i] = FLOOR.STONE_GROUND;
+                    if (detail < 0.06) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                    else if (detail < 0.16) world.blocks[i] = BLOCK.GOLD_ORE;
+                    else if (detail < 0.34) world.blocks[i] = BLOCK.IRON_ORE;
+                    else if (detail < 0.54) world.blocks[i] = BLOCK.COAL_ORE;
+                    else if (detail < 0.82) world.blocks[i] = BLOCK.STONE;
+                    continue;
+                }
+
+                // Shoreline Sand
+                if (elev < 0.24) {
+                    world.floors[i] = FLOOR.SAND;
+                    world.blocks[i] = BLOCK.AIR;
+                    continue;
+                }
+
+                // Biome 5: Lush Forest & Plains
+                world.floors[i] = FLOOR.GRASS;
+                if (detail < 0.13) world.blocks[i] = BLOCK.TREE;
+                else if (detail < 0.17) world.blocks[i] = BLOCK.STONE;
+                else if (detail < 0.195) world.blocks[i] = BLOCK.COAL_ORE;
+                else if (detail < 0.21) world.blocks[i] = BLOCK.IRON_ORE;
+            }
+        }
+    }
+
+    function ensureAreaGenerated(centerTx, centerTy, radiusChunks = 4) {
+        const ccx = Math.floor(centerTx / 10);
+        const ccy = Math.floor(centerTy / 10);
+        for (let dy = -radiusChunks; dy <= radiusChunks; dy++) {
+            for (let dx = -radiusChunks; dx <= radiusChunks; dx++) {
+                ensureChunkGenerated(ccx + dx, ccy + dy);
+            }
+        }
+    }
+
+    function getFloorAt(tx, ty) {
+        if (!inBounds(tx, ty)) return FLOOR.DEEP_WATER;
+        ensureChunkGenerated(Math.floor(tx / 10), Math.floor(ty / 10));
+        return world.floors[idx(tx, ty)];
+    }
+
+    function getBlockAt(tx, ty) {
+        if (!inBounds(tx, ty)) return BLOCK.AIR;
+        ensureChunkGenerated(Math.floor(tx / 10), Math.floor(ty / 10));
+        return world.blocks[idx(tx, ty)];
+    }
+
+    function applyWorldModification(tx, ty, floorId, blockId, saveDelta = true) {
+        if (!inBounds(tx, ty)) return;
+        ensureChunkGenerated(Math.floor(tx / 10), Math.floor(ty / 10));
+        const i = idx(tx, ty);
+        if (typeof floorId === 'number') world.floors[i] = floorId;
+        if (typeof blockId === 'number') world.blocks[i] = blockId;
+        if (saveDelta) {
+            worldDeltas.set(i, [world.floors[i], world.blocks[i]]);
+            persistDeltasLocally();
+        }
+    }
+
+    function persistDeltasLocally() {
+        try {
+            if (worldDeltas.size > 3000) return;
+            const arr = [];
+            worldDeltas.forEach(([f, b], key) => arr.push([key, f, b]));
+            localStorage.setItem('mc2d_global_deltas_v2', JSON.stringify(arr));
+        } catch (e) {}
+    }
+
+    function loadPersistedDeltas() {
+        try {
+            const raw = localStorage.getItem('mc2d_global_deltas_v2');
+            if (!raw) return;
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+                arr.forEach(([key, f, b]) => {
+                    const tx = key % WORLD_SIZE;
+                    const ty = Math.floor(key / WORLD_SIZE);
+                    if (inBounds(tx, ty)) {
+                        worldDeltas.set(key, [f, b]);
+                        ensureChunkGenerated(Math.floor(tx / 10), Math.floor(ty / 10));
+                        world.floors[key] = f;
+                        world.blocks[key] = b;
+                    }
+                });
+            }
+        } catch (e) {}
+    }
+
+    // ==================== 5. PLAYER STATE, INVENTORY & HOTBAR ====================
+    const localPlayer = {
+        id: 'p_' + Math.random().toString(36).substring(2, 9),
+        name: '스티브',
+        color: '#06b6d4',
+        x: SPAWN_X * TILE_SIZE + TILE_SIZE / 2,
+        y: SPAWN_Y * TILE_SIZE + TILE_SIZE / 2,
+        angle: 0,
+        pickaxeTier: 0,
+        selectedSlot: 0,
+        isMining: false,
+        swingProgress: 0,
+        targetTx: -1,
+        targetTy: -1
+    };
+
+    const resources = {
+        wood: 6,
+        cobble: 6,
+        coal: 3,
+        iron: 0,
+        gold: 0,
+        diamond: 0,
+        obsidian: 0,
+        sand: 2
+    };
+
+    const blockInventory = {
+        planks: 16,
+        cobbleWall: 12,
+        bricks: 6,
+        glass: 4,
+        torch: 8,
+        door: 2,
+        craftTable: 1,
+        goldBlock: 1
+    };
+
+    const remotePlayers = new Map();
+    const particles = [];
+    const floatingTexts = [];
+
+    const miningState = {
+        tx: -1,
+        ty: -1,
+        progress: 0,
+        maxHp: 100,
+        hitSoundTimer: 0
+    };
+
+    let isNight = false;
+    let darknessAlpha = 0;
+    let clickActionMode = 'both';
+
+    // ==================== 6. ZERO-CODE AUTOMATIC GLOBAL WORLD NETWORKING ====================
+    // Uses a deterministic Hub Peer ID ('mc2d-global-world-hub-v2') + automatic failover
+    // + BroadcastChannel for instant local multi-tab sync.
+    const GLOBAL_HUB_PEER_ID = 'mc2d-global-world-hub-v2';
+    let peer = null;
+    let netRole = 'connecting'; // 'hub' | 'client' | 'connecting'
+    let hubConn = null;
+    const clientConns = new Map();
+    let reconnectTimer = null;
+
+    // Local BroadcastChannel for zero-latency multi-tab testing on same device
+    const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mc2d_global_shared_world_v2') : null;
+    if (localChannel) {
+        localChannel.onmessage = (ev) => {
+            if (ev.data) handleNetworkPacket(ev.data, ev.data.senderId || 'local_tab', true);
+        };
+    }
+
+    function showToast(msg, color = 'emerald') {
+        const container = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        const borderMap = {
+            emerald: 'border-emerald-400 text-emerald-200',
+            amber: 'border-amber-400 text-amber-200',
+            red: 'border-red-400 text-red-200',
+            blue: 'border-blue-400 text-blue-200'
+        };
+        el.className = `mc-panel px-4 py-2 text-xs font-bold border ${borderMap[color] || borderMap.emerald} shadow-lg transition-opacity duration-300`;
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 300);
+        }, 2700);
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, s => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[s]));
+    }
+
+    function addChatMessage(sender, text, color = '#34d399', isSystem = false) {
+        const box = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = 'bg-gray-950/80 px-2.5 py-1 rounded border border-gray-800/80 break-words leading-snug';
+        if (isSystem) {
+            row.innerHTML = `<span class="text-amber-300 font-bold">📢 ${escapeHtml(text)}</span>`;
+        } else {
+            row.innerHTML = `<span class="font-black" style="color:${color}">[${escapeHtml(sender)}]</span> <span class="text-gray-100">${escapeHtml(text)}</span>`;
+        }
+        box.appendChild(row);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // Automatic Global World Entry (No Room Code Needed!)
+    function connectToGlobalWorld() {
+        if (typeof Peer === 'undefined') {
+            netRole = 'hub';
+            updateNetworkHud();
+            return;
+        }
+
+        // Step 1: Attempt to become or connect to the deterministic Global World Hub
+        tryClaimGlobalHub();
+    }
+
+    function tryClaimGlobalHub() {
+        try {
+            if (peer) peer.destroy();
+            const candidatePeer = new Peer(GLOBAL_HUB_PEER_ID);
+
+            candidatePeer.on('open', () => {
+                // We successfully claimed the Global World Hub!
+                peer = candidatePeer;
+                netRole = 'hub';
+                updateNetworkHud();
+
+                peer.on('connection', (conn) => {
+                    setupHubClientConnection(conn);
+                });
+            });
+
+            candidatePeer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    // The Global World Hub already exists! Connect to it automatically as a client.
+                    try { candidatePeer.destroy(); } catch (e) {}
+                    connectAsGlobalClient();
+                } else {
+                    // Fallback retry
+                    scheduleFailoverReconnect(1800);
+                }
+            });
+        } catch (e) {
+            scheduleFailoverReconnect(2000);
+        }
+    }
+
+    function connectAsGlobalClient() {
+        try {
+            if (peer) peer.destroy();
+            peer = new Peer();
+
+            peer.on('open', () => {
+                const conn = peer.connect(GLOBAL_HUB_PEER_ID, { reliable: true });
+                hubConn = conn;
+
+                conn.on('open', () => {
+                    netRole = 'client';
+                    updateNetworkHud();
+                    // Send our player info + any local deltas we have
+                    const myDeltas = [];
+                    worldDeltas.forEach(([f, b], k) => myDeltas.push([k, f, b]));
+                    conn.send({
+                        type: 'JOIN_HELLO',
+                        player: serializePlayer(localPlayer),
+                        deltas: myDeltas
+                    });
+                });
+
+                conn.on('data', (data) => {
+                    handleNetworkPacket(data, GLOBAL_HUB_PEER_ID, false);
+                });
+
+                conn.on('close', () => {
+                    // Automatic Host Failover! If the current Hub player leaves, remaining players automatically re-elect a Hub.
+                    hubConn = null;
+                    netRole = 'connecting';
+                    updateNetworkHud();
+                    scheduleFailoverReconnect(250 + Math.floor(Math.random() * 650));
+                });
+
+                conn.on('error', () => {
+                    scheduleFailoverReconnect(800 + Math.floor(Math.random() * 700));
+                });
+            });
+
+            peer.on('error', () => {
+                scheduleFailoverReconnect(1200 + Math.floor(Math.random() * 800));
+            });
+        } catch (e) {
+            scheduleFailoverReconnect(2000);
+        }
+    }
+
+    function scheduleFailoverReconnect(delayMs) {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+            tryClaimGlobalHub();
+        }, delayMs);
+    }
+
+    function setupHubClientConnection(conn) {
+        conn.on('open', () => {
+            clientConns.set(conn.peer, conn);
+            const deltaList = [];
+            worldDeltas.forEach(([f, b], k) => deltaList.push([k, f, b]));
+
+            conn.send({
+                type: 'WELCOME_STATE',
+                deltas: deltaList,
+                isNight: isNight,
+                hubPlayer: serializePlayer(localPlayer),
+                otherPlayers: Array.from(remotePlayers.values())
+            });
+            updatePlayerListUI();
+        });
+
+        conn.on('data', (data) => {
+            handleNetworkPacket(data, conn.peer, false);
+        });
+
+        conn.on('close', () => {
+            const pId = conn.metadataPlayerId || conn.peer;
+            clientConns.delete(conn.peer);
+            const leftP = remotePlayers.get(pId);
+            if (leftP) {
+                remotePlayers.delete(pId);
+                broadcastFromHub({ type: 'PLAYER_LEFT', id: pId });
+                addChatMessage('시스템', `${leftP.name}님이 월드에서 나갔습니다.`, '#fbbf24', true);
+                updatePlayerListUI();
+            }
+        });
+    }
+
+    function broadcastFromHub(packet, excludePeerKey = null) {
+        if (netRole !== 'hub') return;
+        clientConns.forEach((conn, peerKey) => {
+            if (peerKey !== excludePeerKey && conn.open) {
+                conn.send(packet);
+            }
+        });
+    }
+
+    function sendGlobalPacket(packet) {
+        packet.senderId = localPlayer.id;
+        if (localChannel) {
+            try { localChannel.postMessage(packet); } catch (e) {}
+        }
+        if (netRole === 'hub') {
+            broadcastFromHub(packet);
+        } else if (netRole === 'client' && hubConn && hubConn.open) {
+            hubConn.send(packet);
+        }
+    }
+
+    function serializePlayer(p) {
+        const slotInfo = HOTBAR_SLOTS[p.selectedSlot] || HOTBAR_SLOTS[0];
+        return {
+            id: p.id,
+            name: p.name,
+            color: p.color,
+            x: Math.round(p.x),
+            y: Math.round(p.y),
+            angle: Number(p.angle.toFixed(2)),
+            pickaxeTier: p.pickaxeTier,
+            heldKey: slotInfo.key,
+            isMining: p.isMining,
+            swingProgress: Number(p.swingProgress.toFixed(2)),
+            targetTx: p.targetTx,
+            targetTy: p.targetTy,
+            lastSeen: Date.now()
+        };
+    }
+
+    function handleNetworkPacket(data, senderPeerKey, fromBroadcastChannel = false) {
+        if (!data || !data.type) return;
+        if (data.senderId === localPlayer.id) return;
+
+        switch (data.type) {
+            case 'WELCOME_STATE': {
+                if (Array.isArray(data.deltas)) {
+                    data.deltas.forEach(([k, f, b]) => {
+                        const tx = k % WORLD_SIZE;
+                        const ty = Math.floor(k / WORLD_SIZE);
+                        applyWorldModification(tx, ty, f, b, true);
+                    });
+                }
+                isNight = !!data.isNight;
+                updateDayNightButton();
+
+                if (data.hubPlayer && data.hubPlayer.id !== localPlayer.id) {
+                    data.hubPlayer.lastSeen = Date.now();
+                    remotePlayers.set(data.hubPlayer.id, data.hubPlayer);
+                }
+                if (Array.isArray(data.otherPlayers)) {
+                    data.otherPlayers.forEach(op => {
+                        if (op && op.id !== localPlayer.id) {
+                            op.lastSeen = Date.now();
+                            remotePlayers.set(op.id, op);
+                        }
+                    });
+                }
+                updatePlayerListUI();
+                break;
+            }
+            case 'JOIN_HELLO': {
+                if (data.player && data.player.id !== localPlayer.id) {
+                    const p = data.player;
+                    p.lastSeen = Date.now();
+                    remotePlayers.set(p.id, p);
+                    const conn = clientConns.get(senderPeerKey);
+                    if (conn) conn.metadataPlayerId = p.id;
+
+                    if (Array.isArray(data.deltas)) {
+                        data.deltas.forEach(([k, f, b]) => {
+                            const tx = k % WORLD_SIZE;
+                            const ty = Math.floor(k / WORLD_SIZE);
+                            applyWorldModification(tx, ty, f, b, true);
+                        });
+                    }
+
+                    addChatMessage('시스템', `🌍 ${p.name}님이 글로벌 월드(X:500, Y:500)에 입장했습니다!`, '#34d399', true);
+                    if (netRole === 'hub' && !fromBroadcastChannel) {
+                        broadcastFromHub({
+                            type: 'CHAT',
+                            sender: '시스템',
+                            text: `🌍 ${p.name}님이 글로벌 월드에 입장했습니다!`,
+                            isSystem: true
+                        }, senderPeerKey);
+                        broadcastFromHub({ type: 'PLAYER_SYNC', player: p }, senderPeerKey);
+                    }
+                    updatePlayerListUI();
+                }
+                break;
+            }
+            case 'PLAYER_SYNC': {
+                if (data.player && data.player.id !== localPlayer.id) {
+                    const p = data.player;
+                    p.lastSeen = Date.now();
+                    const isNew = !remotePlayers.has(p.id);
+                    remotePlayers.set(p.id, p);
+                    if (isNew) updatePlayerListUI();
+                    if (netRole === 'hub' && !fromBroadcastChannel) {
+                        broadcastFromHub(data, senderPeerKey);
+                    }
+                }
+                break;
+            }
+            case 'PLAYER_LEFT': {
+                if (data.id) {
+                    remotePlayers.delete(data.id);
+                    updatePlayerListUI();
+                }
+                break;
+            }
+            case 'WORLD_MOD': {
+                const { tx, ty, floorId, blockId, effectColor } = data;
+                if (inBounds(tx, ty)) {
+                    applyWorldModification(tx, ty, floorId, blockId, true);
+                    if (effectColor) {
+                        spawnParticles(tx * TILE_SIZE + 24, ty * TILE_SIZE + 24, effectColor, 12);
+                    }
+                }
+                if (netRole === 'hub' && !fromBroadcastChannel) {
+                    broadcastFromHub(data, senderPeerKey);
+                }
+                break;
+            }
+            case 'DAY_NIGHT': {
+                isNight = !!data.isNight;
+                updateDayNightButton();
+                if (netRole === 'hub' && !fromBroadcastChannel) {
+                    broadcastFromHub(data, senderPeerKey);
+                }
+                break;
+            }
+            case 'CHAT': {
+                addChatMessage(data.sender, data.text, data.color || '#60a5fa', !!data.isSystem);
+                if (netRole === 'hub' && !fromBroadcastChannel) {
+                    broadcastFromHub(data, senderPeerKey);
+                }
+                break;
+            }
+        }
+    }
+
+    function updateNetworkHud() {
+        const dot = document.getElementById('netStatusDot');
+        const badge = document.getElementById('netModeBadge');
+        const totalOnline = 1 + remotePlayers.size;
+
+        if (netRole === 'hub' || netRole === 'client') {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+            badge.textContent = `🌍 글로벌 공유 월드 온라인 (${totalOnline}명 접속중)`;
+            badge.className = 'text-xs font-black text-emerald-300';
+        } else {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
+            badge.textContent = `🌍 글로벌 공유 월드 자동 연결 중...`;
+            badge.className = 'text-xs font-black text-amber-300';
+        }
+    }
+
+    function teleportToTile(tx, ty, label = '') {
+        const clampedX = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(tx)));
+        const clampedY = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(ty)));
+        ensureAreaGenerated(clampedX, clampedY, 3);
+
+        // Ensure destination tile is walkable (if water/lava, place temporary wood/cobble bridge)
+        const f = getFloorAt(clampedX, clampedY);
+        if (!FLOOR_INFO[f]?.walkable) {
+            applyWorldModification(clampedX, clampedY, FLOOR.WOOD_BRIDGE, BLOCK.AIR, true);
+        } else if (getBlockAt(clampedX, clampedY) !== BLOCK.AIR && BLOCK_INFO[getBlockAt(clampedX, clampedY)]?.solid) {
+            applyWorldModification(clampedX, clampedY, undefined, BLOCK.AIR, true);
+        }
+
+        localPlayer.x = clampedX * TILE_SIZE + TILE_SIZE / 2;
+        localPlayer.y = clampedY * TILE_SIZE + TILE_SIZE / 2;
+        camera.x = localPlayer.x;
+        camera.y = localPlayer.y;
+
+        sfx.playCraft();
+        spawnParticles(localPlayer.x, localPlayer.y, '#38bdf8', 18);
+        if (label) {
+            showToast(`⚡ [${label}] (X:${clampedX}, Y:${clampedY}) 위치로 즉시 이동했습니다!`, 'blue');
+        }
+    }
+
+    function updatePlayerListUI() {
+        const container = document.getElementById('playerListContainer');
+        const mapModalList = document.getElementById('mapModalPlayerList');
+        const countBadge = document.getElementById('playerCountBadge');
+
+        // Prune stale remote players (>15s no packet)
+        const now = Date.now();
+        remotePlayers.forEach((rp, id) => {
+            if (rp.lastSeen && now - rp.lastSeen > 15000) {
+                remotePlayers.delete(id);
+            }
+        });
+
+        const all = [localPlayer, ...Array.from(remotePlayers.values())];
+        countBadge.textContent = `${all.length}명`;
+        updateNetworkHud();
+
+        const htmlRows = all.map((p, index) => {
+            const isMe = index === 0;
+            const ptx = Math.floor(p.x / TILE_SIZE);
+            const pty = Math.floor(p.y / TILE_SIZE);
+            return `
+                <div class="flex items-center justify-between bg-gray-900/85 px-1.5 py-1 rounded border border-gray-800 hover:border-emerald-500/60 transition">
+                    <div class="flex items-center gap-1.5 truncate">
+                        <span class="w-2.5 h-2.5 rounded-sm inline-block shrink-0" style="background:${p.color || '#06b6d4'}"></span>
+                        <span class="truncate ${isMe ? 'font-black text-white' : 'text-gray-200'}">${escapeHtml(p.name)}${isMe ? ' (나)' : ''}</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-[10px] font-mono text-gray-400">${ptx},${pty}</span>
+                        ${!isMe ? `<button data-tpx="${ptx}" data-tpy="${pty}" data-tpname="${escapeHtml(p.name)}" class="tp-player-btn px-1.5 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-[9px] font-black text-white">이동</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = htmlRows;
+        if (mapModalList) mapModalList.innerHTML = htmlRows;
+
+        document.querySelectorAll('.tp-player-btn').forEach(btn => {
+            btn.onclick = () => {
+                const tx = Number(btn.getAttribute('data-tpx'));
+                const ty = Number(btn.getAttribute('data-tpy'));
+                const nm = btn.getAttribute('data-tpname');
+                teleportToTile(tx, ty, `${nm}님 위치`);
+                document.getElementById('worldMapModal').classList.add('hidden');
+            };
+        });
+    }
+
+    // ==================== 7. LIVE RADAR MINIMAP & 1,000x1,000 FULL WORLD MAP ====================
+    const minimapCanvas = document.getElementById('minimapCanvas');
+    const minimapCtx = minimapCanvas.getContext('2d');
+    const fullMapCanvas = document.getElementById('fullWorldMapCanvas');
+    const fullMapCtx = fullMapCanvas.getContext('2d');
+    const fullWorldBackdrop = createOffscreenCanvas(200, 200);
+    let fullWorldBackdropReady = false;
+
+    function getTileMinimapColor(tx, ty) {
+        const i = idx(tx, ty);
+        if (worldDeltas.has(i)) {
+            const [df, db] = worldDeltas.get(i);
+            if (db !== BLOCK.AIR && BLOCK_INFO[db]?.minColor) return BLOCK_INFO[db].minColor;
+            return FLOOR_INFO[df]?.color || '#22c55e';
+        }
+        if (world.generatedChunks[Math.floor(ty / 10) * 100 + Math.floor(tx / 10)]) {
+            const b = world.blocks[i];
+            if (b !== BLOCK.AIR && BLOCK_INFO[b]?.minColor) return BLOCK_INFO[b].minColor;
+            return FLOOR_INFO[world.floors[i]]?.color || '#22c55e';
+        }
+        // Fast overview color for unvisited distant tiles
+        const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
+        if (distSpawn < 10) return '#94a3b8';
+        const elev = smoothNoise(tx, ty, 0.032, GLOBAL_WORLD_SEED) * 0.7 + smoothNoise(tx, ty, 0.09, GLOBAL_WORLD_SEED + 7) * 0.3;
+        if (elev < 0.19) return ty < 260 ? '#7dd3fc' : '#2563eb';
+        if (ty < 270) return elev > 0.65 ? '#6b7280' : '#f1f5f9';
+        if (tx > 640 && ty > 600) return '#eab308';
+        if (tx < 360 && ty > 600) return elev < 0.27 ? '#ea580c' : '#334155';
+        if (elev > 0.63) return '#6b7280';
+        return '#22c55e';
+    }
+
+    // Draw local radar minimap (shows 80x80 tiles around player + directional pointers to distant players)
+    function drawRadarMinimap() {
+        minimapCtx.imageSmoothingEnabled = false;
+        minimapCtx.fillStyle = '#090d16';
+        minimapCtx.fillRect(0, 0, 160, 160);
+
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+        const radius = 40; // 80x80 tile window, each tile 2x2 px
+
+        for (let dy = -radius; dy < radius; dy += 2) {
+            for (let dx = -radius; dx < radius; dx += 2) {
+                const tx = ptx + dx;
+                const ty = pty + dy;
+                if (inBounds(tx, ty)) {
+                    minimapCtx.fillStyle = getTileMinimapColor(tx, ty);
+                    minimapCtx.fillRect((dx + radius) * 2, (dy + radius) * 2, 4, 4);
+                }
+            }
+        }
+
+        // Draw Spawn Plaza indicator on radar
+        const sdx = SPAWN_X - ptx;
+        const sdy = SPAWN_Y - pty;
+        if (Math.abs(sdx) < radius && Math.abs(sdy) < radius) {
+            minimapCtx.strokeStyle = '#facc15';
+            minimapCtx.lineWidth = 2;
+            minimapCtx.strokeRect((sdx + radius) * 2 - 4, (sdy + radius) * 2 - 4, 8, 8);
+        }
+
+        // Draw Remote Players (or directional radar edge dots if far away!)
+        remotePlayers.forEach(rp => {
+            const rtx = rp.x / TILE_SIZE;
+            const rty = rp.y / TILE_SIZE;
+            const dx = rtx - ptx;
+            const dy = rty - pty;
+
+            let rx = (dx + radius) * 2;
+            let ry = (dy + radius) * 2;
+
+            // Clamp to radar edge if player is outside 80x80 window so you can always find them
+            rx = Math.max(6, Math.min(154, rx));
+            ry = Math.max(6, Math.min(154, ry));
+
+            minimapCtx.fillStyle = rp.color || '#38bdf8';
+            minimapCtx.beginPath();
+            minimapCtx.arc(rx, ry, 4.5, 0, Math.PI * 2);
+            minimapCtx.fill();
+            minimapCtx.strokeStyle = '#ffffff';
+            minimapCtx.lineWidth = 1.5;
+            minimapCtx.stroke();
+        });
+
+        // Local player at center of radar
+        minimapCtx.fillStyle = '#ffffff';
+        minimapCtx.fillRect(77, 77, 6, 6);
+        minimapCtx.strokeStyle = '#ef4444';
+        minimapCtx.lineWidth = 1.5;
+        minimapCtx.strokeRect(77, 77, 6, 6);
+    }
+
+    function renderFullWorldMapModal() {
+        if (!fullWorldBackdropReady) {
+            const g = fullWorldBackdrop.getContext('2d');
+            for (let y = 0; y < 200; y++) {
+                for (let x = 0; x < 200; x++) {
+                    g.fillStyle = getTileMinimapColor(x * 5, y * 5);
+                    g.fillRect(x, y, 1, 1);
+                }
+            }
+            fullWorldBackdropReady = true;
+        }
+
+        fullMapCtx.imageSmoothingEnabled = false;
+        fullMapCtx.clearRect(0, 0, 400, 400);
+        fullMapCtx.drawImage(fullWorldBackdrop, 0, 0, 400, 400);
+
+        // Draw Spawn Plaza Marker (500, 500 -> 200, 200)
+        fullMapCtx.strokeStyle = '#facc15';
+        fullMapCtx.lineWidth = 2;
+        fullMapCtx.strokeRect(194, 194, 12, 12);
+
+        // Draw Remote Players
+        remotePlayers.forEach(rp => {
+            const mx = (rp.x / TILE_SIZE) * 0.4;
+            const my = (rp.y / TILE_SIZE) * 0.4;
+            fullMapCtx.fillStyle = rp.color || '#38bdf8';
+            fullMapCtx.beginPath();
+            fullMapCtx.arc(mx, my, 5, 0, Math.PI * 2);
+            fullMapCtx.fill();
+            fullMapCtx.strokeStyle = '#fff';
+            fullMapCtx.stroke();
+        });
+
+        // Draw Local Player
+        const lx = (localPlayer.x / TILE_SIZE) * 0.4;
+        const ly = (localPlayer.y / TILE_SIZE) * 0.4;
+        fullMapCtx.fillStyle = '#ef4444';
+        fullMapCtx.beginPath();
+        fullMapCtx.arc(lx, ly, 5.5, 0, Math.PI * 2);
+        fullMapCtx.fill();
+        fullMapCtx.strokeStyle = '#ffffff';
+        fullMapCtx.lineWidth = 2;
+        fullMapCtx.stroke();
+
+        updatePlayerListUI();
+    }
+
+    // ==================== 8. UI UPDATES: HOTBAR, RESOURCES & CRAFTING ====================
+    function updateResourceUI() {
+        Object.keys(resources).forEach(k => {
+            const el = document.getElementById('res_' + k);
+            if (el) el.textContent = resources[k];
+        });
+        const tier = PICKAXE_TIERS[localPlayer.pickaxeTier];
+        document.getElementById('pickaxeBadge').textContent = `⛏️ ${tier.name} (x${tier.speed})`;
+        renderHotbarUI();
+        if (!document.getElementById('craftModal').classList.contains('hidden')) {
+            renderCraftingModal();
+        }
+    }
+
+    function renderHotbarUI() {
+        const container = document.getElementById('hotbarContainer');
+        container.innerHTML = '';
+
+        HOTBAR_SLOTS.forEach((slotDef, index) => {
+            const slotEl = document.createElement('div');
+            slotEl.className = `hotbar-slot flex items-center justify-center ${localPlayer.selectedSlot === index ? 'active' : ''}`;
+            slotEl.onclick = () => selectHotbarSlot(index);
+
+            const numBadge = document.createElement('span');
+            numBadge.className = 'absolute top-0.5 left-1 text-[10px] font-black text-gray-400';
+            numBadge.textContent = index + 1;
+            slotEl.appendChild(numBadge);
+
+            const iconCanvas = document.createElement('canvas');
+            iconCanvas.width = 36;
+            iconCanvas.height = 36;
+            iconCanvas.className = 'w-8 h-8 pointer-events-none';
+            const ic = iconCanvas.getContext('2d');
+            ic.imageSmoothingEnabled = false;
+
+            if (slotDef.type === 'tool') {
+                const pickSprite = iconSprites['pickaxe_' + localPlayer.pickaxeTier];
+                if (pickSprite) ic.drawImage(pickSprite, 0, 0, 36, 36);
+            } else {
+                const bSprite = tileSprites['block_' + slotDef.blockId];
+                if (bSprite) ic.drawImage(bSprite, 2, 2, 32, 32);
+                const count = blockInventory[slotDef.key] || 0;
+                const qtyBadge = document.createElement('span');
+                qtyBadge.className = `absolute bottom-0.5 right-1 text-[11px] font-black ${count > 0 ? 'text-white' : 'text-red-400'}`;
+                qtyBadge.textContent = count;
+                slotEl.appendChild(qtyBadge);
+            }
+
+            slotEl.appendChild(iconCanvas);
+            container.appendChild(slotEl);
+        });
+
+        const activeSlot = HOTBAR_SLOTS[localPlayer.selectedSlot];
+        const banner = document.getElementById('selectedItemBanner');
+        if (activeSlot.type === 'tool') {
+            const tier = PICKAXE_TIERS[localPlayer.pickaxeTier];
+            banner.textContent = `[1] ${tier.name} (속도 x${tier.speed} · 좌클릭 홀드로 채굴)`;
+        } else {
+            const count = blockInventory[activeSlot.key] || 0;
+            banner.textContent = `[${localPlayer.selectedSlot + 1}] ${activeSlot.name} (보유: ${count}개 · 클릭하여 설치)`;
+        }
+    }
+
+    function selectHotbarSlot(index) {
+        if (index < 0 || index >= HOTBAR_SLOTS.length) return;
+        localPlayer.selectedSlot = index;
+        renderHotbarUI();
+    }
+
+    function canAffordCost(cost) {
+        return Object.entries(cost).every(([k, req]) => (resources[k] || 0) >= req);
+    }
+
+    function renderCraftingModal() {
+        const list = document.getElementById('craftRecipeList');
+        list.innerHTML = '';
+
+        CRAFT_RECIPES.forEach(recipe => {
+            const affordable = canAffordCost(recipe.cost);
+            const alreadyOwnedPick = recipe.type === 'pickaxe' && localPlayer.pickaxeTier >= recipe.tier;
+
+            const card = document.createElement('div');
+            card.className = `p-3 rounded-lg border flex flex-col justify-between gap-2 ${
+                alreadyOwnedPick
+                    ? 'bg-gray-900/50 border-gray-800 opacity-60'
+                    : affordable
+                    ? 'bg-gray-900/95 border-emerald-500/60'
+                    : 'bg-gray-900/80 border-gray-700'
+            }`;
+
+            const costBadges = Object.entries(recipe.cost).map(([k, req]) => {
+                const have = resources[k] || 0;
+                const ok = have >= req;
+                return `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold ${ok ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-red-950 text-red-300 border border-red-800'}">${RESOURCE_LABELS[k]} ${have}/${req}</span>`;
+            }).join(' ');
+
+            card.innerHTML = `
+                <div>
+                    <div class="font-black text-sm text-white flex items-center justify-between">
+                        <span>${recipe.name}</span>
+                        ${alreadyOwnedPick ? '<span class="text-[10px] text-emerald-400">보유 완료</span>' : ''}
+                    </div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">${recipe.desc}</div>
+                    <div class="flex flex-wrap gap-1 mt-2">${costBadges}</div>
+                </div>
+            `;
+
+            const btn = document.createElement('button');
+            btn.className = `mc-btn w-full py-1.5 text-xs ${affordable && !alreadyOwnedPick ? 'mc-btn-green' : 'opacity-50 cursor-not-allowed'}`;
+            btn.textContent = alreadyOwnedPick ? '업그레이드 완료' : affordable ? '⚒️ 제작하기' : '재료 부족';
+            btn.disabled = !affordable || alreadyOwnedPick;
+            btn.onclick = () => executeCraft(recipe);
+
+            card.appendChild(btn);
+            list.appendChild(card);
+        });
+    }
+
+    function executeCraft(recipe) {
+        if (!canAffordCost(recipe.cost)) return;
+        if (recipe.type === 'pickaxe' && localPlayer.pickaxeTier >= recipe.tier) return;
+
+        Object.entries(recipe.cost).forEach(([k, req]) => {
+            resources[k] -= req;
+        });
+
+        if (recipe.type === 'pickaxe') {
+            localPlayer.pickaxeTier = recipe.tier;
+            showToast(`🎉 [${PICKAXE_TIERS[recipe.tier].name}] 업그레이드 완료!`, 'amber');
+            spawnFloatingText(localPlayer.x, localPlayer.y - 20, `${PICKAXE_TIERS[recipe.tier].name}!`, '#facc15');
+        } else if (recipe.type === 'item') {
+            blockInventory[recipe.itemKey] = (blockInventory[recipe.itemKey] || 0) + recipe.amount;
+            showToast(`⚒️ ${recipe.name} 제작 완료!`, 'emerald');
+            spawnFloatingText(localPlayer.x, localPlayer.y - 20, `+${recipe.amount} 제작`, '#4ade80');
+        }
+
+        sfx.playCraft();
+        updateResourceUI();
+    }
+
+    // ==================== 9. PICKAXE MINING & BLOCK BUILDING MECHANICS ====================
+    function spawnParticles(wx, wy, color, count = 10) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 40 + Math.random() * 110;
+            particles.push({
+                x: wx + (Math.random() - 0.5) * 18,
+                y: wy + (Math.random() - 0.5) * 18,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: 4 + Math.random() * 4,
+                color: color,
+                life: 0.35 + Math.random() * 0.25
+            });
+        }
+    }
+
+    function spawnFloatingText(wx, wy, text, color = '#fef08a') {
+        floatingTexts.push({ x: wx, y: wy, text, color, life: 1.1 });
+    }
+
+    function isTargetInRange(tx, ty) {
+        if (!inBounds(tx, ty)) return false;
+        const tileCenterX = tx * TILE_SIZE + TILE_SIZE / 2;
+        const tileCenterY = ty * TILE_SIZE + TILE_SIZE / 2;
+        const distTiles = Math.hypot(tileCenterX - localPlayer.x, tileCenterY - localPlayer.y) / TILE_SIZE;
+        return distTiles <= REACH_TILES;
+    }
+
+    function updateMining(dt, targetTx, targetTy) {
+        if (!isTargetInRange(targetTx, targetTy)) {
+            resetMiningState();
+            return;
+        }
+
+        const blockId = getBlockAt(targetTx, targetTy);
+        const floorId = getFloorAt(targetTx, targetTy);
+
+        let targetMaxHp = 0;
+        let hitSfxType = 'stone';
+        let particleCol = '#9ca3af';
+
+        if (blockId !== BLOCK.AIR) {
+            const bInfo = BLOCK_INFO[blockId];
+            if (localPlayer.pickaxeTier < (bInfo.minTier || 0)) {
+                const reqName = PICKAXE_TIERS[bInfo.minTier]?.name || '상위 곡괭이';
+                if (miningState.hitSoundTimer <= 0) {
+                    showToast(`⚠️ [${bInfo.name}] 채굴에는 최소 [${reqName}]가 필요합니다! (E키 제작)`, 'amber');
+                    miningState.hitSoundTimer = 1.2;
+                } else {
+                    miningState.hitSoundTimer -= dt;
+                }
+                resetMiningState();
+                return;
+            }
+            targetMaxHp = bInfo.hp;
+            hitSfxType = bInfo.sfx || 'stone';
+            particleCol = bInfo.particleColor || '#9ca3af';
+        } else if (floorId === FLOOR.WOOD_BRIDGE || floorId === FLOOR.COBBLE_BRIDGE) {
+            targetMaxHp = 45;
+            hitSfxType = 'wood';
+            particleCol = '#b45309';
+        } else if (floorId === FLOOR.SAND) {
+            targetMaxHp = 50;
+            hitSfxType = 'wood';
+            particleCol = '#fde047';
+        } else {
+            resetMiningState();
+            return;
+        }
+
+        if (miningState.tx !== targetTx || miningState.ty !== targetTy) {
+            miningState.tx = targetTx;
+            miningState.ty = targetTy;
+            miningState.progress = 0;
+            miningState.maxHp = targetMaxHp;
+        }
+
+        localPlayer.isMining = true;
+        localPlayer.targetTx = targetTx;
+        localPlayer.targetTy = targetTy;
+        localPlayer.swingProgress = (localPlayer.swingProgress + dt * 9) % (Math.PI * 2);
+
+        const tcx = targetTx * TILE_SIZE + TILE_SIZE / 2;
+        const tcy = targetTy * TILE_SIZE + TILE_SIZE / 2;
+        localPlayer.angle = Math.atan2(tcy - localPlayer.y, tcx - localPlayer.x);
+
+        const pickSpeed = PICKAXE_TIERS[localPlayer.pickaxeTier].speed;
+        miningState.progress += dt * 78 * pickSpeed;
+
+        miningState.hitSoundTimer -= dt;
+        if (miningState.hitSoundTimer <= 0) {
+            miningState.hitSoundTimer = 0.17 / Math.sqrt(pickSpeed);
+            sfx.playHit(hitSfxType);
+            spawnParticles(tcx, tcy, particleCol, 3);
+        }
+
+        if (miningState.progress >= miningState.maxHp) {
+            completeBlockMine(targetTx, targetTy);
+            resetMiningState();
+        }
+    }
+
+    function resetMiningState() {
+        miningState.tx = -1;
+        miningState.ty = -1;
+        miningState.progress = 0;
+        localPlayer.isMining = false;
+    }
+
+    function completeBlockMine(tx, ty) {
+        const blockId = getBlockAt(tx, ty);
+        const floorId = getFloorAt(tx, ty);
+        const wx = tx * TILE_SIZE + 24;
+        const wy = ty * TILE_SIZE + 24;
+
+        sfx.playBreak();
+
+        if (blockId !== BLOCK.AIR) {
+            const info = BLOCK_INFO[blockId];
+            applyWorldModification(tx, ty, undefined, BLOCK.AIR, true);
+            spawnParticles(wx, wy, info.particleColor || '#ffffff', 16);
+
+            if (info.dropType === 'res') {
+                resources[info.dropKey] = (resources[info.dropKey] || 0) + info.dropCount;
+                spawnFloatingText(wx, wy - 10, `+${info.dropCount} ${info.dropLabel}`, '#fde047');
+            } else if (info.dropType === 'item') {
+                blockInventory[info.dropKey] = (blockInventory[info.dropKey] || 0) + info.dropCount;
+                spawnFloatingText(wx, wy - 10, `+${info.dropCount} ${info.dropLabel}`, '#4ade80');
+            }
+
+            updateResourceUI();
+            sendGlobalPacket({
+                type: 'WORLD_MOD',
+                tx,
+                ty,
+                blockId: BLOCK.AIR,
+                effectColor: info.particleColor
+            });
+        } else if (floorId === FLOOR.WOOD_BRIDGE || floorId === FLOOR.COBBLE_BRIDGE) {
+            const restoredFloor = FLOOR.WATER;
+            applyWorldModification(tx, ty, restoredFloor, BLOCK.AIR, true);
+            const dropKey = floorId === FLOOR.WOOD_BRIDGE ? 'planks' : 'cobbleWall';
+            blockInventory[dropKey] = (blockInventory[dropKey] || 0) + 1;
+            spawnParticles(wx, wy, '#b45309', 12);
+            spawnFloatingText(wx, wy - 10, '+1 다리 블록 회수', '#4ade80');
+            updateResourceUI();
+            sendGlobalPacket({
+                type: 'WORLD_MOD',
+                tx,
+                ty,
+                floorId: restoredFloor,
+                effectColor: '#b45309'
+            });
+        } else if (floorId === FLOOR.SAND) {
+            resources.sand = (resources.sand || 0) + 1;
+            spawnParticles(wx, wy, '#fde047', 10);
+            spawnFloatingText(wx, wy - 10, '+1 모래', '#fef08a');
+            updateResourceUI();
+        }
+    }
+
+    function tryInteractOrPlaceBlock(tx, ty) {
+        if (!isTargetInRange(tx, ty)) {
+            showToast('사거리가 멉니다! 가까이 이동해서 설치하세요.', 'amber');
+            return;
+        }
+
+        const existingBlock = getBlockAt(tx, ty);
+        const existingFloor = getFloorAt(tx, ty);
+
+        if (existingBlock === BLOCK.CRAFT_TABLE) {
+            toggleCraftingModal(true);
+            return;
+        }
+        if (existingBlock === BLOCK.DOOR_CLOSED || existingBlock === BLOCK.DOOR_OPEN) {
+            const nextDoor = existingBlock === BLOCK.DOOR_CLOSED ? BLOCK.DOOR_OPEN : BLOCK.DOOR_CLOSED;
+            applyWorldModification(tx, ty, undefined, nextDoor, true);
+            sfx.playPlace();
+            sendGlobalPacket({ type: 'WORLD_MOD', tx, ty, blockId: nextDoor });
+            return;
+        }
+
+        let slotDef = HOTBAR_SLOTS[localPlayer.selectedSlot];
+        if (slotDef.type === 'tool') {
+            slotDef = HOTBAR_SLOTS[1]; // Default right-click places Wood Planks
+        }
+
+        const itemKey = slotDef.key;
+        const count = blockInventory[itemKey] || 0;
+        if (count <= 0) {
+            showToast(`${slotDef.name} 수량이 부족합니다! (E키로 제작)`, 'amber');
+            return;
+        }
+
+        if (existingBlock !== BLOCK.AIR) return;
+
+        const wx = tx * TILE_SIZE + 24;
+        const wy = ty * TILE_SIZE + 24;
+
+        // Placing Wood Planks or Cobble on Water/Lava builds a walkable Bridge!
+        if ((existingFloor === FLOOR.WATER || existingFloor === FLOOR.DEEP_WATER || existingFloor === FLOOR.LAVA) &&
+            (itemKey === 'planks' || itemKey === 'cobbleWall')) {
+            const bridgeFloor = itemKey === 'cobbleWall' ? FLOOR.COBBLE_BRIDGE : FLOOR.WOOD_BRIDGE;
+            applyWorldModification(tx, ty, bridgeFloor, BLOCK.AIR, true);
+            blockInventory[itemKey]--;
+            sfx.playPlace();
+            spawnParticles(wx, wy, '#d97706', 8);
+            updateResourceUI();
+            sendGlobalPacket({
+                type: 'WORLD_MOD',
+                tx,
+                ty,
+                floorId: bridgeFloor,
+                effectColor: '#d97706'
+            });
+            return;
+        }
+
+        if (existingFloor === FLOOR.WATER || existingFloor === FLOOR.DEEP_WATER || existingFloor === FLOOR.LAVA) {
+            showToast('물이나 용암 위에는 먼저 [2번 나무 판자] 또는 [3번 조약돌]로 다리를 놓으세요!', 'amber');
+            return;
+        }
+
+        const targetBlockInfo = BLOCK_INFO[slotDef.blockId];
+        if (targetBlockInfo && targetBlockInfo.solid) {
+            const pTileX = Math.floor(localPlayer.x / TILE_SIZE);
+            const pTileY = Math.floor(localPlayer.y / TILE_SIZE);
+            if (pTileX === tx && pTileY === ty) {
+                showToast('내 캐릭터가 서 있는 위치에는 벽 블록을 놓을 수 없습니다!', 'amber');
+                return;
+            }
+        }
+
+        applyWorldModification(tx, ty, undefined, slotDef.blockId, true);
+        blockInventory[itemKey]--;
+        sfx.playPlace();
+        spawnParticles(wx, wy, targetBlockInfo?.particleColor || '#d97706', 8);
+        updateResourceUI();
+        sendGlobalPacket({
+            type: 'WORLD_MOD',
+            tx,
+            ty,
+            blockId: slotDef.blockId,
+            effectColor: targetBlockInfo?.particleColor
+        });
+    }
+
+    // ==================== 10. PLAYER MOVEMENT & COLLISION DETECTION ====================
+    const keys = {};
+    const touchDirs = { up: false, down: false, left: false, right: false, mine: false };
+    let mouseScreenX = window.innerWidth / 2;
+    let mouseScreenY = window.innerHeight / 2;
+    let isLeftMouseDown = false;
+    let isRightMouseDown = false;
+    let rightPlaceCooldown = 0;
+
+    function isTileSolidForPlayer(tx, ty) {
+        if (!inBounds(tx, ty)) return true;
+        const f = getFloorAt(tx, ty);
+        if (!FLOOR_INFO[f]?.walkable) return true;
+        const b = getBlockAt(tx, ty);
+        if (b !== BLOCK.AIR && BLOCK_INFO[b]?.solid) return true;
+        return false;
+    }
+
+    function movePlayerWithCollision(dt) {
+        let dx = 0;
+        let dy = 0;
+        if (keys['KeyW'] || keys['ArrowUp'] || touchDirs.up) dy -= 1;
+        if (keys['KeyS'] || keys['ArrowDown'] || touchDirs.down) dy += 1;
+        if (keys['KeyA'] || keys['ArrowLeft'] || touchDirs.left) dx -= 1;
+        if (keys['KeyD'] || keys['ArrowRight'] || touchDirs.right) dx += 1;
+
+        if (dx !== 0 && dy !== 0) {
+            const inv = 1 / Math.SQRT2;
+            dx *= inv;
+            dy *= inv;
+        }
+
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+        ensureAreaGenerated(ptx, pty, 3);
+
+        // Ice floor gives a slight speed boost!
+        const currentFloor = getFloorAt(ptx, pty);
+        const speed = currentFloor === FLOOR.ICE ? 275 : 215;
+        const radius = 14;
+
+        const nextX = localPlayer.x + dx * speed * dt;
+        if (!checkCircleTileCollision(nextX, localPlayer.y, radius)) {
+            localPlayer.x = nextX;
+        }
+
+        const nextY = localPlayer.y + dy * speed * dt;
+        if (!checkCircleTileCollision(localPlayer.x, nextY, radius)) {
+            localPlayer.y = nextY;
+        }
+
+        const ntx = Math.floor(localPlayer.x / TILE_SIZE);
+        const nty = Math.floor(localPlayer.y / TILE_SIZE);
+        document.getElementById('coordsDisplay').textContent = `X:${ntx} Y:${nty}`;
+        document.getElementById('biomeBadge').textContent = getBiomeNameAt(ntx, nty);
+    }
+
+    function checkCircleTileCollision(cx, cy, r) {
+        const minTx = Math.floor((cx - r) / TILE_SIZE);
+        const maxTx = Math.floor((cx + r) / TILE_SIZE);
+        const minTy = Math.floor((cy - r) / TILE_SIZE);
+        const maxTy = Math.floor((cy + r) / TILE_SIZE);
+
+        for (let ty = minTy; ty <= maxTy; ty++) {
+            for (let tx = minTx; tx <= maxTx; tx++) {
+                if (isTileSolidForPlayer(tx, ty)) {
+                    const rx = tx * TILE_SIZE;
+                    const ry = ty * TILE_SIZE;
+                    const closestX = Math.max(rx, Math.min(cx, rx + TILE_SIZE));
+                    const closestY = Math.max(ry, Math.min(cy, ry + TILE_SIZE));
+                    const distSq = (cx - closestX) ** 2 + (cy - closestY) ** 2;
+                    if (distSq < r * r) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // ==================== 11. MAIN CANVAS RENDERER & DYNAMIC LIGHTING ====================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const lightCanvas = document.createElement('canvas');
+    const lightCtx = lightCanvas.getContext('2d');
+
+    const camera = {
+        x: localPlayer.x,
+        y: localPlayer.y
+    };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        lightCanvas.width = window.innerWidth;
+        lightCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getHoveredWorldTile() {
+        const worldX = mouseScreenX - canvas.width / 2 + camera.x;
+        const worldY = mouseScreenY - canvas.height / 2 + camera.y;
+        return {
+            tx: Math.floor(worldX / TILE_SIZE),
+            ty: Math.floor(worldY / TILE_SIZE),
+            worldX,
+            worldY
+        };
+    }
+
+    function drawPlayerCharacter(p, isLocal, timeSec) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+
+        // Ground shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 12, 14, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.rotate(p.angle || 0);
+
+        const swingOffset = p.isMining ? Math.sin(p.swingProgress * 2.2) * 0.85 : 0;
+        ctx.save();
+        ctx.translate(10, 10);
+        ctx.rotate(swingOffset);
+
+        const heldKey = isLocal ? HOTBAR_SLOTS[localPlayer.selectedSlot].key : (p.heldKey || 'pickaxe');
+        if (heldKey === 'pickaxe') {
+            const tier = PICKAXE_TIERS[p.pickaxeTier || 0] || PICKAXE_TIERS[0];
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(0, -2, 18, 4);
+            ctx.fillStyle = tier.headColor;
+            ctx.fillRect(13, -10, 5, 20);
+            ctx.strokeStyle = '#111827';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(13, -10, 5, 20);
+        } else {
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(6, -6, 12, 12);
+            ctx.strokeStyle = '#111827';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(6, -6, 12, 12);
+        }
+        ctx.restore();
+
+        // Torso
+        ctx.fillStyle = p.color || '#06b6d4';
+        ctx.fillRect(-11, -13, 22, 26);
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-11, -13, 22, 26);
+
+        // Head
+        ctx.fillStyle = '#fcd34d';
+        ctx.fillRect(-9, -9, 18, 18);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(-9, -9, 10, 18);
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(5, -5, 3, 3);
+        ctx.fillRect(5, 2, 3, 3);
+        ctx.strokeRect(-9, -9, 18, 18);
+
+        ctx.restore();
+
+        // Nametag
+        ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        const label = p.name || '플레이어';
+        const tw = ctx.measureText(label).width + 12;
+        ctx.fillStyle = 'rgba(17, 24, 39, 0.82)';
+        ctx.fillRect(-tw / 2, -34, tw, 18);
+        ctx.fillStyle = isLocal ? '#4ade80' : '#ffffff';
+        ctx.fillText(label, 0, -21);
+
+        ctx.restore();
+    }
+
+    function renderGameWorld(timeSec) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        const camOffsetX = Math.floor(canvas.width / 2 - camera.x);
+        const camOffsetY = Math.floor(canvas.height / 2 - camera.y);
+        ctx.translate(camOffsetX, camOffsetY);
+
+        const startTx = Math.max(0, Math.floor((camera.x - canvas.width / 2) / TILE_SIZE) - 1);
+        const endTx = Math.min(WORLD_SIZE - 1, Math.ceil((camera.x + canvas.width / 2) / TILE_SIZE) + 1);
+        const startTy = Math.max(0, Math.floor((camera.y - canvas.height / 2) / TILE_SIZE) - 1);
+        const endTy = Math.min(WORLD_SIZE - 1, Math.ceil((camera.y + canvas.height / 2) / TILE_SIZE) + 1);
+
+        const lightSources = [];
+
+        // 1. Render Floor Tiles
+        for (let ty = startTy; ty <= endTy; ty++) {
+            for (let tx = startTx; tx <= endTx; tx++) {
+                const f = getFloorAt(tx, ty);
+                const wx = tx * TILE_SIZE;
+                const wy = ty * TILE_SIZE;
+                const sprite = tileSprites['floor_' + f];
+                if (sprite) ctx.drawImage(sprite, wx, wy);
+
+                if (f === FLOOR.WATER || f === FLOOR.DEEP_WATER) {
+                    const wave = Math.sin(timeSec * 3 + tx * 0.7 + ty * 0.5);
+                    if (wave > 0.65) {
+                        ctx.fillStyle = 'rgba(191, 219, 254, 0.22)';
+                        ctx.fillRect(wx + 10, wy + 18, 16, 4);
+                    }
+                } else if (f === FLOOR.LAVA) {
+                    lightSources.push({ x: wx + 24, y: wy + 24, r: 110 });
+                }
+            }
+        }
+
+        // Spawn Plaza Welcome Sign on ground
+        if (Math.abs(camera.x - SPAWN_X * TILE_SIZE) < canvas.width && Math.abs(camera.y - SPAWN_Y * TILE_SIZE) < canvas.height) {
+            ctx.save();
+            ctx.font = '900 14px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+            const sx = SPAWN_X * TILE_SIZE + 24;
+            const sy = (SPAWN_Y - 2) * TILE_SIZE;
+            ctx.fillRect(sx - 135, sy - 18, 270, 26);
+            ctx.strokeStyle = '#facc15';
+            ctx.strokeRect(sx - 135, sy - 18, 270, 26);
+            ctx.fillStyle = '#fde047';
+            ctx.fillText('🏛️ 글로벌 스폰 광장 (X:500, Y:500)', sx, sy);
+            ctx.restore();
+        }
+
+        // 2. Render Blocks & Ores
+        for (let ty = startTy; ty <= endTy; ty++) {
+            for (let tx = startTx; tx <= endTx; tx++) {
+                const b = getBlockAt(tx, ty);
+                if (b === BLOCK.AIR) continue;
+
+                const wx = tx * TILE_SIZE;
+                const wy = ty * TILE_SIZE;
+
+                if (BLOCK_INFO[b]?.solid) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+                    ctx.fillRect(wx + 4, wy + 6, TILE_SIZE, TILE_SIZE);
+                }
+
+                const bSprite = tileSprites['block_' + b];
+                if (bSprite) ctx.drawImage(bSprite, wx, wy);
+
+                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK) {
+                    const flicker = Math.sin(timeSec * 12 + tx * 3 + ty * 5) * 8;
+                    lightSources.push({
+                        x: wx + 24,
+                        y: wy + 24,
+                        r: (BLOCK_INFO[b].light || 180) + flicker
+                    });
+                }
+
+                if (miningState.tx === tx && miningState.ty === ty && miningState.progress > 0) {
+                    const stage = Math.min(9, Math.floor((miningState.progress / miningState.maxHp) * 10));
+                    ctx.drawImage(crackSprites[stage], wx, wy);
+                }
+            }
+        }
+
+        // Remote player mining cracks
+        remotePlayers.forEach(rp => {
+            if (rp.isMining && inBounds(rp.targetTx, rp.targetTy)) {
+                const wx = rp.targetTx * TILE_SIZE;
+                const wy = rp.targetTy * TILE_SIZE;
+                const animStage = Math.floor((timeSec * 6) % 10);
+                ctx.drawImage(crackSprites[animStage], wx, wy);
+            }
+        });
+
+        // 3. Target Tile Selection Box & Mining Progress Bar
+        const hover = getHoveredWorldTile();
+        if (inBounds(hover.tx, hover.ty)) {
+            const inRange = isTargetInRange(hover.tx, hover.ty);
+            const wx = hover.tx * TILE_SIZE;
+            const wy = hover.ty * TILE_SIZE;
+
+            ctx.strokeStyle = inRange ? '#facc15' : 'rgba(239, 68, 68, 0.55)';
+            ctx.lineWidth = inRange ? 3 : 2;
+            ctx.strokeRect(wx + 1.5, wy + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
+
+            if (miningState.tx === hover.tx && miningState.ty === hover.ty && miningState.progress > 0) {
+                const pct = Math.min(1, miningState.progress / miningState.maxHp);
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.fillRect(wx + 4, wy - 10, TILE_SIZE - 8, 6);
+                ctx.fillStyle = pct > 0.7 ? '#22c55e' : '#facc15';
+                ctx.fillRect(wx + 5, wy - 9, (TILE_SIZE - 10) * pct, 4);
+            }
+        }
+
+        // 4. Render Players
+        remotePlayers.forEach(rp => {
+            drawPlayerCharacter(rp, false, timeSec);
+            lightSources.push({ x: rp.x, y: rp.y, r: 125 });
+        });
+        drawPlayerCharacter(localPlayer, true, timeSec);
+        lightSources.push({ x: localPlayer.x, y: localPlayer.y, r: 155 });
+
+        // 5. Render Debris Particles
+        particles.forEach(pt => {
+            ctx.fillStyle = pt.color;
+            ctx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
+        });
+
+        // 6. Floating Loot Texts
+        ctx.font = '900 13px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        floatingTexts.forEach(ft => {
+            ctx.fillStyle = '#000000';
+            ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+            ctx.fillStyle = ft.color;
+            ctx.fillText(ft.text, ft.x, ft.y);
+        });
+
+        ctx.restore();
+
+        // 7. Day / Night Dynamic Lighting Overlay
+        if (darknessAlpha > 0.01) {
+            lightCtx.clearRect(0, 0, lightCanvas.width, lightCanvas.height);
+            lightCtx.fillStyle = `rgba(6, 10, 26, ${darknessAlpha})`;
+            lightCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
+
+            lightCtx.globalCompositeOperation = 'destination-out';
+            lightSources.forEach(src => {
+                const sx = src.x + camOffsetX;
+                const sy = src.y + camOffsetY;
+                if (sx < -src.r || sy < -src.r || sx > lightCanvas.width + src.r || sy > lightCanvas.height + src.r) return;
+                const grad = lightCtx.createRadialGradient(sx, sy, 8, sx, sy, src.r);
+                grad.addColorStop(0, 'rgba(0,0,0,1)');
+                grad.addColorStop(0.6, 'rgba(0,0,0,0.65)');
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+                lightCtx.fillStyle = grad;
+                lightCtx.beginPath();
+                lightCtx.arc(sx, sy, src.r, 0, Math.PI * 2);
+                lightCtx.fill();
+            });
+            lightCtx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(lightCanvas, 0, 0);
+        }
+    }
+
+    // ==================== 12. GAME LOOP & INPUT EVENTS ====================
+    let lastTime = performance.now();
+    let netSyncAccum = 0;
+    let radarAccum = 0;
+    let gameStarted = false;
+
+    function updateTargetHud() {
+        const hover = getHoveredWorldTile();
+        const nameEl = document.getElementById('targetBlockName');
+        const hintEl = document.getElementById('targetBlockHint');
+
+        if (!inBounds(hover.tx, hover.ty)) {
+            nameEl.textContent = '🎯 월드 경계 밖';
+            hintEl.textContent = '';
+            return;
+        }
+        const b = getBlockAt(hover.tx, hover.ty);
+        const f = getFloorAt(hover.tx, hover.ty);
+        const inRange = isTargetInRange(hover.tx, hover.ty);
+
+        if (b !== BLOCK.AIR) {
+            nameEl.textContent = `🎯 ${BLOCK_INFO[b].name}`;
+            hintEl.textContent = inRange ? '좌클릭 홀드: 채굴' : '⚠️ 사거리 밖';
+        } else {
+            nameEl.textContent = `🎯 ${FLOOR_INFO[f].name}`;
+            hintEl.textContent = inRange ? '우클릭: 블록 설치' : '⚠️ 사거리 밖';
+        }
+    }
+
+    function gameLoop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        const timeSec = now / 1000;
+
+        if (gameStarted) {
+            movePlayerWithCollision(dt);
+
+            camera.x += (localPlayer.x - camera.x) * Math.min(1, dt * 10);
+            camera.y += (localPlayer.y - camera.y) * Math.min(1, dt * 10);
+
+            const hover = getHoveredWorldTile();
+            if (!localPlayer.isMining) {
+                localPlayer.angle = Math.atan2(hover.worldY - localPlayer.y, hover.worldX - localPlayer.x);
+            }
+
+            const activeSlot = HOTBAR_SLOTS[localPlayer.selectedSlot];
+            const hoverBlock = inBounds(hover.tx, hover.ty) ? getBlockAt(hover.tx, hover.ty) : BLOCK.AIR;
+
+            const wantsToMine =
+                keys['Space'] ||
+                touchDirs.mine ||
+                (isLeftMouseDown && (clickActionMode === 'mine' || (clickActionMode === 'both' && (activeSlot.type === 'tool' || hoverBlock !== BLOCK.AIR))));
+
+            const wantsToBuild =
+                isRightMouseDown ||
+                (isLeftMouseDown && (clickActionMode === 'build' || (clickActionMode === 'both' && activeSlot.type === 'block' && hoverBlock === BLOCK.AIR)));
+
+            if (wantsToMine && inBounds(hover.tx, hover.ty)) {
+                updateMining(dt, hover.tx, hover.ty);
+            } else {
+                resetMiningState();
+            }
+
+            if (rightPlaceCooldown > 0) rightPlaceCooldown -= dt;
+            if (wantsToBuild && rightPlaceCooldown <= 0 && inBounds(hover.tx, hover.ty)) {
+                tryInteractOrPlaceBlock(hover.tx, hover.ty);
+                rightPlaceCooldown = 0.19;
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vx *= 0.92;
+                p.vy *= 0.92;
+                p.life -= dt;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y -= 28 * dt;
+                ft.life -= dt;
+                if (ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            const targetDark = isNight ? 0.78 : 0.0;
+            darknessAlpha += (targetDark - darknessAlpha) * dt * 3;
+
+            netSyncAccum += dt;
+            if (netSyncAccum >= 0.07) {
+                netSyncAccum = 0;
+                sendGlobalPacket({
+                    type: 'PLAYER_SYNC',
+                    player: serializePlayer(localPlayer)
+                });
+            }
+
+            radarAccum += dt;
+            if (radarAccum >= 0.15) {
+                radarAccum = 0;
+                drawRadarMinimap();
+                updateTargetHud();
+            }
+        }
+
+        renderGameWorld(timeSec);
+        requestAnimationFrame(gameLoop);
+    }
+
+    // ==================== 13. EVENT LISTENERS & UI BINDINGS ====================
+    function enterSharedGlobalWorld() {
+        const nameVal = document.getElementById('playerNameInput').value.trim();
+        if (nameVal) localPlayer.name = nameVal;
+        document.getElementById('lobbyModal').classList.add('hidden');
+        gameStarted = true;
+        sfx.init();
+        ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
+        updateResourceUI();
+        connectToGlobalWorld();
+        addChatMessage('시스템', `🌍 1,000 × 1,000 글로벌 공유 월드(X:500, Y:500 광장)에 입장했습니다! M키로 전체 지도를 열거나 우측 접속자 목록에서 다른 유저에게 즉시 이동할 수 있습니다.`, '#34d399', true);
+    }
+
+    function toggleCraftingModal(forceState) {
+        const modal = document.getElementById('craftModal');
+        const show = typeof forceState === 'boolean' ? forceState : modal.classList.contains('hidden');
+        if (show) {
+            renderCraftingModal();
+            modal.classList.remove('hidden');
+            isLeftMouseDown = false;
+            isRightMouseDown = false;
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function toggleWorldMapModal(forceState) {
+        const modal = document.getElementById('worldMapModal');
+        const show = typeof forceState === 'boolean' ? forceState : modal.classList.contains('hidden');
+        if (show) {
+            modal.classList.remove('hidden');
+            renderFullWorldMapModal();
+            isLeftMouseDown = false;
+            isRightMouseDown = false;
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function updateDayNightButton() {
+        document.getElementById('timeOfDayLabel').textContent = isNight ? '🌙 밤 (횃불 조명)' : '☀️ 낮';
+    }
+
+    document.querySelectorAll('.color-swatch').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-swatch').forEach(b => {
+                b.classList.remove('ring-2', 'ring-emerald-400', 'border-white');
+                b.classList.add('border-gray-700');
+            });
+            btn.classList.remove('border-gray-700');
+            btn.classList.add('border-white', 'ring-2', 'ring-emerald-400');
+            localPlayer.color = btn.getAttribute('data-color');
+        });
+    });
+
+    document.getElementById('btnEnterGlobalWorld').addEventListener('click', enterSharedGlobalWorld);
+
+    // GitHub Guide Modal
+    document.getElementById('btnOpenGithubGuide').addEventListener('click', () => {
+        document.getElementById('githubGuideModal').classList.remove('hidden');
+    });
+    document.getElementById('btnCloseGithubGuide').addEventListener('click', () => {
+        document.getElementById('githubGuideModal').classList.add('hidden');
+    });
+    document.getElementById('btnConfirmGithubGuide').addEventListener('click', () => {
+        document.getElementById('githubGuideModal').classList.add('hidden');
+    });
+
+    // Top-left Utility Buttons
+    document.getElementById('btnReturnSpawn').addEventListener('click', () => {
+        teleportToTile(SPAWN_X, SPAWN_Y, '중앙 스폰 광장');
+    });
+    document.getElementById('btnToggleCraft').addEventListener('click', () => toggleCraftingModal());
+    document.getElementById('btnCloseCraft').addEventListener('click', () => toggleCraftingModal(false));
+    document.getElementById('btnToggleWorldMap').addEventListener('click', () => toggleWorldMapModal());
+    document.getElementById('btnCloseWorldMap').addEventListener('click', () => toggleWorldMapModal(false));
+    minimapCanvas.addEventListener('click', () => toggleWorldMapModal(true));
+
+    // Click on 1,000x1,000 Full World Map to teleport anywhere
+    fullMapCanvas.addEventListener('click', (e) => {
+        const rect = fullMapCanvas.getBoundingClientRect();
+        const relX = (e.clientX - rect.left) / rect.width;
+        const relY = (e.clientY - rect.top) / rect.height;
+        const tx = Math.floor(relX * WORLD_SIZE);
+        const ty = Math.floor(relY * WORLD_SIZE);
+        teleportToTile(tx, ty, getBiomeNameAt(tx, ty));
+        toggleWorldMapModal(false);
+    });
+
+    document.querySelectorAll('.landmark-tp-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const [tx, ty, name] = btn.getAttribute('data-tp').split(',');
+            teleportToTile(Number(tx), Number(ty), name);
+            toggleWorldMapModal(false);
+        });
+    });
+
+    document.getElementById('btnToggleActionMode').addEventListener('click', () => {
+        if (clickActionMode === 'both') {
+            clickActionMode = 'mine';
+            document.getElementById('actionModeLabel').textContent = '⛏️ 좌클릭: 채굴 전용';
+        } else if (clickActionMode === 'mine') {
+            clickActionMode = 'build';
+            document.getElementById('actionModeLabel').textContent = '🧱 좌클릭: 건설 전용';
+        } else {
+            clickActionMode = 'both';
+            document.getElementById('actionModeLabel').textContent = '🖱️ 좌:채굴/우:건설';
+        }
+    });
+
+    document.getElementById('btnToggleDayNight').addEventListener('click', () => {
+        isNight = !isNight;
+        updateDayNightButton();
+        sendGlobalPacket({ type: 'DAY_NIGHT', isNight });
+    });
+
+    document.getElementById('btnSoundToggle').addEventListener('click', (e) => {
+        sfx.enabled = !sfx.enabled;
+        e.currentTarget.textContent = sfx.enabled ? '🔊' : '🔇';
+    });
+
+    function submitChatMessage() {
+        const input = document.getElementById('chatInput');
+        const txt = input.value.trim();
+        if (!txt) return;
+        input.value = '';
+        addChatMessage(localPlayer.name, txt, localPlayer.color, false);
+        sendGlobalPacket({
+            type: 'CHAT',
+            sender: localPlayer.name,
+            text: txt,
+            color: localPlayer.color
+        });
+        input.blur();
+    }
+
+    document.getElementById('btnSendChat').addEventListener('click', submitChatMessage);
+
+    window.addEventListener('keydown', (e) => {
+        const activeTag = document.activeElement?.tagName;
+        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+            if (e.key === 'Enter') {
+                if (document.activeElement.id === 'chatInput') {
+                    submitChatMessage();
+                } else if (document.activeElement.id === 'playerNameInput' && !gameStarted) {
+                    enterSharedGlobalWorld();
+                }
+            } else if (e.key === 'Escape') {
+                document.activeElement.blur();
+            }
+            return;
+        }
+
+        keys[e.code] = true;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('chatInput').focus();
+            return;
+        }
+        if (e.code === 'KeyE') {
+            e.preventDefault();
+            toggleCraftingModal();
+            return;
+        }
+        if (e.code === 'KeyM') {
+            e.preventDefault();
+            toggleWorldMapModal();
+            return;
+        }
+        if (e.code === 'KeyH') {
+            e.preventDefault();
+            teleportToTile(SPAWN_X, SPAWN_Y, '중앙 스폰 광장');
+            return;
+        }
+        if (e.key === 'Escape') {
+            toggleCraftingModal(false);
+            toggleWorldMapModal(false);
+        }
+        if (e.code.startsWith('Digit')) {
+            const num = parseInt(e.code.replace('Digit', ''), 10);
+            if (num >= 1 && num <= 9) selectHotbarSlot(num - 1);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        mouseScreenX = e.clientX;
+        mouseScreenY = e.clientY;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        sfx.init();
+        mouseScreenX = e.clientX;
+        mouseScreenY = e.clientY;
+        if (e.button === 0) isLeftMouseDown = true;
+        if (e.button === 2) isRightMouseDown = true;
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        if (e.button === 0) isLeftMouseDown = false;
+        if (e.button === 2) isRightMouseDown = false;
+    });
+
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    window.addEventListener('wheel', (e) => {
+        if (!gameStarted) return;
+        const dir = e.deltaY > 0 ? 1 : -1;
+        const next = (localPlayer.selectedSlot + dir + HOTBAR_SLOTS.length) % HOTBAR_SLOTS.length;
+        selectHotbarSlot(next);
+    });
+
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+            sfx.init();
+            mouseScreenX = e.touches[0].clientX;
+            mouseScreenY = e.touches[0].clientY;
+            isLeftMouseDown = true;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            mouseScreenX = e.touches[0].clientX;
+            mouseScreenY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => {
+        isLeftMouseDown = false;
+    });
+
+    document.querySelectorAll('.touch-dpad').forEach(btn => {
+        const dir = btn.getAttribute('data-dir');
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchDirs[dir] = true;
+        });
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchDirs[dir] = false;
+        });
+    });
+
+    // ==================== 14. INITIALIZATION ON WINDOW LOAD ====================
+    window.onload = function () {
+        generateAllSprites();
+        loadPersistedDeltas();
+        ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
+        updateResourceUI();
+        drawRadarMinimap();
+        requestAnimationFrame(gameLoop);
+    };
+    </script>
+</body>
+</html>
