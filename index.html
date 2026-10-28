@@ -1093,6 +1093,57 @@
         sand: '🏖️모래'
     };
 
+    // ==================== 2-B. ADDITION MOB (MONSTER) DEFINITIONS & HP STATE ====================
+    const MOB_MAX_HP = 3; // 3문제를 맞히면 몹 처치
+
+    const MOB_TIERS = {
+        1: { level: 1, name: '초록 슬라임',   icon: '🟢', bodyColor: '#22c55e', eyeColor: '#052e16', accentColor: '#86efac', dropDia: 2, dropGold: 1 },
+        2: { level: 2, name: '버섯 고블린',   icon: '🍄', bodyColor: '#ef4444', eyeColor: '#fef08a', accentColor: '#fca5a5', dropDia: 2, dropGold: 2 },
+        3: { level: 3, name: '동굴 독거미',   icon: '🕷️', bodyColor: '#3b82f6', eyeColor: '#ef4444', accentColor: '#93c5fd', dropDia: 3, dropGold: 2 },
+        4: { level: 4, name: '철갑 좀비',     icon: '🧟', bodyColor: '#15803d', eyeColor: '#111827', accentColor: '#9ca3af', dropDia: 3, dropGold: 3 },
+        5: { level: 5, name: '황금 해골궁수', icon: '💀', bodyColor: '#eab308', eyeColor: '#1f2937', accentColor: '#fef08a', dropDia: 4, dropGold: 4 },
+        6: { level: 6, name: '번개 크리퍼',   icon: '⚡', bodyColor: '#06b6d4', eyeColor: '#0f172a', accentColor: '#67e8f9', dropDia: 5, dropGold: 4 },
+        7: { level: 7, name: '화염 블레이즈', icon: '🔥', bodyColor: '#f97316', eyeColor: '#fef08a', accentColor: '#fdba74', dropDia: 6, dropGold: 5 },
+        8: { level: 8, name: '엔더 드래곤',   icon: '🐉', bodyColor: '#9333ea', eyeColor: '#f472b6', accentColor: '#d8b4fe', dropDia: 8, dropGold: 8 }
+    };
+
+    // 타일 인덱스(ty * WORLD_SIZE + tx)별 몹의 남은 체력을 저장하는 맵
+    const mobHpMap = new Map();
+
+    // 특정 좌표(tx, ty)에 있는 몹의 난이도(Lv.1~8)와 현재 체력(1~3)을 반환
+    function getMobDataAt(tx, ty) {
+        if (!inBounds(tx, ty)) return { ...MOB_TIERS[1], hp: MOB_MAX_HP, maxHp: MOB_MAX_HP };
+        const key = idx(tx, ty);
+        const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
+        const r = fastHash(tx, ty, GLOBAL_WORLD_SEED + 777);
+
+        let lvl = 1;
+        if (distSpawn < 12) {
+            // 스폰 광장 바로 안쪽은 초보용 Lv.1 ~ Lv.3 몹 배치
+            lvl = (Math.floor(r * 3) % 3) + 1;
+        } else if (distSpawn < 32) {
+            // 광장 주변 평원은 Lv.1 ~ Lv.5 몹 배치
+            lvl = (Math.floor(r * 5) % 5) + 1;
+        } else if (ty < 270 || (tx < 360 && ty > 600)) {
+            // 북부 설원 및 남서 화산 지대는 고난도 Lv.5 ~ Lv.8 몹 집중 배치
+            lvl = 5 + (Math.floor(r * 4) % 4);
+        } else {
+            // 그 외 일반 월드는 Lv.1 ~ Lv.8 골고루 등장
+            lvl = (Math.floor(r * 8) % 8) + 1;
+        }
+
+        const tierInfo = MOB_TIERS[lvl] || MOB_TIERS[1];
+        const currentHp = mobHpMap.has(key) ? mobHpMap.get(key) : MOB_MAX_HP;
+
+        return {
+            ...tierInfo,
+            tx,
+            ty,
+            hp: currentHp,
+            maxHp: MOB_MAX_HP
+        };
+    }
+
     // ==================== 3. PROCEDURAL PIXEL-ART SPRITE CACHE ====================
     const tileSprites = {};
     const crackSprites = [];
@@ -1405,32 +1456,55 @@
             tileSprites['block_' + BLOCK.GOLD_BLOCK] = c;
         }
 
-        // ✨ Magic Crystal Ore Sprite (Glowing Magenta/Cyan Addition Crystal)
-        {
+        // 👾 8-Tier Pixel-Art Addition Mobs (Lv.1 ~ Lv.8)
+        Object.values(MOB_TIERS).forEach(mob => {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
-            g.fillStyle = '#311042';
-            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
-            g.fillStyle = '#581c87';
-            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 6);
-            const crystals = [
-                [8, 8, 10, 14, '#f472b6'],
-                [26, 6, 12, 16, '#22d3ee'],
-                [16, 22, 14, 16, '#e879f9'],
-                [6, 28, 10, 10, '#38bdf8'],
-                [32, 26, 10, 12, '#facc15']
-            ];
-            crystals.forEach(([x, y, w, h, col]) => {
-                g.fillStyle = col;
-                g.fillRect(x, y, w, h);
+
+            // Ground shadow
+            g.fillStyle = 'rgba(0,0,0,0.4)';
+            g.beginPath();
+            g.ellipse(24, 41, 16, 5, 0, 0, Math.PI * 2);
+            g.fill();
+
+            // Monster Horns / Ears for high tier mobs
+            if (mob.level >= 5) {
+                g.fillStyle = mob.accentColor;
+                g.fillRect(8, 4, 6, 8);
+                g.fillRect(34, 4, 6, 8);
+            }
+
+            // Monster Body / Head
+            g.fillStyle = '#111827';
+            g.fillRect(7, 9, 34, 30);
+            g.fillStyle = mob.bodyColor;
+            g.fillRect(9, 11, 30, 26);
+
+            // Top forehead highlight
+            g.fillStyle = mob.accentColor;
+            g.fillRect(11, 12, 26, 5);
+
+            // Eyes
+            g.fillStyle = '#ffffff';
+            g.fillRect(13, 19, 8, 7);
+            g.fillRect(27, 19, 8, 7);
+            g.fillStyle = mob.eyeColor;
+            g.fillRect(16, 21, 4, 5);
+            g.fillRect(28, 21, 4, 5);
+
+            // Angry / Cute Mouth & Fangs
+            g.fillStyle = '#111827';
+            g.fillRect(16, 30, 16, 4);
+            if (mob.level >= 3) {
                 g.fillStyle = '#ffffff';
-                g.fillRect(x + 2, y + 2, 4, 4);
-            });
-            g.strokeStyle = '#f472b6';
-            g.lineWidth = 2;
-            g.strokeRect(1, 1, TILE_SIZE - 2, TILE_SIZE - 2);
-            tileSprites['block_' + BLOCK.MAGIC_CRYSTAL] = c;
-        }
+                g.fillRect(17, 30, 3, 3);
+                g.fillRect(28, 30, 3, 3);
+            }
+
+            tileSprites['mob_' + mob.level] = c;
+        });
+        // Fallback default sprite
+        tileSprites['block_' + BLOCK.MAGIC_CRYSTAL] = tileSprites['mob_1'];
 
         // 🌈 Rainbow Math Trophy Block Sprite
         {
@@ -1914,47 +1988,89 @@
         }
     }
 
-    // ① GOLDILOCKS PROBLEM GENERATOR (+4%~10% Optimal Challenge)
+    // ① GOLDILOCKS PROBLEM GENERATOR (+4%~10% Optimal Challenge & 3-Term Support)
     function generateGoldilocksProblem(lvl) {
         let a = 1, b = 2, c = 0;
         const rInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
         switch (lvl) {
-            case 1: // Sum <= 5
-                a = rInt(1, 3);
-                b = rInt(1, 5 - a);
+            case 1: // 합이 5 이하 기초 덧셈 (세 수 기초 포함: 1+2+1)
+                if (Math.random() < 0.3) {
+                    a = rInt(1, 2);
+                    b = rInt(1, 2);
+                    c = 1;
+                } else {
+                    a = rInt(1, 3);
+                    b = rInt(1, 5 - a);
+                }
                 break;
-            case 2: // Sum 6 ~ 9
-                a = rInt(2, 6);
-                b = rInt(Math.max(1, 6 - a), 9 - a);
+            case 2: // 합이 9 이하 덧셈 (세 수 덧셈 포함: 2+3+2, 3+2+4)
+                if (Math.random() < 0.35) {
+                    a = rInt(1, 4);
+                    b = rInt(1, 4);
+                    c = rInt(1, Math.max(1, 9 - a - b));
+                } else {
+                    a = rInt(2, 6);
+                    b = rInt(Math.max(1, 6 - a), 9 - a);
+                }
                 break;
-            case 3: // Make 10 friends (합이 10이 되는 짝꿍수)
-                a = rInt(1, 9);
-                b = 10 - a;
-                break;
-            case 4: // Single digit bridging 10 (8+5, 7+6, 9+4)
-                a = rInt(6, 9);
-                b = rInt(11 - a, 9);
-                break;
-            case 5: // Teen + single digit without carry (12+5)
-                a = rInt(11, 16);
-                b = rInt(2, 19 - a);
-                break;
-            case 6: // Teen + single digit with carry (16+7)
-                a = rInt(13, 19);
-                b = rInt(21 - a, 9);
-                break;
-            case 7: // Two-digit no carry (14+15, 20+30)
-                a = rInt(11, 25);
-                b = rInt(10, 24);
-                if ((a % 10) + (b % 10) >= 10) b -= ((a % 10) + (b % 10) - 8);
-                break;
-            case 8: // Two-digit with carry or 3-number addition
-            default:
+            case 3: // 합이 10이 되는 짝꿍수 & 세 수로 10 만들기 (예: 3+5+2, 4+3+3)
                 if (Math.random() < 0.45) {
-                    a = rInt(6, 9);
+                    a = rInt(2, 5);
+                    b = rInt(2, 8 - a);
+                    c = 10 - a - b;
+                } else {
+                    a = rInt(1, 9);
                     b = 10 - a;
-                    c = rInt(4, 9);
+                }
+                break;
+            case 4: // 10 만들어 더하기 (예: 8+5, 또는 세 수 7+3+4, 6+2+5)
+                if (Math.random() < 0.4) {
+                    a = rInt(4, 8);
+                    b = rInt(2, 6);
+                    c = rInt(2, 5);
+                } else {
+                    a = rInt(6, 9);
+                    b = rInt(11 - a, 9);
+                }
+                break;
+            case 5: // 십몇 + 한 자리 수 (12+5, 또는 10+3+5)
+                if (Math.random() < 0.35) {
+                    a = 10;
+                    b = rInt(2, 5);
+                    c = rInt(2, 9 - b);
+                } else {
+                    a = rInt(11, 16);
+                    b = rInt(2, 19 - a);
+                }
+                break;
+            case 6: // 받아올림 있는 십몇 + 한 자리 (16+7, 또는 8+4+5)
+                if (Math.random() < 0.35) {
+                    a = rInt(6, 9);
+                    b = rInt(4, 8);
+                    c = rInt(3, 7);
+                } else {
+                    a = rInt(13, 19);
+                    b = rInt(21 - a, 9);
+                }
+                break;
+            case 7: // 두 자리 수 기초 덧셈 (14+15, 또는 10+5+4)
+                if (Math.random() < 0.35) {
+                    a = rInt(10, 14);
+                    b = rInt(3, 6);
+                    c = rInt(2, 6);
+                } else {
+                    a = rInt(11, 25);
+                    b = rInt(10, 24);
+                    if ((a % 10) + (b % 10) >= 10) b -= ((a % 10) + (b % 10) - 8);
+                }
+                break;
+            case 8: // 두 자리 받아올림 & 고난도 세 수의 덧셈
+            default:
+                if (Math.random() < 0.55) {
+                    a = rInt(5, 9);
+                    b = rInt(4, 9);
+                    c = rInt(3, 9);
                 } else {
                     a = rInt(15, 28);
                     b = rInt(14, 26);
@@ -2051,7 +2167,7 @@
         }
     }
 
-    // Draw the Interactive Minecraft 10-Frame Visualizer (10칸 광물 상자)
+    // Draw the Interactive Minecraft 10-Frame Visualizer (2-Tray for a+b, 3-Tray for a+b+c!)
     function renderTenFrameCanvas() {
         const tfCanvas = document.getElementById('tenFrameCanvas');
         if (!tfCanvas || !mathFlowState.currentProblem) return;
@@ -2062,6 +2178,15 @@
 
         const wrap = document.getElementById('tenFrameVisualizerWrap');
         const make10Banner = document.getElementById('make10DecompositionBanner');
+        const storyPrompt = document.getElementById('questionStoryPrompt');
+
+        if (storyPrompt) {
+            if (prob.c > 0) {
+                storyPrompt.textContent = `⚔️ 첫째 상자(${prob.a}) + 둘째 상자(${prob.b}) + 셋째 상자(${prob.c})를 모두 합치면 몇 개일까요?`;
+            } else {
+                storyPrompt.textContent = `⚔️ 첫 번째 광물 상자(${prob.a})와 두 번째 광물 상자(${prob.b})를 합치면 모두 몇 개일까요?`;
+            }
+        }
 
         // Hide visualizer only if player explicitly chose Mental Math AND hasn't made a mistake yet
         if (mathFlowState.strategy === 'mental' && !prob.hadRetry) {
@@ -2071,10 +2196,135 @@
         }
         wrap.classList.remove('hidden');
 
-        // Show Make-10 decomposition hint if strategy === 'make10' or if they had a retry or if bridging 10
+        const animT = mathFlowState.tenFrameAnimProgress; // 0 -> 1
+
+        // ==================== CASE A: 3-TERM ADDITION (예: 3 + 5 + 2) -> 3 COMPARTMENTS ====================
+        if (prob.c > 0) {
+            if (mathFlowState.strategy === 'make10' || prob.hadRetry) {
+                make10Banner.classList.remove('hidden');
+                if (prob.a + prob.b === 10) {
+                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 먼저 <strong>${prob.a} + ${prob.b} = <span class="text-emerald-300 font-black">10</span></strong>을 채우고, 셋째 상자의 <span class="text-amber-300 font-black">${prob.c}</span>를 더해요! (<strong>10 + ${prob.c}</strong>)`;
+                } else if (prob.a + prob.c === 10) {
+                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 짝꿍수인 <strong>${prob.a} + ${prob.c} = <span class="text-emerald-300 font-black">10</span></strong>을 먼저 만들고, 둘째 상자의 <span class="text-cyan-300 font-black">${prob.b}</span>를 더해요!`;
+                } else if (prob.b + prob.c === 10) {
+                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 둘째·셋째 상자 <strong>${prob.b} + ${prob.c} = <span class="text-emerald-300 font-black">10</span></strong>을 만들고, 첫째 상자 <span class="text-amber-300 font-black">${prob.a}</span>를 더해요!`;
+                } else {
+                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 세 상자(<strong>${prob.a}개, ${prob.b}개, ${prob.c}개</strong>)의 블록을 첫째 상자부터 10칸씩 차례대로 채워 보세요!`;
+                }
+            } else {
+                make10Banner.classList.add('hidden');
+            }
+
+            // 3개의 10칸 상자 구획 레이아웃 (캔버스 폭 440px에 3개 구획 배치)
+            const trayW = 136;
+            const trayH = 82;
+            const trayXs = [6, 152, 298];
+            const trayY = 24;
+
+            const drawMiniTray = (tIdx, title, borderColor) => {
+                const sx = trayXs[tIdx];
+                g.fillStyle = '#111827';
+                g.fillRect(sx, trayY, trayW, trayH);
+                g.strokeStyle = borderColor;
+                g.lineWidth = 2;
+                g.strokeRect(sx, trayY, trayW, trayH);
+
+                g.font = 'bold 10.5px "Noto Sans KR", sans-serif';
+                g.fillStyle = '#e5e7eb';
+                g.fillText(title, sx + 3, trayY - 5);
+
+                for (let s = 0; s < 10; s++) {
+                    const col = s % 5;
+                    const row = Math.floor(s / 5);
+                    const cellX = sx + 6 + col * 25;
+                    const cellY = trayY + 8 + row * 34;
+                    g.fillStyle = '#1f2937';
+                    g.fillRect(cellX, cellY, 21, 28);
+                    g.strokeStyle = '#374151';
+                    g.lineWidth = 1;
+                    g.strokeRect(cellX, cellY, 21, 28);
+                }
+            };
+
+            drawMiniTray(0, `① 첫째 상자 (${prob.a}개)`, animT > 0.9 ? '#facc15' : '#10b981');
+            drawMiniTray(1, `② 둘째 상자 (+${prob.b}개)`, '#38bdf8');
+            drawMiniTray(2, `③ 셋째 상자 (+${prob.c}개)`, '#f59e0b');
+
+            const slotCoord3 = (tIdx, slotIdx) => {
+                const col = slotIdx % 5;
+                const row = Math.floor(slotIdx / 5);
+                return {
+                    x: trayXs[tIdx] + 6 + col * 25 + 2,
+                    y: trayY + 8 + row * 34 + 3
+                };
+            };
+
+            const dispA = Math.min(10, prob.a > 10 ? (prob.a % 10 || 10) : prob.a);
+            const dispB = Math.min(10, prob.b);
+            const dispC = Math.min(10, prob.c);
+
+            // 애니메이션 시 모든 블록이 앞쪽 상자(0번 -> 1번 -> 2번)의 빈칸을 순서대로 채우도록 목표 위치 계산
+            let fillCursor = dispA;
+
+            // 1) 첫째 상자 블록 그리기 (초록 에메랄드)
+            for (let i = 0; i < dispA; i++) {
+                const pos = slotCoord3(0, i);
+                g.fillStyle = '#10b981';
+                g.fillRect(pos.x, pos.y, 17, 22);
+                g.fillStyle = '#6ee7b7';
+                g.fillRect(pos.x + 2, pos.y + 2, 6, 6);
+            }
+
+            // 2) 둘째 상자 블록 그리기 (하늘 다이아몬드)
+            for (let i = 0; i < dispB; i++) {
+                const fromPos = slotCoord3(1, i);
+                let drawX = fromPos.x;
+                let drawY = fromPos.y;
+
+                const targetTray = Math.min(2, Math.floor(fillCursor / 10));
+                const targetSlot = fillCursor % 10;
+                fillCursor++;
+
+                if (animT > 0 && (targetTray !== 1 || targetSlot !== i)) {
+                    const toPos = slotCoord3(targetTray, targetSlot);
+                    drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
+                    drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 16;
+                }
+
+                g.fillStyle = '#06b6d4';
+                g.fillRect(drawX, drawY, 17, 22);
+                g.fillStyle = '#a5f3fc';
+                g.fillRect(drawX + 2, drawY + 2, 6, 6);
+            }
+
+            // 3) 셋째 상자 블록 그리기 (황금 호박석)
+            for (let i = 0; i < dispC; i++) {
+                const fromPos = slotCoord3(2, i);
+                let drawX = fromPos.x;
+                let drawY = fromPos.y;
+
+                const targetTray = Math.min(2, Math.floor(fillCursor / 10));
+                const targetSlot = fillCursor % 10;
+                fillCursor++;
+
+                if (animT > 0 && (targetTray !== 2 || targetSlot !== i)) {
+                    const toPos = slotCoord3(targetTray, targetSlot);
+                    drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
+                    drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
+                }
+
+                g.fillStyle = '#f59e0b';
+                g.fillRect(drawX, drawY, 17, 22);
+                g.fillStyle = '#fef08a';
+                g.fillRect(drawX + 2, drawY + 2, 6, 6);
+            }
+            return;
+        }
+
+        // ==================== CASE B: 2-TERM ADDITION (a + b) -> 2 COMPARTMENTS ====================
         const aMod = prob.a % 10;
         const needTo10 = aMod > 0 ? 10 - aMod : 0;
-        if ((mathFlowState.strategy === 'make10' || prob.hadRetry) && needTo10 > 0 && prob.b >= needTo10 && prob.c === 0) {
+        if ((mathFlowState.strategy === 'make10' || prob.hadRetry) && needTo10 > 0 && prob.b >= needTo10) {
             const nextTen = prob.a + needTo10;
             const remainB = prob.b - needTo10;
             make10Banner.classList.remove('hidden');
@@ -2082,11 +2332,6 @@
         } else {
             make10Banner.classList.add('hidden');
         }
-
-        // For numbers <= 20, draw two 10-slot Minecraft chests side by side
-        const totalA = Math.min(20, prob.a);
-        const totalB = Math.min(20, prob.b + prob.c);
-        const animT = mathFlowState.tenFrameAnimProgress; // 0 -> 1
 
         const drawTray = (startX, startY, title, borderColor) => {
             g.fillStyle = '#111827';
@@ -2113,7 +2358,7 @@
         };
 
         const tray1Title = prob.a > 10 ? `첫째 상자 (${prob.a} 중 1의자리 ${prob.a % 10}개 + 10묶음)` : `첫째 상자 (${prob.a}개)`;
-        const tray2Title = `둘째 상자 (+${prob.b + prob.c}개)`;
+        const tray2Title = `둘째 상자 (+${prob.b}개)`;
         drawTray(16, 24, tray1Title, animT > 0.9 ? '#facc15' : '#10b981');
         drawTray(230, 24, tray2Title, '#38bdf8');
 
@@ -2128,11 +2373,10 @@
         };
 
         const dispA = prob.a > 10 ? (prob.a % 10 === 0 ? 10 : prob.a % 10) : prob.a;
-        const dispB = Math.min(10, prob.b + prob.c);
+        const dispB = Math.min(10, prob.b);
         const emptyInTray1 = Math.max(0, 10 - dispA);
         const transferCount = Math.min(emptyInTray1, dispB);
 
-        // Draw A blocks (Green Emeralds)
         for (let i = 0; i < dispA; i++) {
             const pos = slotCoord(0, i);
             g.fillStyle = '#10b981';
@@ -2141,7 +2385,6 @@
             g.fillRect(pos.x + 3, pos.y + 3, 8, 8);
         }
 
-        // Draw B blocks (Cyan Diamonds - some animate hopping into Tray 1 to complete 10!)
         for (let i = 0; i < dispB; i++) {
             const fromPos = slotCoord(1, i);
             let drawX = fromPos.x;
@@ -2180,17 +2423,112 @@
         requestAnimationFrame(step);
     }
 
-    function openMathStudioModal(contextTitle = '✨ 마법 크리스탈 덧셈 에너지 충전소', tx = -1, ty = -1) {
+    // 몹 배틀 체력바(HP Bar) UI를 모달 내부에 생성 및 갱신하는 보조 함수
+    function updateMobBattleBannerUI() {
+        const eqDisplay = document.getElementById('mathEquationDisplay');
+        if (!eqDisplay) return;
+
+        let mobBox = document.getElementById('mobBattleStatusBox');
+        if (!mobBox) {
+            mobBox = document.createElement('div');
+            mobBox.id = 'mobBattleStatusBox';
+            mobBox.className = 'mb-3 p-2.5 rounded-lg bg-gray-950/90 border-2 border-red-500/70 flex flex-col sm:flex-row items-center justify-between gap-2';
+            eqDisplay.parentNode.insertBefore(mobBox, eqDisplay);
+        }
+
+        const bState = mathFlowState.activeMobBattle;
+        if (!bState) {
+            mobBox.classList.add('hidden');
+            return;
+        }
+        mobBox.classList.remove('hidden');
+
+        const hpPct = Math.max(0, (bState.hp / bState.maxHp) * 100);
+        const hearts = Array.from({ length: bState.maxHp }, (_, idx) =>
+            idx < bState.hp ? '❤️' : '🖤'
+        ).join(' ');
+
+        mobBox.innerHTML = `
+            <div class="flex items-center gap-2.5">
+                <div class="text-2xl sm:text-3xl bg-gray-900 p-1.5 rounded-lg border border-gray-700">${bState.icon}</div>
+                <div class="text-left">
+                    <div class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 rounded bg-red-600 text-white text-[10px]">Lv.${bState.level} 몬스터</span>
+                        <span>${bState.name}</span>
+                    </div>
+                    <div class="text-[11px] text-amber-300 font-bold mt-0.5">
+                        ${bState.hp > 0 ? `⚔️ 문제를 맞혀 공격하세요! (${bState.hp}문제 더 맞히면 처치!)` : `🎉 몬스터 처치 완료!`}
+                    </div>
+                </div>
+            </div>
+            <div class="w-full sm:w-48 bg-gray-900 p-2 rounded border border-gray-700">
+                <div class="flex justify-between text-[11px] font-black mb-1">
+                    <span class="text-red-300">👾 몹 체력(HP)</span>
+                    <span class="text-white">${hearts} (${bState.hp}/${bState.maxHp})</span>
+                </div>
+                <div class="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden border border-gray-600">
+                    <div class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 h-full transition-all duration-300" style="width:${hpPct}%"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    function openMathStudioModal(contextTitle = '⚔️ 덧셈 몬스터 배틀', tx = -1, ty = -1) {
         const modal = document.getElementById('mathModal');
         modal.classList.remove('hidden');
         isLeftMouseDown = false;
         isRightMouseDown = false;
 
-        document.getElementById('mathModalContextTitle').textContent = contextTitle;
+        if (tx >= 0 && ty >= 0 && getBlockAt(tx, ty) === BLOCK.MAGIC_CRYSTAL) {
+            // 월드 맵의 실제 몹과 조우한 경우: 해당 몹의 난이도와 남은 체력을 불러옴
+            const mob = getMobDataAt(tx, ty);
+            mathFlowState.level = mob.level;
+            localPlayer.mathLevel = mob.level;
+            mathFlowState.activeMobBattle = {
+                tx,
+                ty,
+                level: mob.level,
+                name: mob.name,
+                icon: mob.icon,
+                hp: mob.hp,
+                maxHp: mob.maxHp,
+                dropDia: mob.dropDia,
+                dropGold: mob.dropGold,
+                isWorldMob: true
+            };
+            document.getElementById('mathModalContextTitle').textContent =
+                `⚔️ [Lv.${mob.level} ${mob.name}] 등장! (3문제를 풀어 처치하세요)`;
+        } else {
+            // Q키 등으로 자율 훈련 배틀을 연 경우: 현재 내 레벨에 맞는 훈련용 몹(체력 3) 소환
+            const mob = MOB_TIERS[mathFlowState.level] || MOB_TIERS[1];
+            mathFlowState.activeMobBattle = {
+                tx: -1,
+                ty: -1,
+                level: mob.level,
+                name: `훈련용 ${mob.name}`,
+                icon: mob.icon,
+                hp: MOB_MAX_HP,
+                maxHp: MOB_MAX_HP,
+                dropDia: mob.dropDia,
+                dropGold: mob.dropGold,
+                isWorldMob: false
+            };
+            document.getElementById('mathModalContextTitle').textContent =
+                `⚔️ [Lv.${mob.level} 훈련용 ${mob.name}] 배틀! (3문제를 풀어 처치하세요)`;
+        }
+
         startNewMathProblem(tx, ty);
     }
 
     function startNewMathProblem(tx = -1, ty = -1) {
+        const bState = mathFlowState.activeMobBattle;
+        if (bState) {
+            tx = bState.tx;
+            ty = bState.ty;
+            mathFlowState.level = bState.level;
+            localPlayer.mathLevel = bState.level;
+        }
+
         const prob = generateGoldilocksProblem(mathFlowState.level);
         prob.contextTx = tx;
         prob.contextTy = ty;
@@ -2204,7 +2542,9 @@
         const banner = document.getElementById('safeFeedbackBanner');
         banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-gray-900/90 border border-gray-700 text-xs sm:text-sm font-bold text-gray-200 flex items-center justify-between gap-2';
         document.getElementById('safeFeedbackText').textContent =
-            '👇 아래 숫자 블록을 클릭하거나 키보드 숫자키를 눌러 마법 에너지를 충전해 보세요!';
+            bState
+                ? `⚔️ 정답을 맞히면 [${bState.name}]의 체력이 1칸 깎입니다! (남은 체력: ${bState.hp}/${bState.maxHp})`
+                : '👇 아래 숫자 블록을 클릭하여 공격 에너지를 충전해 보세요!';
         document.getElementById('btnNextProblem').classList.add('hidden');
 
         const choices = buildSmartChoices(prob.answer);
@@ -2219,6 +2559,7 @@
             grid.appendChild(btn);
         });
 
+        updateMobBattleBannerUI();
         updateFlowHud();
         renderTenFrameCanvas();
     }
@@ -2231,16 +2572,16 @@
         if (slotEl) slotEl.textContent = selectedVal;
 
         if (selectedVal === prob.answer) {
-            // ② IMMEDIATE POSITIVE FEEDBACK (< 1 second sensory & gameplay reward)
             prob.solved = true;
             const solveSec = Math.max(0.8, (performance.now() - prob.startedAt) / 1000);
+            sfx.playHit('ore');
             sfx.playMathSuccess();
 
             if (btnEl) {
                 btnEl.classList.add('mc-btn-green', 'ring-2', 'ring-yellow-300');
             }
 
-            // Record growth & check badges
+            // 성장 기록 저장
             const g = mathFlowState.growth;
             g.totalSolved = (g.totalSolved || 0) + 1;
             g.recentSolveTimes.push(Number(solveSec.toFixed(1)));
@@ -2272,37 +2613,65 @@
                 }
             }
 
-            // Goldilocks Auto-Flow Balancing (+4~10% challenge adjustment)
-            mathFlowState.recentResults.push({ firstTry: !prob.hadRetry, timeSec: solveSec });
-            if (!prob.hadRetry) {
-                mathFlowState.consecutiveFirstTry++;
-            } else {
-                mathFlowState.consecutiveFirstTry = 0;
+            // 몹 데미지 처리 (1문제 정답 = 체력 1 감소, 총 3문제 맞히면 몹 처치!)
+            const bState = mathFlowState.activeMobBattle;
+            let mobBattleMsg = '';
+            let isMobDefeated = false;
+
+            if (bState) {
+                bState.hp = Math.max(0, bState.hp - 1);
+                if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
+                    const key = idx(bState.tx, bState.ty);
+                    if (bState.hp > 0) {
+                        mobHpMap.set(key, bState.hp);
+                    } else {
+                        mobHpMap.delete(key);
+                    }
+                }
+                updateMobBattleBannerUI();
+
+                if (bState.hp <= 0) {
+                    isMobDefeated = true;
+                    sfx.playBreak();
+
+                    // 월드 몹인 경우 맵에서 제거하고 멀티플레이 동기화
+                    if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
+                        applyWorldModification(bState.tx, bState.ty, undefined, BLOCK.AIR, true);
+                        const wx = bState.tx * TILE_SIZE + 24;
+                        const wy = bState.ty * TILE_SIZE + 24;
+                        spawnParticles(wx, wy, '#ef4444', 24);
+                        spawnParticles(wx, wy, '#facc15', 20);
+                        spawnFloatingText(wx, wy - 18, `💥 ${bState.name} 처치! (+💎${bState.dropDia})`, '#fde047');
+
+                        sendGlobalPacket({
+                            type: 'WORLD_MOD',
+                            tx: bState.tx,
+                            ty: bState.ty,
+                            blockId: BLOCK.AIR,
+                            effectColor: '#ef4444'
+                        });
+                    }
+
+                    // 몹 처치 완료 전리품 지급
+                    const isMentalBonus = (mathFlowState.strategy === 'mental' && !prob.hadRetry);
+                    const totalDia = bState.dropDia + (isMentalBonus ? 2 : 0);
+                    resources.diamond = (resources.diamond || 0) + totalDia;
+                    resources.gold = (resources.gold || 0) + bState.dropGold;
+                    blockInventory.rainbowBlock = (blockInventory.rainbowBlock || 0) + 5;
+
+                    // 채굴 가속 버프 충전
+                    mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 35);
+                    mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
+
+                    mobBattleMsg = ` 🎉 [3연속 타격 성공!] ${bState.icon} ${bState.name}을(를) 완전히 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개, 🌈무지개블록 5개를 획득했어요!`;
+                } else {
+                    // 아직 체력이 남은 경우 (2/3 또는 1/3)
+                    resources.gold = (resources.gold || 0) + 1;
+                    mobBattleMsg = ` ⚔️ 명중! ${bState.icon} ${bState.name}의 체력이 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp}) 다음 문제를 풀어 마저 공격하세요!`;
+                }
             }
 
-            let levelUpMsg = '';
-            if (mathFlowState.consecutiveFirstTry >= 3 && mathFlowState.level < 8) {
-                mathFlowState.level++;
-                localPlayer.mathLevel = mathFlowState.level;
-                mathFlowState.consecutiveFirstTry = 0;
-                if (mathFlowState.level > g.bestLevel) g.bestLevel = mathFlowState.level;
-                unlockBadge('goldilocks_up');
-                if (mathFlowState.level >= 5) unlockBadge('master_arch');
-                levelUpMsg = ` 🎉 실력이 자라나 [${MATH_LEVEL_CURRICULUM[mathFlowState.level].title}] 단계로 승급했어요!`;
-            }
-
-            // Instant Reward Calculation
-            const isMentalBonus = (mathFlowState.strategy === 'mental' && !prob.hadRetry);
-            const bonusGem = isMentalBonus ? 3 : 2;
-            resources.diamond = (resources.diamond || 0) + bonusGem;
-            resources.gold = (resources.gold || 0) + 2;
-            blockInventory.rainbowBlock = (blockInventory.rainbowBlock || 0) + 4;
-
-            // Activate 2.5x Lightning Mining Speed Buff
-            mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 30);
-            mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
-
-            // Micro-Goal Progress
+            // 초단기 미션(3문제) 게이지 진행
             mathFlowState.microGoalProgress++;
             const activeGoal = MICRO_GOAL_TYPES[mathFlowState.microGoalKey] || MICRO_GOAL_TYPES.speed;
             let microGoalCompleteMsg = '';
@@ -2312,12 +2681,11 @@
                 if (activeGoal.id === 'speed') {
                     resources.diamond += 4;
                     mathFlowState.buffRemainingSec = 60;
-                    // Also unlock Master Pickaxe if at least Lv.3!
                     if (localPlayer.pickaxeTier < 5 && g.totalSolved >= 6) {
                         localPlayer.pickaxeTier = 5;
-                        microGoalCompleteMsg = ' 🌟 [초단기 미션 달성!] 다이아 4개 + ✨덧셈 마스터 곡괭이 획득!';
+                        microGoalCompleteMsg = ' 🌟 [초단기 미션 달성!] ✨덧셈 마스터 곡괭이 획득!';
                     } else {
-                        microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 4개 + 60초 광속 버프 충전!';
+                        microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 4개 + 60초 광속 버프!';
                     }
                 } else if (activeGoal.id === 'rainbow') {
                     blockInventory.rainbowBlock += 15;
@@ -2334,36 +2702,32 @@
             updateResourceUI();
             updateFlowHud();
 
-            // Celebration Fireworks on Canvas & Multiplayer Broadcast
-            spawnParticles(localPlayer.x, localPlayer.y, '#facc15', 22);
-            spawnParticles(localPlayer.x, localPlayer.y, '#22d3ee', 18);
-            spawnFloatingText(localPlayer.x, localPlayer.y - 28, `✨ 정답! ${fullEq} (+💎${bonusGem})`, '#fde047');
-
-            sendGlobalPacket({
-                type: 'MATH_CELEBRATE',
-                playerName: localPlayer.name,
-                mathLevel: localPlayer.mathLevel,
-                x: localPlayer.x,
-                y: localPlayer.y
-            });
-
-            // Process-praising feedback banner
-            const praiseProcess = prob.hadRetry
-                ? `👏 포기하지 않고 10칸 광물 상자 힌트로 끝까지 답(${prob.answer})을 찾아냈어요!`
-                : isMentalBonus
-                ? `⚡ 대단해요! 블록 없이 머릿속 암산으로 ${solveSec.toFixed(1)}초 만에 정확히 풀었어요!`
-                : `🎯 정확해요! ${prob.eqText} = ${prob.answer}! 보석 +${bonusGem}개와 무지개 블록 4개가 지급되었어요!`;
+            spawnParticles(localPlayer.x, localPlayer.y, '#facc15', 16);
 
             const banner = document.getElementById('safeFeedbackBanner');
             banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-emerald-950/95 border-2 border-emerald-400 text-xs sm:text-sm font-bold text-emerald-200 flex items-center justify-between gap-2';
-            document.getElementById('safeFeedbackText').textContent = praiseProcess + levelUpMsg + microGoalCompleteMsg;
-            document.getElementById('btnNextProblem').classList.remove('hidden');
+            document.getElementById('safeFeedbackText').textContent =
+                `🎯 정답(${fullEq})!` + mobBattleMsg + microGoalCompleteMsg;
 
-            // Animate 10-frame completion for visual reinforcement
+            const nextBtn = document.getElementById('btnNextProblem');
+            nextBtn.classList.remove('hidden');
+
+            if (isMobDefeated) {
+                nextBtn.textContent = '🎉 승리! 월드로 돌아가기 ▶';
+                nextBtn.onclick = () => {
+                    document.getElementById('mathModal').classList.add('hidden');
+                };
+            } else {
+                nextBtn.textContent = `⚔️ 다음 공격 (${bState ? bState.hp : 1}타 남음) ▶`;
+                nextBtn.onclick = () => {
+                    startNewMathProblem(prob.contextTx, prob.contextTy);
+                };
+            }
+
             triggerMake10Animation();
 
         } else {
-            // ④ SAFE FAILURE (낮은 심리적 비용: 실수를 능력이 아닌 '전략 수정 힌트'로 전환)
+            // ④ 안전한 시행착오: 오답 시 감점 없이 10칸 상자 힌트 제공
             prob.hadRetry = true;
             sfx.playGentleHint();
 
@@ -2379,7 +2743,7 @@
             const banner = document.getElementById('safeFeedbackBanner');
             banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-amber-950/90 border-2 border-amber-400 text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-between gap-2';
             document.getElementById('safeFeedbackText').textContent =
-                `💡 좋은 시도예요! ${diffHint} 위 10칸 광물 상자에서 블록이 빈칸을 어떻게 채우는지 보고 다시 골라 볼까요?`;
+                `💡 아슬아슬했어요! ${diffHint} 아래 광물 상자 그림을 보고 다시 공격해 볼까요?`;
 
             renderTenFrameCanvas();
             triggerMake10Animation();
@@ -3210,6 +3574,17 @@
         const blockId = getBlockAt(targetTx, targetTy);
         const floorId = getFloorAt(targetTx, targetTy);
 
+        // 👾 타겟이 덧셈 몬스터(구 마법 크리스탈)인 경우: 즉시 3문제 몹 배틀 진입!
+        if (blockId === BLOCK.MAGIC_CRYSTAL) {
+            resetMiningState();
+            isLeftMouseDown = false;
+            touchDirs.mine = false;
+            sfx.playHit('ore');
+            const mob = getMobDataAt(targetTx, targetTy);
+            openMathStudioModal(`⚔️ [Lv.${mob.level} ${mob.name}] 배틀!`, targetTx, targetTy);
+            return;
+        }
+
         let targetMaxHp = 0;
         let hitSfxType = 'stone';
         let particleCol = '#9ca3af';
@@ -3666,7 +4041,7 @@
             ctx.restore();
         }
 
-        // 2. Render Blocks & Ores
+        // 2. Render Blocks, Ores & Addition Mobs
         for (let ty = startTy; ty <= endTy; ty++) {
             for (let tx = startTx; tx <= endTx; tx++) {
                 const b = getBlockAt(tx, ty);
@@ -3674,6 +4049,39 @@
 
                 const wx = tx * TILE_SIZE;
                 const wy = ty * TILE_SIZE;
+
+                // 👾 덧셈 몬스터(구 마법 크리스탈) 렌더링: 통통 튀는 애니메이션 + 레벨 이름표 + 3칸 체력바
+                if (b === BLOCK.MAGIC_CRYSTAL) {
+                    const mob = getMobDataAt(tx, ty);
+                    const bounceY = Math.sin(timeSec * 5 + tx * 1.7 + ty * 2.3) * 3;
+                    const mobSprite = tileSprites['mob_' + mob.level] || tileSprites['block_' + BLOCK.MAGIC_CRYSTAL];
+                    if (mobSprite) {
+                        ctx.drawImage(mobSprite, wx, wy + bounceY);
+                    }
+
+                    // 몹 3칸 체력바 (HP Bar)
+                    const barW = 38;
+                    const barH = 6;
+                    const barX = wx + (TILE_SIZE - barW) / 2;
+                    const barY = wy - 8 + bounceY;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+                    const segW = (barW - 4) / 3;
+                    for (let h = 0; h < 3; h++) {
+                        ctx.fillStyle = h < mob.hp ? '#ef4444' : '#374151';
+                        ctx.fillRect(barX + 1 + h * (segW + 1), barY, segW, barH);
+                    }
+
+                    // 몹 레벨 배지
+                    ctx.font = '900 10px "Noto Sans KR", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillText(`Lv.${mob.level} ${mob.name}`, wx + 24, barY - 3);
+
+                    lightSources.push({ x: wx + 24, y: wy + 24, r: 150 });
+                    continue;
+                }
 
                 if (BLOCK_INFO[b]?.solid) {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
@@ -3683,7 +4091,7 @@
                 const bSprite = tileSprites['block_' + b];
                 if (bSprite) ctx.drawImage(bSprite, wx, wy);
 
-                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.MAGIC_CRYSTAL || b === BLOCK.RAINBOW_BLOCK) {
+                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.RAINBOW_BLOCK) {
                     const flicker = Math.sin(timeSec * 12 + tx * 3 + ty * 5) * 8;
                     lightSources.push({
                         x: wx + 24,
@@ -3800,7 +4208,11 @@
         const f = getFloorAt(hover.tx, hover.ty);
         const inRange = isTargetInRange(hover.tx, hover.ty);
 
-        if (b !== BLOCK.AIR) {
+        if (b === BLOCK.MAGIC_CRYSTAL) {
+            const mob = getMobDataAt(hover.tx, hover.ty);
+            nameEl.textContent = `👾 [Lv.${mob.level}] ${mob.name} (체력 ${mob.hp}/${mob.maxHp})`;
+            hintEl.textContent = inRange ? '⚔️ 좌클릭: 덧셈 공격!' : '⚠️ 사거리 밖';
+        } else if (b !== BLOCK.AIR) {
             nameEl.textContent = `🎯 ${BLOCK_INFO[b].name}`;
             hintEl.textContent = inRange ? '좌클릭 홀드: 채굴' : '⚠️ 사거리 밖';
         } else {
