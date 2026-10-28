@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2D 마인크래프트 온라인 - 어린이 덧셈 몰입 탐험 월드 (1,000x1,000)</title>
+    <!-- App Icons (icon.ico & icon.png) -->
+    <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <!-- PWA Meta & Zero-Cache Instant Update Headers -->
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="manifest" id="pwaManifestLink" href="manifest.json">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PeerJS for WebRTC Serverless Global World Auto-Matchmaking on GitHub Pages -->
@@ -1859,7 +1872,7 @@
         hitSoundTimer: 0
     };
 
-    let clickActionMode = 'both'; // 'both' | 'mine' | 'build'
+    let clickActionMode = 'mine'; // 'both' | 'mine' | 'build'
     let isNight = false;
     let darknessAlpha = 0;
 
@@ -2167,14 +2180,12 @@
         }
     }
 
-    // Draw the Interactive Minecraft 10-Frame Visualizer (2-Tray for a+b, 3-Tray for a+b+c!)
+    // 10단위(십 묶음)를 생략하지 않고 모든 10칸 상자와 낱개 블록을 시각적으로 그리는 함수
     function renderTenFrameCanvas() {
         const tfCanvas = document.getElementById('tenFrameCanvas');
         if (!tfCanvas || !mathFlowState.currentProblem) return;
         const g = tfCanvas.getContext('2d');
         const prob = mathFlowState.currentProblem;
-
-        g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
 
         const wrap = document.getElementById('tenFrameVisualizerWrap');
         const make10Banner = document.getElementById('make10DecompositionBanner');
@@ -2182,13 +2193,13 @@
 
         if (storyPrompt) {
             if (prob.c > 0) {
-                storyPrompt.textContent = `⚔️ 첫째 상자(${prob.a}) + 둘째 상자(${prob.b}) + 셋째 상자(${prob.c})를 모두 합치면 몇 개일까요?`;
+                storyPrompt.textContent = `⚔️ 첫째 수(${prob.a}) + 둘째 수(${prob.b}) + 셋째 수(${prob.c})의 모든 10묶음과 낱개를 합치면 몇 개일까요?`;
             } else {
-                storyPrompt.textContent = `⚔️ 첫 번째 광물 상자(${prob.a})와 두 번째 광물 상자(${prob.b})를 합치면 모두 몇 개일까요?`;
+                storyPrompt.textContent = `⚔️ 첫 번째 광물(${prob.a}개)과 두 번째 광물(${prob.b}개)의 10묶음과 낱개를 합치면 모두 몇 개일까요?`;
             }
         }
 
-        // Hide visualizer only if player explicitly chose Mental Math AND hasn't made a mistake yet
+        // 암산 도전 모드이면서 아직 오답이 없을 때만 상자 숨김
         if (mathFlowState.strategy === 'mental' && !prob.hadRetry) {
             wrap.classList.add('hidden');
             make10Banner.classList.add('hidden');
@@ -2197,209 +2208,261 @@
         wrap.classList.remove('hidden');
 
         const animT = mathFlowState.tenFrameAnimProgress; // 0 -> 1
+        const isThreeTerms = prob.c > 0;
 
-        // ==================== CASE A: 3-TERM ADDITION (예: 3 + 5 + 2) -> 3 COMPARTMENTS ====================
-        if (prob.c > 0) {
+        // 각 항이 필요로 하는 10칸 상자 개수 계산 (예: 26이면 10+10+6 -> 상자 3개)
+        const boxesA = Math.max(1, Math.ceil(prob.a / 10));
+        const boxesB = Math.max(1, Math.ceil(prob.b / 10));
+        const boxesC = isThreeTerms ? Math.max(1, Math.ceil(prob.c / 10)) : 0;
+        const maxRows = Math.max(boxesA, boxesB, boxesC);
+
+        // 상자 층수에 맞춰 캔버스 높이 동적 조절 (10단위 상자들이 잘리지 않고 모두 보이도록 함)
+        const rowH = 78;
+        const topPad = 26;
+        const neededHeight = topPad + maxRows * rowH + 6;
+        if (tfCanvas.height !== neededHeight) {
+            tfCanvas.height = neededHeight;
+        }
+        g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
+
+        // 10 만들기 힌트 배너 업데이트
+        const aMod = prob.a % 10;
+        const needTo10 = aMod > 0 ? 10 - aMod : 0;
+        if (isThreeTerms) {
             if (mathFlowState.strategy === 'make10' || prob.hadRetry) {
                 make10Banner.classList.remove('hidden');
-                if (prob.a + prob.b === 10) {
-                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 먼저 <strong>${prob.a} + ${prob.b} = <span class="text-emerald-300 font-black">10</span></strong>을 채우고, 셋째 상자의 <span class="text-amber-300 font-black">${prob.c}</span>를 더해요! (<strong>10 + ${prob.c}</strong>)`;
-                } else if (prob.a + prob.c === 10) {
-                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 짝꿍수인 <strong>${prob.a} + ${prob.c} = <span class="text-emerald-300 font-black">10</span></strong>을 먼저 만들고, 둘째 상자의 <span class="text-cyan-300 font-black">${prob.b}</span>를 더해요!`;
-                } else if (prob.b + prob.c === 10) {
-                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 둘째·셋째 상자 <strong>${prob.b} + ${prob.c} = <span class="text-emerald-300 font-black">10</span></strong>을 만들고, 첫째 상자 <span class="text-amber-300 font-black">${prob.a}</span>를 더해요!`;
-                } else {
-                    make10Banner.innerHTML = `💡 세 수 더하기 힌트: 세 상자(<strong>${prob.a}개, ${prob.b}개, ${prob.c}개</strong>)의 블록을 첫째 상자부터 10칸씩 차례대로 채워 보세요!`;
-                }
+                make10Banner.innerHTML = `💡 세 수 더하기: 각 구획의 <strong>🔟 10묶음 상자</strong>와 <strong>낱개 블록</strong>을 빈칸으로 옮겨 10칸을 채워 보세요!`;
             } else {
                 make10Banner.classList.add('hidden');
             }
+        } else {
+            if ((mathFlowState.strategy === 'make10' || prob.hadRetry) && needTo10 > 0 && prob.b >= needTo10) {
+                const nextTen = prob.a + needTo10;
+                const remainB = prob.b - needTo10;
+                make10Banner.classList.remove('hidden');
+                make10Banner.innerHTML = `💡 10 만들기 힌트: <strong>${prob.a}</strong>의 빈칸에 <strong>${prob.b}</strong>에서 <span class="text-amber-300 font-black">${needTo10}개</span>를 옮겨 <span class="text-emerald-300 font-black">${nextTen}</span>을 채우고, 남은 <span class="text-cyan-300 font-black">${remainB}</span>을 더해요! (<strong>${nextTen} + ${remainB} = ${prob.answer}</strong>)`;
+            } else {
+                make10Banner.classList.add('hidden');
+            }
+        }
 
-            // 3개의 10칸 상자 구획 레이아웃 (캔버스 폭 440px에 3개 구획 배치)
+        // ==================== CASE A: 항이 3개인 덧셈 (a + b + c) -> 3구획 & 모든 10묶음 표시 ====================
+        if (isThreeTerms) {
             const trayW = 136;
-            const trayH = 82;
+            const trayH = 68;
             const trayXs = [6, 152, 298];
-            const trayY = 24;
+            const terms = [
+                { val: prob.a, boxes: boxesA, title: `① 첫째 (${prob.a}개)`, border: '#10b981', fill: '#10b981', shine: '#6ee7b7' },
+                { val: prob.b, boxes: boxesB, title: `② 둘째 (+${prob.b}개)`, border: '#38bdf8', fill: '#06b6d4', shine: '#a5f3fc' },
+                { val: prob.c, boxes: boxesC, title: `③ 셋째 (+${prob.c}개)`, border: '#f59e0b', fill: '#f59e0b', shine: '#fef08a' }
+            ];
 
-            const drawMiniTray = (tIdx, title, borderColor) => {
-                const sx = trayXs[tIdx];
-                g.fillStyle = '#111827';
-                g.fillRect(sx, trayY, trayW, trayH);
-                g.strokeStyle = borderColor;
-                g.lineWidth = 2;
-                g.strokeRect(sx, trayY, trayW, trayH);
+            // 각 구획 상단 제목 및 층별 10칸 빈 상자 그리기
+            terms.forEach((tm, colIdx) => {
+                const sx = trayXs[colIdx];
+                g.font = 'bold 11px "Noto Sans KR", sans-serif';
+                g.fillStyle = '#f3f4f6';
+                g.fillText(tm.title, sx + 2, 16);
 
-                g.font = 'bold 10.5px "Noto Sans KR", sans-serif';
-                g.fillStyle = '#e5e7eb';
-                g.fillText(title, sx + 3, trayY - 5);
+                for (let r = 0; r < tm.boxes; r++) {
+                    const sy = topPad + r * rowH;
+                    const boxCount = Math.min(10, Math.max(0, tm.val - r * 10));
+                    const isFullTen = (boxCount === 10);
 
-                for (let s = 0; s < 10; s++) {
-                    const col = s % 5;
-                    const row = Math.floor(s / 5);
-                    const cellX = sx + 6 + col * 25;
-                    const cellY = trayY + 8 + row * 34;
-                    g.fillStyle = '#1f2937';
-                    g.fillRect(cellX, cellY, 21, 28);
-                    g.strokeStyle = '#374151';
-                    g.lineWidth = 1;
-                    g.strokeRect(cellX, cellY, 21, 28);
+                    g.fillStyle = '#111827';
+                    g.fillRect(sx, sy, trayW, trayH);
+                    g.strokeStyle = isFullTen ? '#facc15' : tm.border;
+                    g.lineWidth = isFullTen ? 2.5 : 1.8;
+                    g.strokeRect(sx, sy, trayW, trayH);
+
+                    // 10개가 꽉 찬 상자는 우측 상단에 '🔟 10묶음' 라벨 표시
+                    if (isFullTen) {
+                        g.fillStyle = 'rgba(250, 204, 21, 0.2)';
+                        g.fillRect(sx + 1, sy + 1, trayW - 2, trayH - 2);
+                    }
+
+                    for (let s = 0; s < 10; s++) {
+                        const c = s % 5;
+                        const rw = Math.floor(s / 5);
+                        const cellX = sx + 6 + c * 25;
+                        const cellY = sy + 6 + rw * 28;
+                        g.fillStyle = '#1f2937';
+                        g.fillRect(cellX, cellY, 21, 24);
+                        g.strokeStyle = '#374151';
+                        g.lineWidth = 1;
+                        g.strokeRect(cellX, cellY, 21, 24);
+                    }
                 }
-            };
+            });
 
-            drawMiniTray(0, `① 첫째 상자 (${prob.a}개)`, animT > 0.9 ? '#facc15' : '#10b981');
-            drawMiniTray(1, `② 둘째 상자 (+${prob.b}개)`, '#38bdf8');
-            drawMiniTray(2, `③ 셋째 상자 (+${prob.c}개)`, '#f59e0b');
-
-            const slotCoord3 = (tIdx, slotIdx) => {
-                const col = slotIdx % 5;
-                const row = Math.floor(slotIdx / 5);
+            const getSlotPos3 = (colIdx, blockIndex) => {
+                const boxRow = Math.floor(blockIndex / 10);
+                const slotInBox = blockIndex % 10;
+                const c = slotInBox % 5;
+                const rw = Math.floor(slotInBox / 5);
                 return {
-                    x: trayXs[tIdx] + 6 + col * 25 + 2,
-                    y: trayY + 8 + row * 34 + 3
+                    x: trayXs[colIdx] + 6 + c * 25 + 2,
+                    y: topPad + boxRow * rowH + 6 + rw * 28 + 2
                 };
             };
 
-            const dispA = Math.min(10, prob.a > 10 ? (prob.a % 10 || 10) : prob.a);
-            const dispB = Math.min(10, prob.b);
-            const dispC = Math.min(10, prob.c);
+            // 첫째 구획의 마지막 상자 빈칸 개수 계산 (애니메이션 시 둘째·셋째의 낱개가 이 빈칸을 채움)
+            const remA = prob.a % 10;
+            const emptyInA = remA > 0 ? (10 - remA) : 0;
+            let fillOffset = 0;
 
-            // 애니메이션 시 모든 블록이 앞쪽 상자(0번 -> 1번 -> 2번)의 빈칸을 순서대로 채우도록 목표 위치 계산
-            let fillCursor = dispA;
-
-            // 1) 첫째 상자 블록 그리기 (초록 에메랄드)
-            for (let i = 0; i < dispA; i++) {
-                const pos = slotCoord3(0, i);
-                g.fillStyle = '#10b981';
-                g.fillRect(pos.x, pos.y, 17, 22);
-                g.fillStyle = '#6ee7b7';
+            // 1) 첫째 수(a)의 모든 블록(10단위 + 1단위) 그리기
+            for (let i = 0; i < prob.a; i++) {
+                const pos = getSlotPos3(0, i);
+                g.fillStyle = terms[0].fill;
+                g.fillRect(pos.x, pos.y, 17, 20);
+                g.fillStyle = terms[0].shine;
                 g.fillRect(pos.x + 2, pos.y + 2, 6, 6);
             }
 
-            // 2) 둘째 상자 블록 그리기 (하늘 다이아몬드)
-            for (let i = 0; i < dispB; i++) {
-                const fromPos = slotCoord3(1, i);
+            // 2) 둘째 수(b)의 모든 블록 그리기 (낱개 일부가 첫째 상자 빈칸으로 이동)
+            for (let i = 0; i < prob.b; i++) {
+                const fromPos = getSlotPos3(1, i);
                 let drawX = fromPos.x;
                 let drawY = fromPos.y;
 
-                const targetTray = Math.min(2, Math.floor(fillCursor / 10));
-                const targetSlot = fillCursor % 10;
-                fillCursor++;
-
-                if (animT > 0 && (targetTray !== 1 || targetSlot !== i)) {
-                    const toPos = slotCoord3(targetTray, targetSlot);
+                // 위쪽 낱개부터 emptyInA 만큼 첫째 수의 빈칸으로 이동 연출
+                if (animT > 0 && i >= prob.b - Math.min(prob.b, emptyInA - fillOffset)) {
+                    const targetIdxInA = prob.a + fillOffset;
+                    fillOffset++;
+                    const toPos = getSlotPos3(0, targetIdxInA);
                     drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
                     drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 16;
                 }
 
-                g.fillStyle = '#06b6d4';
-                g.fillRect(drawX, drawY, 17, 22);
-                g.fillStyle = '#a5f3fc';
+                g.fillStyle = terms[1].fill;
+                g.fillRect(drawX, drawY, 17, 20);
+                g.fillStyle = terms[1].shine;
                 g.fillRect(drawX + 2, drawY + 2, 6, 6);
             }
 
-            // 3) 셋째 상자 블록 그리기 (황금 호박석)
-            for (let i = 0; i < dispC; i++) {
-                const fromPos = slotCoord3(2, i);
+            // 3) 셋째 수(c)의 모든 블록 그리기
+            for (let i = 0; i < prob.c; i++) {
+                const fromPos = getSlotPos3(2, i);
                 let drawX = fromPos.x;
                 let drawY = fromPos.y;
 
-                const targetTray = Math.min(2, Math.floor(fillCursor / 10));
-                const targetSlot = fillCursor % 10;
-                fillCursor++;
-
-                if (animT > 0 && (targetTray !== 2 || targetSlot !== i)) {
-                    const toPos = slotCoord3(targetTray, targetSlot);
+                if (animT > 0 && fillOffset < emptyInA && i >= prob.c - (emptyInA - fillOffset)) {
+                    const targetIdxInA = prob.a + fillOffset;
+                    fillOffset++;
+                    const toPos = getSlotPos3(0, targetIdxInA);
                     drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
                     drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
                 }
 
-                g.fillStyle = '#f59e0b';
-                g.fillRect(drawX, drawY, 17, 22);
-                g.fillStyle = '#fef08a';
+                g.fillStyle = terms[2].fill;
+                g.fillRect(drawX, drawY, 17, 20);
+                g.fillStyle = terms[2].shine;
                 g.fillRect(drawX + 2, drawY + 2, 6, 6);
             }
             return;
         }
 
-        // ==================== CASE B: 2-TERM ADDITION (a + b) -> 2 COMPARTMENTS ====================
-        const aMod = prob.a % 10;
-        const needTo10 = aMod > 0 ? 10 - aMod : 0;
-        if ((mathFlowState.strategy === 'make10' || prob.hadRetry) && needTo10 > 0 && prob.b >= needTo10) {
-            const nextTen = prob.a + needTo10;
-            const remainB = prob.b - needTo10;
-            make10Banner.classList.remove('hidden');
-            make10Banner.innerHTML = `💡 10 만들기 힌트: <strong>${prob.a}</strong>에 <strong>${prob.b}</strong>에서 <span class="text-amber-300 font-black">${needTo10}</span>만큼 먼저 옮겨 <span class="text-emerald-300 font-black">${nextTen}</span>을 채우고, 남은 <span class="text-cyan-300 font-black">${remainB}</span>을 더해요! (<strong>${nextTen} + ${remainB}</strong>)`;
-        } else {
-            make10Banner.classList.add('hidden');
-        }
+        // ==================== CASE B: 항이 2개인 덧셈 (a + b) -> 2구획 & 모든 10묶음 상자 표시 ====================
+        const trayW2 = 194;
+        const trayH2 = 68;
+        const baseXs = [16, 230];
 
-        const drawTray = (startX, startY, title, borderColor) => {
+        const tensA = Math.floor(prob.a / 10);
+        const onesA = prob.a % 10;
+        const tensB = Math.floor(prob.b / 10);
+        const onesB = prob.b % 10;
+
+        const titleA = tensA > 0 ? `첫째: ${prob.a} (10묶음 ${tensA}상자 + 낱개 ${onesA}개)` : `첫째 상자 (${prob.a}개)`;
+        const titleB = tensB > 0 ? `둘째: +${prob.b} (10묶음 ${tensB}상자 + 낱개 ${onesB}개)` : `둘째 상자 (+${prob.b}개)`;
+
+        g.font = 'bold 11px "Noto Sans KR", sans-serif';
+        g.fillStyle = '#e5e7eb';
+        g.fillText(titleA, baseXs[0] + 2, 16);
+        g.fillText(titleB, baseXs[1] + 2, 16);
+
+        const drawBoxGrid2 = (colIdx, rowIdx, isFullTen, defaultBorder) => {
+            const sx = baseXs[colIdx];
+            const sy = topPad + rowIdx * rowH;
+
             g.fillStyle = '#111827';
-            g.fillRect(startX, startY, 194, 82);
-            g.strokeStyle = borderColor;
-            g.lineWidth = 2;
-            g.strokeRect(startX, startY, 194, 82);
+            g.fillRect(sx, sy, trayW2, trayH2);
+            g.strokeStyle = isFullTen ? '#facc15' : defaultBorder;
+            g.lineWidth = isFullTen ? 2.5 : 2;
+            g.strokeRect(sx, sy, trayW2, trayH2);
 
-            g.font = 'bold 11px "Noto Sans KR", sans-serif';
-            g.fillStyle = '#d1d5db';
-            g.fillText(title, startX + 4, startY - 5);
+            if (isFullTen) {
+                g.fillStyle = 'rgba(250, 204, 21, 0.14)';
+                g.fillRect(sx + 1, sy + 1, trayW2 - 2, trayH2 - 2);
+                g.font = '900 9.5px "Noto Sans KR", sans-serif';
+                g.fillStyle = '#fde047';
+                g.fillText('🔟 10묶음', sx + trayW2 - 50, sy - 2);
+            }
 
             for (let s = 0; s < 10; s++) {
-                const col = s % 5;
-                const row = Math.floor(s / 5);
-                const sx = startX + 8 + col * 36;
-                const sy = startY + 8 + row * 34;
+                const c = s % 5;
+                const rw = Math.floor(s / 5);
+                const cellX = sx + 8 + c * 36;
+                const cellY = sy + 6 + rw * 28;
                 g.fillStyle = '#1f2937';
-                g.fillRect(sx, sy, 30, 28);
+                g.fillRect(cellX, cellY, 30, 24);
                 g.strokeStyle = '#374151';
                 g.lineWidth = 1;
-                g.strokeRect(sx, sy, 30, 28);
+                g.strokeRect(cellX, cellY, 30, 24);
             }
         };
 
-        const tray1Title = prob.a > 10 ? `첫째 상자 (${prob.a} 중 1의자리 ${prob.a % 10}개 + 10묶음)` : `첫째 상자 (${prob.a}개)`;
-        const tray2Title = `둘째 상자 (+${prob.b}개)`;
-        drawTray(16, 24, tray1Title, animT > 0.9 ? '#facc15' : '#10b981');
-        drawTray(230, 24, tray2Title, '#38bdf8');
+        for (let r = 0; r < boxesA; r++) {
+            const cnt = Math.min(10, Math.max(0, prob.a - r * 10));
+            const completedByAnim = (r === boxesA - 1 && animT > 0.9 && cnt + prob.b >= 10);
+            drawBoxGrid2(0, r, cnt === 10 || completedByAnim, '#10b981');
+        }
+        for (let r = 0; r < boxesB; r++) {
+            const cnt = Math.min(10, Math.max(0, prob.b - r * 10));
+            drawBoxGrid2(1, r, cnt === 10, '#38bdf8');
+        }
 
-        const slotCoord = (trayIndex, slotIdx) => {
-            const baseX = trayIndex === 0 ? 16 : 230;
-            const col = slotIdx % 5;
-            const row = Math.floor(slotIdx / 5);
+        const getSlotPos2 = (colIdx, blockIndex) => {
+            const boxRow = Math.floor(blockIndex / 10);
+            const slotInBox = blockIndex % 10;
+            const c = slotInBox % 5;
+            const rw = Math.floor(slotInBox / 5);
             return {
-                x: baseX + 8 + col * 36 + 3,
-                y: 24 + 8 + row * 34 + 2
+                x: baseXs[colIdx] + 8 + c * 36 + 3,
+                y: topPad + boxRow * rowH + 6 + rw * 28 + 2
             };
         };
 
-        const dispA = prob.a > 10 ? (prob.a % 10 === 0 ? 10 : prob.a % 10) : prob.a;
-        const dispB = Math.min(10, prob.b);
-        const emptyInTray1 = Math.max(0, 10 - dispA);
-        const transferCount = Math.min(emptyInTray1, dispB);
-
-        for (let i = 0; i < dispA; i++) {
-            const pos = slotCoord(0, i);
+        // 1) 첫째 수(prob.a)의 모든 블록(10단위 상자 + 낱개 상자) 그리기
+        for (let i = 0; i < prob.a; i++) {
+            const pos = getSlotPos2(0, i);
             g.fillStyle = '#10b981';
-            g.fillRect(pos.x, pos.y, 24, 24);
+            g.fillRect(pos.x, pos.y, 24, 20);
             g.fillStyle = '#6ee7b7';
-            g.fillRect(pos.x + 3, pos.y + 3, 8, 8);
+            g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
         }
 
-        for (let i = 0; i < dispB; i++) {
-            const fromPos = slotCoord(1, i);
+        // 2) 둘째 수(prob.b)의 모든 블록 그리기 (마법 이동 시 마지막 낱개들이 첫째 수의 빈칸을 채움)
+        const emptyInLastBoxA = onesA > 0 ? (10 - onesA) : 0;
+        const transferCount = Math.min(emptyInLastBoxA, prob.b);
+
+        for (let i = 0; i < prob.b; i++) {
+            const fromPos = getSlotPos2(1, i);
             let drawX = fromPos.x;
             let drawY = fromPos.y;
 
-            if (i < transferCount && animT > 0) {
-                const toPos = slotCoord(0, dispA + i);
+            // 둘째 수의 마지막 낱개 블록들부터 차례대로 첫째 수의 빈칸으로 이동
+            const transferOrder = prob.b - 1 - i;
+            if (transferOrder < transferCount && animT > 0) {
+                const toPos = getSlotPos2(0, prob.a + transferOrder);
                 drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
                 drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
             }
 
             g.fillStyle = '#06b6d4';
-            g.fillRect(drawX, drawY, 24, 24);
+            g.fillRect(drawX, drawY, 24, 20);
             g.fillStyle = '#a5f3fc';
-            g.fillRect(drawX + 3, drawY + 3, 8, 8);
+            g.fillRect(drawX + 3, drawY + 3, 7, 6);
         }
     }
 
@@ -4218,7 +4281,7 @@
             ctx.restore();
         }
 
-        // 2. Render Blocks, Ores & Addition Mobs
+        // 2. Render Blocks, Ores & Opaque Addition Mobs
         for (let ty = startTy; ty <= endTy; ty++) {
             for (let tx = startTx; tx <= endTx; tx++) {
                 const b = getBlockAt(tx, ty);
@@ -4227,36 +4290,43 @@
                 const wx = tx * TILE_SIZE;
                 const wy = ty * TILE_SIZE;
 
-                // 👾 덧셈 몬스터: 문제풀이 창과 동일한 아이콘(mob.icon) + 발밑 오라 + 머리 위 체력바로 렌더링
+                // 👾 덧셈 몬스터: 투명도 없이 100% 선명한 불투명 모습 + 머리 위 체력바 렌더링
                 if (b === BLOCK.MAGIC_CRYSTAL) {
                     const mob = getMobDataAt(tx, ty);
                     const bounceY = Math.sin(timeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3.5;
 
                     ctx.save();
-                    // 발밑 그림자 & 등급 색상 마법진 오라
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                    ctx.globalAlpha = 1.0;
+
+                    // 발밑 그림자
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
                     ctx.beginPath();
-                    ctx.ellipse(wx + 24, wy + 40, 16, 6, 0, 0, Math.PI * 2);
+                    ctx.ellipse(wx + 24, wy + 41, 16, 6, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    ctx.strokeStyle = mob.bodyColor;
-                    ctx.lineWidth = 2;
+                    // 바닥 타일 색상이 비치지 않도록 몹 뒤쪽에 불투명 원형 바디 실드 배치
+                    ctx.fillStyle = '#111827';
                     ctx.beginPath();
-                    ctx.ellipse(wx + 24, wy + 39, 17 + Math.sin(timeSec * 4) * 1.5, 6.5, 0, 0, Math.PI * 2);
+                    ctx.arc(wx + 24, wy + 24 + bounceY, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = mob.bodyColor;
                     ctx.stroke();
 
-                    // 문제풀이 창과 100% 동일한 몹 아이콘 렌더링
-                    ctx.font = '32px "Noto Sans KR", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+                    // ★ 핵심: fillStyle을 불투명한 #ffffff로 재설정해야 이모지가 반투명해지지 않음!
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Noto Sans KR", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(mob.icon, wx + 24, wy + 24 + bounceY);
+                    ctx.fillText(mob.icon, wx + 24, wy + 25 + bounceY);
 
                     // 몹 머리 위 3칸 체력바 (HP Bar)
                     const barW = 38;
                     const barH = 6;
                     const barX = wx + (TILE_SIZE - barW) / 2;
                     const barY = wy - 7 + bounceY;
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+                    ctx.fillStyle = '#090d16';
                     ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
 
                     const segW = (barW - 4) / 3;
@@ -4270,7 +4340,7 @@
                     ctx.textBaseline = 'alphabetic';
                     const tagText = `Lv.${mob.level} ${mob.name}`;
                     const tagW = ctx.measureText(tagText).width + 8;
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+                    ctx.fillStyle = '#0f172a';
                     ctx.fillRect(wx + 24 - tagW / 2, barY - 14, tagW, 12);
                     ctx.fillStyle = '#fef08a';
                     ctx.fillText(tagText, wx + 24, barY - 4);
@@ -4861,15 +4931,481 @@
         });
     });
 
-    // ==================== 14. INITIALIZATION ON WINDOW LOAD ====================
-    window.onload = function () {
-        generateAllSprites();
-        loadPersistedDeltas();
-        loadMathGrowthState();
-        ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
+    // ==================== 14. MULTI-PROFILE ACCOUNT SYSTEM (LOCALSTORAGE) & INSTANT-UPDATE PWA ====================
+    const PROFILES_STORAGE_KEY = 'mc2d_user_profiles_v1';
+    const ACTIVE_PROFILE_ID_KEY = 'mc2d_active_profile_id_v1';
+    let currentProfileId = null;
+
+    function getDefaultGrowthObject(initLv = 1) {
+        return {
+            firstLevel: initLv,
+            firstEquation: null,
+            firstAvgSec: null,
+            bestLevel: initLv,
+            bestEquation: null,
+            totalSolved: 0,
+            recentSolveTimes: [],
+            levelHistory: [initLv],
+            overcomeEquations: [],
+            unlockedBadges: {}
+        };
+    }
+
+    function loadAllProfiles() {
+        try {
+            const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
+            if (!raw) return [];
+            const list = JSON.parse(raw);
+            return Array.isArray(list) ? list : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveAllProfiles(list) {
+        try {
+            localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(list));
+        } catch (e) {}
+    }
+
+    // 현재 플레이 중인 캐릭터의 모든 상태(위치, 자원, 블록, 곡괭이, 덧셈 성장 기록)를 즉시 저장
+    function saveCurrentProfileState() {
+        if (!currentProfileId) return;
+        const profiles = loadAllProfiles();
+        const idxProfile = profiles.findIndex(p => p.id === currentProfileId);
+
+        const snapshot = {
+            id: currentProfileId,
+            name: localPlayer.name,
+            color: localPlayer.color,
+            x: Math.round(localPlayer.x),
+            y: Math.round(localPlayer.y),
+            pickaxeTier: localPlayer.pickaxeTier,
+            mathLevel: mathFlowState.level,
+            selectedSlot: localPlayer.selectedSlot,
+            clickActionMode: clickActionMode,
+            resources: { ...resources },
+            blockInventory: { ...blockInventory },
+            mathFlow: {
+                level: mathFlowState.level,
+                triggerMode: mathFlowState.triggerMode,
+                strategy: mathFlowState.strategy,
+                microGoalKey: mathFlowState.microGoalKey,
+                microGoalProgress: mathFlowState.microGoalProgress,
+                buffRemainingSec: mathFlowState.buffRemainingSec,
+                growth: JSON.parse(JSON.stringify(mathFlowState.growth))
+            },
+            lastPlayedAt: Date.now()
+        };
+
+        if (idxProfile >= 0) {
+            profiles[idxProfile] = snapshot;
+        } else {
+            profiles.unshift(snapshot);
+        }
+        saveAllProfiles(profiles);
+        try {
+            localStorage.setItem(ACTIVE_PROFILE_ID_KEY, currentProfileId);
+        } catch (e) {}
+    }
+
+    // 선택한 캐릭터 프로필 데이터를 게임 상태에 복원
+    function applyProfileToGame(profile) {
+        if (!profile) return;
+        currentProfileId = profile.id;
+        localPlayer.id = profile.id;
+        localPlayer.name = profile.name || '스티브';
+        localPlayer.color = profile.color || '#06b6d4';
+        localPlayer.x = typeof profile.x === 'number' ? profile.x : (SPAWN_X * TILE_SIZE + TILE_SIZE / 2);
+        localPlayer.y = typeof profile.y === 'number' ? profile.y : (SPAWN_Y * TILE_SIZE + TILE_SIZE / 2);
+        camera.x = localPlayer.x;
+        camera.y = localPlayer.y;
+
+        localPlayer.pickaxeTier = profile.pickaxeTier || 0;
+        localPlayer.selectedSlot = profile.selectedSlot || 0;
+
+        // 좌클릭 기본 모드를 'mine'(채굴 전용)으로 복원
+        clickActionMode = profile.clickActionMode || 'mine';
+        const modeLabel = document.getElementById('actionModeLabel');
+        if (modeLabel) {
+            modeLabel.textContent =
+                clickActionMode === 'mine' ? '⛏️ 좌클릭: 채굴 전용' :
+                clickActionMode === 'build' ? '🧱 좌클릭: 건설 전용' : '🖱️ 좌:채굴/우:건설';
+        }
+
+        // 자원 복원
+        const defaultRes = { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2 };
+        Object.keys(defaultRes).forEach(k => {
+            resources[k] = (profile.resources && typeof profile.resources[k] === 'number') ? profile.resources[k] : defaultRes[k];
+        });
+
+        // 블록 인벤토리 복원
+        const defaultInv = { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 };
+        Object.keys(defaultInv).forEach(k => {
+            blockInventory[k] = (profile.blockInventory && typeof profile.blockInventory[k] === 'number') ? profile.blockInventory[k] : defaultInv[k];
+        });
+
+        // 덧셈 플로우 & 성장 박물관 기록 복원
+        const mf = profile.mathFlow || {};
+        mathFlowState.level = mf.level || profile.mathLevel || 1;
+        localPlayer.mathLevel = mathFlowState.level;
+        mathFlowState.triggerMode = mf.triggerMode || 'magic_only';
+        mathFlowState.strategy = mf.strategy || 'tenframe';
+        mathFlowState.microGoalKey = mf.microGoalKey || 'speed';
+        mathFlowState.microGoalProgress = mf.microGoalProgress || 0;
+        mathFlowState.buffRemainingSec = mf.buffRemainingSec || 0;
+        mathFlowState.growth = Object.assign(getDefaultGrowthObject(mathFlowState.level), mf.growth || {});
+
+        // 로비 입력 폼 동기화
+        const nameInp = document.getElementById('playerNameInput');
+        if (nameInp) nameInp.value = localPlayer.name;
+        const lvSel = document.getElementById('initialMathLevelSelect');
+        if (lvSel) lvSel.value = String(mathFlowState.level);
+        const trigSel = document.getElementById('triggerModeSelect');
+        if (trigSel) trigSel.value = mathFlowState.triggerMode;
+
+        document.querySelectorAll('.color-swatch').forEach(b => {
+            const isMatch = b.getAttribute('data-color') === localPlayer.color;
+            b.classList.toggle('ring-2', isMatch);
+            b.classList.toggle('ring-emerald-400', isMatch);
+            b.classList.toggle('border-white', isMatch);
+            b.classList.toggle('border-gray-700', !isMatch);
+        });
+
+        ensureAreaGenerated(Math.floor(localPlayer.x / TILE_SIZE), Math.floor(localPlayer.y / TILE_SIZE), 4);
         updateResourceUI();
         updateFlowHud();
         drawRadarMinimap();
+    }
+
+    // 로비 모달에 [계정(캐릭터) 선택 및 새 캐릭터 생성] UI 주입 및 렌더링
+    function setupAccountManagerUI() {
+        const lobbyPanel = document.querySelector('#lobbyModal .mc-panel');
+        if (!lobbyPanel) return;
+
+        // 1) 로비 상단에 icon.png 아이콘 배지 추가
+        const titleEl = lobbyPanel.querySelector('h1');
+        if (titleEl && !document.getElementById('lobbyAppIconImg')) {
+            const iconWrap = document.createElement('div');
+            iconWrap.className = 'flex justify-center mb-2';
+            iconWrap.innerHTML = `<img id="lobbyAppIconImg" src="icon.png" alt="아이콘" onerror="this.src='icon.ico'; this.onerror=null;" class="w-14 h-14 rounded-xl border-2 border-amber-400 shadow-lg bg-gray-900 object-contain p-1">`;
+            titleEl.parentNode.insertBefore(iconWrap, titleEl);
+        }
+
+        // 2) 캐릭터 선택/생성 컨테이너 삽입
+        let accountBox = document.getElementById('accountSelectorSection');
+        if (!accountBox) {
+            accountBox = document.createElement('div');
+            accountBox.id = 'accountSelectorSection';
+            accountBox.className = 'bg-gray-950/90 border-2 border-emerald-500/70 rounded-lg p-3.5 mb-3 text-left';
+            const formBox = document.getElementById('playerNameInput')?.closest('.bg-gray-900\\/85');
+            if (formBox) {
+                formBox.parentNode.insertBefore(accountBox, formBox);
+            }
+        }
+
+        // 3) 좌측 상단 HUD에 [👤 캐릭터 전환] 버튼 추가
+        const spawnBtn = document.getElementById('btnReturnSpawn');
+        if (spawnBtn && !document.getElementById('btnSwitchAccountHud')) {
+            const swBtn = document.createElement('button');
+            swBtn.id = 'btnSwitchAccountHud';
+            swBtn.className = 'mc-btn px-2 py-0.5 text-[11px]';
+            swBtn.title = '다른 캐릭터(계정)로 전환하거나 새 캐릭터를 만듭니다';
+            swBtn.textContent = '👤 캐릭터 전환';
+            swBtn.onclick = () => {
+                saveCurrentProfileState();
+                renderAccountListUI();
+                document.getElementById('lobbyModal').classList.remove('hidden');
+            };
+            spawnBtn.parentNode.appendChild(swBtn);
+        }
+
+        renderAccountListUI();
+    }
+
+    function renderAccountListUI() {
+        const accountBox = document.getElementById('accountSelectorSection');
+        if (!accountBox) return;
+
+        const profiles = loadAllProfiles();
+        const savedActiveId = localStorage.getItem(ACTIVE_PROFILE_ID_KEY);
+
+        if (profiles.length === 0) {
+            currentProfileId = null;
+            accountBox.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-emerald-300">👤 첫 캐릭터(계정) 만들기</span>
+                    <span class="text-[11px] text-gray-400">비밀번호 없이 기기에 자동 저장됩니다</span>
+                </div>
+                <p class="text-[11px] text-gray-300 mt-1">아래에서 닉네임과 시작 덧셈 단계를 고른 뒤 입장하면 나만의 캐릭터 스토리가 자동 저장됩니다!</p>
+            `;
+            return;
+        }
+
+        const cardsHtml = profiles.map(p => {
+            const isSelected = (p.id === currentProfileId) || (!currentProfileId && p.id === savedActiveId);
+            const ptx = Math.floor((p.x || SPAWN_X * TILE_SIZE) / TILE_SIZE);
+            const pty = Math.floor((p.y || SPAWN_Y * TILE_SIZE) / TILE_SIZE);
+            const pickName = PICKAXE_TIERS[p.pickaxeTier || 0]?.name || '나무 곡괭이';
+            const solvedCnt = p.mathFlow?.growth?.totalSolved || 0;
+
+            return `
+                <div data-pid="${p.id}" class="profile-card cursor-pointer p-2.5 rounded-lg border-2 transition flex items-center justify-between gap-2 ${
+                    isSelected
+                        ? 'bg-emerald-950/70 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.35)]'
+                        : 'bg-gray-900/90 border-gray-700 hover:border-gray-500'
+                }">
+                    <div class="flex items-center gap-2.5 truncate">
+                        <span class="w-8 h-8 rounded-lg border-2 border-white shrink-0 flex items-center justify-center font-black text-sm text-gray-950 shadow"
+                              style="background:${p.color || '#06b6d4'}">${escapeHtml((p.name || '스')[0])}</span>
+                        <div class="truncate">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-black text-sm text-white truncate">${escapeHtml(p.name)}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-[10px] font-black">Lv.${p.mathLevel || 1}</span>
+                            </div>
+                            <div class="text-[10px] text-gray-300 mt-0.5">
+                                ⛏️ ${pickName} · 📍(${ptx},${pty}) · ✨해결 ${solvedCnt}문제
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button type="button" data-resume="${p.id}" class="btn-resume-profile mc-btn mc-btn-green px-2.5 py-1 text-xs font-black">
+                            ▶ 이어하기
+                        </button>
+                        <button type="button" data-del="${p.id}" class="btn-del-profile mc-btn px-2 py-1 text-xs text-red-300 hover:bg-red-900/60" title="캐릭터 삭제">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        accountBox.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-black text-emerald-300">👥 저장된 캐릭터 선택 (클릭 시 이어하기)</span>
+                <button type="button" id="btnPrepareNewProfile" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black shadow">
+                    ➕ 새 캐릭터 만들기
+                </button>
+            </div>
+            <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                ${cardsHtml}
+            </div>
+            <div id="profileModeNotice" class="text-[11px] text-amber-300 font-bold mt-2">
+                ${currentProfileId ? '✅ 선택된 캐릭터의 설정입니다. 아래에서 닉네임/색상을 수정하거나 바로 입장할 수 있어요.' : '✨ 새 캐릭터 생성 모드: 아래에 새 닉네임을 입력하고 입장 버튼을 누르세요!'}
+            </div>
+        `;
+
+        // 카드 클릭 시 해당 캐릭터 선택
+        accountBox.querySelectorAll('.profile-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-del-profile') || e.target.closest('.btn-resume-profile')) return;
+                const pid = card.getAttribute('data-pid');
+                const found = profiles.find(x => x.id === pid);
+                if (found) {
+                    applyProfileToGame(found);
+                    renderAccountListUI();
+                }
+            });
+        });
+
+        // [▶ 이어하기] 버튼 클릭 시 즉시 해당 캐릭터로 월드 입장
+        accountBox.querySelectorAll('.btn-resume-profile').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pid = btn.getAttribute('data-resume');
+                const found = profiles.find(x => x.id === pid);
+                if (found) {
+                    applyProfileToGame(found);
+                    startWorldWithActiveProfile();
+                }
+            });
+        });
+
+        // [🗑️] 삭제 버튼
+        accountBox.querySelectorAll('.btn-del-profile').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pid = btn.getAttribute('data-del');
+                const remain = loadAllProfiles().filter(x => x.id !== pid);
+                saveAllProfiles(remain);
+                if (currentProfileId === pid) {
+                    currentProfileId = remain[0]?.id || null;
+                    if (remain[0]) applyProfileToGame(remain[0]);
+                }
+                renderAccountListUI();
+                showToast('캐릭터 기록이 삭제되었습니다.', 'amber');
+            });
+        });
+
+        // [➕ 새 캐릭터 만들기] 버튼 클릭 시 입력 폼 초기화
+        const newBtn = document.getElementById('btnPrepareNewProfile');
+        if (newBtn) {
+            newBtn.addEventListener('click', () => {
+                currentProfileId = null;
+                const nameInp = document.getElementById('playerNameInput');
+                if (nameInp) {
+                    nameInp.value = `탐험가${profiles.length + 1}`;
+                    nameInp.focus();
+                    nameInp.select();
+                }
+                renderAccountListUI();
+                showToast('새 캐릭터 닉네임과 옷 색상을 고른 뒤 아래 입장 버튼을 눌러주세요!', 'blue');
+            });
+        }
+    }
+
+    function startWorldWithActiveProfile() {
+        const nameVal = document.getElementById('playerNameInput').value.trim() || '스티브';
+        const initLv = parseInt(document.getElementById('initialMathLevelSelect').value, 10) || 1;
+
+        if (!currentProfileId) {
+            // 새 캐릭터(계정) 생성
+            currentProfileId = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+            localPlayer.id = currentProfileId;
+            localPlayer.name = nameVal;
+            localPlayer.x = SPAWN_X * TILE_SIZE + TILE_SIZE / 2;
+            localPlayer.y = SPAWN_Y * TILE_SIZE + TILE_SIZE / 2;
+            camera.x = localPlayer.x;
+            camera.y = localPlayer.y;
+            localPlayer.pickaxeTier = 0;
+            localPlayer.selectedSlot = 0;
+            clickActionMode = 'mine';
+
+            Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2 });
+            Object.assign(blockInventory, { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 });
+
+            mathFlowState.level = initLv;
+            localPlayer.mathLevel = initLv;
+            mathFlowState.microGoalProgress = 0;
+            mathFlowState.buffRemainingSec = 0;
+            mathFlowState.growth = getDefaultGrowthObject(initLv);
+        } else {
+            // 기존 선택된 캐릭터에 닉네임/레벨 변경사항 반영
+            localPlayer.name = nameVal;
+            mathFlowState.level = initLv;
+            localPlayer.mathLevel = initLv;
+        }
+
+        saveCurrentProfileState();
+
+        document.getElementById('lobbyModal').classList.add('hidden');
+        gameStarted = true;
+        sfx.init();
+        ensureAreaGenerated(Math.floor(localPlayer.x / TILE_SIZE), Math.floor(localPlayer.y / TILE_SIZE), 4);
+        updateResourceUI();
+        updateFlowHud();
+        if (netRole === 'connecting') {
+            connectToGlobalWorld();
+        }
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+        addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 이어갑니다! 모든 진행 상황은 자동 저장됩니다.`, '#34d399', true);
+    }
+
+    // 기존 saveMathGrowthState 및 updateResourceUI 호출 시 현재 캐릭터 프로필도 함께 자동 저장되도록 오버라이드
+    const _origUpdateResourceUI = updateResourceUI;
+    updateResourceUI = function () {
+        _origUpdateResourceUI();
+        saveCurrentProfileState();
+    };
+
+    saveMathGrowthState = function () {
+        saveCurrentProfileState();
+    };
+
+    // 코드 업데이트 시 반영 지연이 발생하지 않는 Network-First PWA 초기화 함수
+    function initZeroDelayPWA() {
+        try {
+            // 1) icon.png & icon.ico를 사용하는 동적 Web App Manifest 생성
+            const iconPngUrl = new URL('icon.png', window.location.href).href;
+            const iconIcoUrl = new URL('icon.ico', window.location.href).href;
+            const startUrl = window.location.href.split('#')[0];
+
+            const manifestObj = {
+                name: '2D 마인크래프트 덧셈 탐험대',
+                short_name: 'MC2D 덧셈탐험',
+                description: '1,000x1,000 오픈월드 어린이 덧셈 몬스터 배틀 & 멀티플레이 건축 게임',
+                start_url: startUrl,
+                display: 'standalone',
+                orientation: 'any',
+                background_color: '#0b0f19',
+                theme_color: '#0b0f19',
+                icons: [
+                    { src: iconPngUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+                    { src: iconPngUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+                    { src: iconIcoUrl, sizes: '48x48 32x32 16x16', type: 'image/x-icon' }
+                ]
+            };
+
+            const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+            const manifestLink = document.getElementById('pwaManifestLink');
+            if (manifestLink) {
+                manifestLink.href = URL.createObjectURL(blob);
+            }
+
+            // 2) 서비스 워커 등록 (updateViaCache: 'none'으로 브라우저 HTTP 캐시 무시 & 즉시 업데이트)
+            if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+                    reg.update();
+                    window.addEventListener('focus', () => reg.update());
+                    if (reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        }
+                    });
+                }).catch(() => {});
+            }
+        } catch (e) {}
+    }
+
+    window.onload = function () {
+        // 좌클릭 기본 모드를 '채굴 전용'으로 UI 초기화
+        clickActionMode = 'mine';
+        const actionLbl = document.getElementById('actionModeLabel');
+        if (actionLbl) actionLbl.textContent = '⛏️ 좌클릭: 채굴 전용';
+
+        // 기존 입장 버튼을 다중 계정 입장 함수로 연결
+        const enterBtn = document.getElementById('btnEnterGlobalWorld');
+        if (enterBtn) {
+            enterBtn.replaceWith(enterBtn.cloneNode(true));
+            document.getElementById('btnEnterGlobalWorld').addEventListener('click', startWorldWithActiveProfile);
+        }
+
+        generateAllSprites();
+        loadPersistedDeltas();
+
+        // 저장된 캐릭터 프로필 불러오기 (최근 플레이한 캐릭터 자동 선택)
+        const profiles = loadAllProfiles();
+        const lastActiveId = localStorage.getItem(ACTIVE_PROFILE_ID_KEY);
+        const initialProfile = profiles.find(p => p.id === lastActiveId) || profiles[0] || null;
+        if (initialProfile) {
+            applyProfileToGame(initialProfile);
+        } else {
+            ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
+            updateResourceUI();
+            updateFlowHud();
+            drawRadarMinimap();
+        }
+
+        setupAccountManagerUI();
+        initZeroDelayPWA();
+
+        // 2초마다 플레이어 위치 및 상태 자동 저장 + 창 닫기 직전 저장
+        setInterval(() => {
+            if (gameStarted) saveCurrentProfileState();
+        }, 2000);
+        window.addEventListener('beforeunload', () => {
+            if (gameStarted) saveCurrentProfileState();
+        });
+
         requestAnimationFrame(gameLoop);
     };
     </script>
