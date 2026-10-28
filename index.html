@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2D 마인크래프트 온라인 - 1,000x1,000 글로벌 오픈월드</title>
+    <title>2D 마인크래프트 온라인 - 어린이 덧셈 몰입 탐험 월드 (1,000x1,000)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PeerJS for WebRTC Serverless Global World Auto-Matchmaking on GitHub Pages -->
@@ -126,71 +126,94 @@
 
     <!-- ==================== ENTRY MODAL: ZERO-CODE AUTOMATIC GLOBAL WORLD ==================== -->
     <div id="lobbyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-        <div class="mc-panel max-w-lg w-full p-6 text-center relative my-auto">
+        <div class="mc-panel max-w-xl w-full p-6 text-center relative my-auto">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-400/50 text-emerald-300 text-xs font-bold mb-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span>단일 글로벌 오픈월드 서버리스 자동 매칭 · 1,000 × 1,000 월드</span>
+                <span>어린이 덧셈 몰입 에디션 · 1,000 × 1,000 글로벌 오픈월드</span>
             </div>
-            <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-emerald-300 via-green-400 to-emerald-600 drop-shadow mb-1">
-                MINECRAFT 2D WORLD
+            <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-emerald-300 to-cyan-400 drop-shadow mb-1">
+                MINECRAFT 2D 덧셈 탐험대
             </h1>
-            <p class="text-xs sm:text-sm text-gray-300 mb-5">
-                방 코드 입력 없이 접속자 전원이 <strong>하나의 거대한 공유 월드(1,000,000 블록)</strong>에서 자동으로 만납니다!
+            <p class="text-xs sm:text-sm text-gray-300 mb-4">
+                친구들과 <strong>100만 블록 공유 월드</strong>에서 만나 마법 광석을 캐고, <strong>스스로 고른 덧셈 미션</strong>으로 초고속 곡괭이와 무지개 성을 건설해요!
             </p>
 
-            <!-- Player Customization -->
-            <div class="bg-gray-900/85 border border-gray-700 rounded-lg p-4 mb-5 text-left">
-                <div>
-                    <label class="block text-xs font-bold text-gray-300 mb-1.5">플레이어 닉네임</label>
-                    <input id="playerNameInput" type="text" maxlength="12" value="스티브" placeholder="닉네임을 입력하세요"
-                        class="w-full px-3.5 py-2.5 rounded bg-gray-800 border border-gray-600 text-white font-bold text-base focus:outline-none focus:border-emerald-400">
+            <!-- Player Customization & Initial Math Starting Comfort -->
+            <div class="bg-gray-900/85 border border-gray-700 rounded-lg p-4 mb-4 text-left space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">플레이어 닉네임</label>
+                        <input id="playerNameInput" type="text" maxlength="12" value="스티브" placeholder="닉네임을 입력하세요"
+                            class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white font-bold text-sm focus:outline-none focus:border-emerald-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-amber-300 mb-1">🎯 시작 덧셈 단계 (언제든 자동/수동 조절)</label>
+                        <select id="initialMathLevelSelect" class="w-full px-2.5 py-2 rounded bg-gray-800 border border-amber-500/60 text-white font-bold text-xs focus:outline-none">
+                            <option value="1">Lv.1 씨앗 광부 (합이 5 이하: 1+2, 2+3)</option>
+                            <option value="2">Lv.2 새싹 광부 (합이 9 이하: 4+3, 5+4)</option>
+                            <option value="3">Lv.3 열매 광부 (10이 되는 짝꿍수: 7+3, 6+4)</option>
+                            <option value="4">Lv.4 철광석 광부 (10 만들어 더하기: 8+5, 7+6)</option>
+                            <option value="5">Lv.5 황금 광부 (십몇 + 한 자리: 12+5, 14+3)</option>
+                            <option value="6">Lv.6 에메랄드 광부 (받아올림 십몇+한자리: 16+7)</option>
+                            <option value="7">Lv.7 다이아 광부 (두 자리 기초 덧셈: 14+15)</option>
+                            <option value="8">Lv.8 마스터 건축가 (두 자리 받아올림 & 세 수 덧셈)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="mt-3.5">
+                <div>
                     <label class="block text-xs font-bold text-gray-300 mb-1.5">캐릭터 옷 색상</label>
                     <div id="colorPickerRow" class="flex items-center gap-2.5 flex-wrap">
-                        <button type="button" data-color="#06b6d4" class="color-swatch w-8 h-8 rounded-full border-2 border-white ring-2 ring-emerald-400" style="background:#06b6d4"></button>
-                        <button type="button" data-color="#ef4444" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#ef4444"></button>
-                        <button type="button" data-color="#22c55e" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#22c55e"></button>
-                        <button type="button" data-color="#eab308" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#eab308"></button>
-                        <button type="button" data-color="#a855f7" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#a855f7"></button>
-                        <button type="button" data-color="#ec4899" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#ec4499"></button>
-                        <button type="button" data-color="#f97316" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-700" style="background:#f97316"></button>
+                        <button type="button" data-color="#06b6d4" class="color-swatch w-7 h-7 rounded-full border-2 border-white ring-2 ring-emerald-400" style="background:#06b6d4"></button>
+                        <button type="button" data-color="#ef4444" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#ef4444"></button>
+                        <button type="button" data-color="#22c55e" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#22c55e"></button>
+                        <button type="button" data-color="#eab308" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#eab308"></button>
+                        <button type="button" data-color="#a855f7" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#a855f7"></button>
+                        <button type="button" data-color="#ec4899" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#ec4899"></button>
+                        <button type="button" data-color="#f97316" class="color-swatch w-7 h-7 rounded-full border-2 border-gray-700" style="background:#f97316"></button>
                     </div>
                 </div>
             </div>
 
             <!-- Single Instant Auto-Join Button -->
-            <button id="btnEnterGlobalWorld" class="mc-btn mc-btn-green w-full py-4 px-5 flex items-center justify-between text-left shadow-lg">
+            <button id="btnEnterGlobalWorld" class="mc-btn mc-btn-green w-full py-3.5 px-5 flex items-center justify-between text-left shadow-lg">
                 <div>
-                    <div class="text-lg font-black flex items-center gap-2">
+                    <div class="text-base sm:text-lg font-black flex items-center gap-2">
                         <span>🌍 글로벌 공유 월드 입장하기 (자동 합류)</span>
                     </div>
                     <div class="text-xs text-emerald-100 font-normal mt-0.5">
-                        중앙 스폰 광장(X:500, Y:500)으로 즉시 입장하며 접속 중인 모든 유저와 자동 연결됩니다
+                        중앙 스폰 광장(X:500, Y:500)에서 친구들과 만나 덧셈 마법 광석을 함께 채굴해요!
                     </div>
                 </div>
                 <span class="text-2xl font-black">▶</span>
             </button>
 
-            <!-- World Specs Highlights -->
-            <div class="grid grid-cols-3 gap-2 mt-4 text-left">
-                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
-                    <div class="text-[11px] font-black text-emerald-400">🗺️ 100배 초대형 맵</div>
-                    <div class="text-[10px] text-gray-300 mt-0.5">1,000 × 1,000 타일 (총 100만 블록, 6대 바이옴)</div>
+            <!-- 5 Flow Principles Highlights -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 mt-4 text-left">
+                <div class="bg-gray-900/75 border border-gray-800 rounded p-2">
+                    <div class="text-[10px] font-black text-emerald-400">① 골디락스 밸런스</div>
+                    <div class="text-[9px] text-gray-300 mt-0.5">내 실력보다 +4~10% 아슬아슬한 맞춤 난이도</div>
                 </div>
-                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
-                    <div class="text-[11px] font-black text-amber-400">⛏️ 곡괭이 채굴/건축</div>
-                    <div class="text-[10px] text-gray-300 mt-0.5">5단계 곡괭이 진화, 광물 채굴 및 수상 다리/집 건축</div>
+                <div class="bg-gray-900/75 border border-gray-800 rounded p-2">
+                    <div class="text-[10px] font-black text-amber-400">② 1초 즉각 보상</div>
+                    <div class="text-[9px] text-gray-300 mt-0.5">초단기 미션(3문제) 달성 즉시 광속 채굴 버프</div>
                 </div>
-                <div class="bg-gray-900/70 border border-gray-800 rounded p-2.5">
-                    <div class="text-[11px] font-black text-blue-400">⚡ 코드 없는 멀티</div>
-                    <div class="text-[10px] text-gray-300 mt-0.5">입장 즉시 자동 매칭 & 친구 위치로 순간이동 지원</div>
+                <div class="bg-gray-900/75 border border-gray-800 rounded p-2">
+                    <div class="text-[10px] font-black text-cyan-400">③ 스스로 선택(자율)</div>
+                    <div class="text-[9px] text-gray-300 mt-0.5">풀고 싶을 때, 원하는 미션과 풀이 전략을 직접 결정</div>
+                </div>
+                <div class="bg-gray-900/75 border border-gray-800 rounded p-2">
+                    <div class="text-[10px] font-black text-pink-400">④ 안전한 시행착오</div>
+                    <div class="text-[9px] text-gray-300 mt-0.5">감점 없이 10칸 광물 상자 블록 힌트로 재도전</div>
+                </div>
+                <div class="bg-gray-900/75 border border-gray-800 rounded p-2 col-span-2 sm:col-span-1">
+                    <div class="text-[10px] font-black text-purple-400">⑤ 어제 vs 오늘 성장</div>
+                    <div class="text-[9px] text-gray-300 mt-0.5">과거의 나와 비교하는 성장 박물관 & 훈장(G키)</div>
                 </div>
             </div>
 
             <!-- Footer Info & GitHub Guide Button -->
-            <div class="mt-5 pt-3 border-t border-gray-700/80 flex items-center justify-between text-xs text-gray-400">
-                <span>조작: WASD 이동 / 좌클릭 채굴 / 우클릭 건설 / E 제작 / M 전체지도</span>
+            <div class="mt-4 pt-3 border-t border-gray-700/80 flex items-center justify-between text-xs text-gray-400">
+                <span>단축키: WASD 이동 / Q 덧셈마법 / G 성장일지 / E 제작 / M 지도</span>
                 <button id="btnOpenGithubGuide" class="text-emerald-400 hover:underline font-bold">
                     📘 깃허브 배포 안내
                 </button>
@@ -236,11 +259,17 @@
 
             <!-- Action Utility Buttons -->
             <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-gray-700/80">
-                <button id="btnToggleCraft" class="mc-btn mc-btn-amber px-2.5 py-1 text-xs flex items-center gap-1">
-                    <span>⚒️ 제작/업그레이드 (E)</span>
+                <button id="btnOpenMathStudio" class="mc-btn mc-btn-green px-2.5 py-1 text-xs flex items-center gap-1 animate-pulse">
+                    <span>✨ 덧셈 마법 충전 (Q)</span>
                 </button>
-                <button id="btnToggleWorldMap" class="mc-btn mc-btn-blue px-2.5 py-1 text-xs flex items-center gap-1">
-                    <span>🗺️ 전체 지도/순간이동 (M)</span>
+                <button id="btnOpenGrowthModal" class="mc-btn mc-btn-purple px-2.5 py-1 text-xs flex items-center gap-1">
+                    <span>📈 내 성장일지 (G)</span>
+                </button>
+                <button id="btnToggleCraft" class="mc-btn mc-btn-amber px-2.5 py-1 text-xs flex items-center gap-1">
+                    <span>⚒️ 제작 (E)</span>
+                </button>
+                <button id="btnToggleWorldMap" class="mc-btn mc-btn-blue px-2 py-1 text-xs flex items-center gap-1">
+                    <span>🗺️ 지도 (M)</span>
                 </button>
                 <button id="btnToggleActionMode" class="mc-btn px-2 py-1 text-xs flex items-center gap-1" title="좌클릭 동작 전환">
                     <span id="actionModeLabel">🖱️ 좌:채굴/우:건설</span>
@@ -251,6 +280,47 @@
                 <button id="btnSoundToggle" class="mc-btn px-2 py-1 text-xs" title="효과음 켜기/끄기">
                     🔊
                 </button>
+            </div>
+        </div>
+
+        <!-- FLOW HUD: ① GOLDILOCKS ZONE + ② MICRO-GOAL PROGRESS + ③ AUTONOMY SWITCH -->
+        <div class="mc-panel p-2.5 pointer-events-auto border-2 border-emerald-500/60 bg-gray-950/90">
+            <div class="flex items-center justify-between gap-2 mb-1">
+                <div class="flex items-center gap-1.5">
+                    <span id="mathLevelBadgeHud" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-[11px] font-black">
+                        Lv.1 씨앗 광부
+                    </span>
+                    <span id="goldilocksZoneBadge" class="text-[11px] font-bold text-emerald-300">
+                        🎯 골디락스 최적 몰입 (+6% 도전)
+                    </span>
+                </div>
+                <button id="btnChangeMicroGoal" class="text-[10px] font-bold text-cyan-300 hover:underline">
+                    🎯 미션 바꾸기(자율)
+                </button>
+            </div>
+
+            <!-- ② Micro-goal Progress Bar & Pips -->
+            <div class="bg-gray-900/90 rounded px-2.5 py-1.5 border border-gray-700 flex items-center justify-between gap-2">
+                <div class="truncate">
+                    <div class="text-[10px] text-gray-400 font-bold">⚡ 나의 초단기 미션 (즉각 보상)</div>
+                    <div id="microGoalTitleHud" class="text-xs font-black text-white truncate">
+                        덧셈 마법 3번 성공 → 💎다이아x4 + 광속버프
+                    </div>
+                </div>
+                <div id="microGoalPipsHud" class="flex items-center gap-1 shrink-0">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Active Speed Boost Timer Bar (Visible when buff active) -->
+            <div id="mathBuffBarContainer" class="hidden mt-1.5 bg-amber-950/90 border border-amber-400 rounded px-2 py-1">
+                <div class="flex justify-between text-[10px] font-black text-amber-300">
+                    <span>⚡ 번개 곡괭이 채굴 2.5배 버프 가동 중!</span>
+                    <span id="mathBuffTimerText">30초</span>
+                </div>
+                <div class="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden mt-0.5">
+                    <div id="mathBuffProgressFill" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-full w-full transition-all"></div>
+                </div>
             </div>
         </div>
 
@@ -403,6 +473,196 @@
 
             <div id="craftRecipeList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[62vh] overflow-y-auto pr-1">
                 <!-- Dynamically populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 🧙‍♂️ CHILDREN'S ADDITION FLOW STUDIO MODAL (PRESS Q OR MINE MAGIC ORE) ==================== -->
+    <div id="mathModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+        <div class="mc-panel max-w-2xl w-full p-4 sm:p-6 my-auto border-2 border-emerald-400 relative">
+            <!-- Header: Level, Goldilocks Flow Gauge & Autonomy Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-700">
+                <div class="flex items-center gap-2">
+                    <span id="modalMathLevelBadge" class="px-2.5 py-1 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-black">
+                        Lv.1 씨앗 광부
+                    </span>
+                    <div>
+                        <h2 id="mathModalContextTitle" class="text-base sm:text-lg font-black text-emerald-300">
+                            ✨ 마법 크리스탈 덧셈 에너지 충전소
+                        </h2>
+                        <div id="modalGoldilocksStatus" class="text-[11px] text-cyan-300 font-bold">
+                            🧠 골디락스 밸런스: 내 실력에 딱 맞는 +6% 도전 구간이에요!
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <!-- Autonomy: Child can freely adjust difficulty up/down anytime -->
+                    <button id="btnMathEasier" class="mc-btn px-2 py-1 text-[11px]" title="내가 직접 한 단계 쉬운 문제로 바꾸기">
+                        🔽 조금 쉽게
+                    </button>
+                    <button id="btnMathHarder" class="mc-btn px-2 py-1 text-[11px]" title="내가 직접 한 단계 어려운 문제에 도전하기">
+                        🔼 조금 어렵게
+                    </button>
+                    <button id="btnCloseMathModal" class="mc-btn px-2.5 py-1 text-xs">
+                        나중에 풀기 (ESC)
+                    </button>
+                </div>
+            </div>
+
+            <!-- ③ AUTONOMY BAR: Choose Micro-Goal & Choose Solving Strategy -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                <!-- Choose Micro-Goal (Autonomy of Goal) -->
+                <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-2.5">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-amber-300 mb-1">
+                        <span>🎯 내가 고르는 오늘의 초단기 미션 (3문제)</span>
+                        <span id="modalMicroGoalCounter" class="text-emerald-400 font-black">0 / 3 달성</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1">
+                        <button type="button" data-goal="speed" class="goal-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-emerald-400 bg-emerald-950/80 text-emerald-200">
+                            ⚡ 광속채굴+다이아
+                        </button>
+                        <button type="button" data-goal="rainbow" class="goal-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-gray-700 bg-gray-800 text-gray-300">
+                            🌈 무지개블록x15
+                        </button>
+                        <button type="button" data-goal="gold" class="goal-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-gray-700 bg-gray-800 text-gray-300">
+                            🥇 황금보물+철광석
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Choose Solving Strategy (Autonomy of Method) -->
+                <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-2.5">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-cyan-300 mb-1">
+                        <span>🧭 내가 선택하는 풀이 전략</span>
+                        <span id="strategyBonusBadge" class="text-[10px] text-amber-300">블록 상자 가이드 켜짐</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1">
+                        <button type="button" data-strategy="tenframe" class="strategy-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-cyan-400 bg-cyan-950/80 text-cyan-200">
+                            🧱 10칸 상자 보기
+                        </button>
+                        <button type="button" data-strategy="make10" class="strategy-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-gray-700 bg-gray-800 text-gray-300">
+                            🔟 10 만들어 풀기
+                        </button>
+                        <button type="button" data-strategy="mental" class="strategy-select-btn px-1.5 py-1 rounded text-[10px] font-bold border border-gray-700 bg-gray-800 text-gray-300">
+                            🚀 암산 도전(+50%)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN ADDITION QUESTION DISPLAY -->
+            <div class="bg-gradient-to-b from-gray-900 to-gray-950 border-2 border-gray-700 rounded-xl p-4 text-center mb-3 relative">
+                <div id="questionStoryPrompt" class="text-xs text-emerald-300 font-bold mb-1">
+                    ⛏️ 첫 번째 광물 상자와 두 번째 광물 상자를 합치면 모두 몇 개일까요?
+                </div>
+                <div id="mathEquationDisplay" class="text-3xl sm:text-5xl font-black tracking-wider text-white my-2 font-mono">
+                    8 + 5 = <span id="answerSlotDisplay" class="inline-block min-w-[64px] px-3 py-0.5 rounded-lg bg-amber-500/20 border-2 border-amber-400 text-amber-300">?</span>
+                </div>
+
+                <!-- Step-by-step Make-10 Decomposition Hint Banner -->
+                <div id="make10DecompositionBanner" class="hidden mt-2 inline-block px-3 py-1 rounded-full bg-indigo-950/90 border border-indigo-400 text-xs text-indigo-200 font-bold">
+                    💡 10 만들기 전략: 8에 <span class="text-amber-300 font-black">2</span>를 먼저 더해 <span class="text-emerald-300 font-black">10</span>을 만들고, 남은 <span class="text-cyan-300 font-black">3</span>을 더해요! (10 + 3)
+                </div>
+
+                <!-- INTERACTIVE MINECRAFT 10-FRAME BLOCK VISUALIZER (10칸 광물 상자) -->
+                <div id="tenFrameVisualizerWrap" class="mt-3 pt-3 border-t border-gray-800 flex flex-col items-center">
+                    <div class="flex items-center justify-between w-full max-w-md mb-1.5 text-[11px] text-gray-300 font-bold">
+                        <span>📦 마인크래프트 10칸 광물 상자 (한 상자에 10개씩 들어가요)</span>
+                        <button id="btnAnimateMake10" type="button" class="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black shadow">
+                            ✨ 10칸 채우기 마법 이동 보기
+                        </button>
+                    </div>
+                    <canvas id="tenFrameCanvas" width="440" height="115" class="w-full max-w-md h-auto rounded border border-gray-700 bg-gray-950"></canvas>
+                </div>
+            </div>
+
+            <!-- ④ SAFE FAILURE & IMMEDIATE PROCESS FEEDBACK BANNER -->
+            <div id="safeFeedbackBanner" class="mb-3 px-3.5 py-2.5 rounded-lg bg-gray-900/90 border border-gray-700 text-xs sm:text-sm font-bold text-gray-200 flex items-center justify-between gap-2">
+                <span id="safeFeedbackText">👇 아래 숫자 블록을 고르거나 직접 숫자를 눌러 마법 에너지를 충전해 보세요!</span>
+                <button id="btnNextProblem" class="hidden mc-btn mc-btn-green px-3 py-1.5 text-xs shrink-0">
+                    다음 문제 도전 ▶
+                </button>
+            </div>
+
+            <!-- ANSWER CHOICES (6 Smart Choices + Direct Number Pad Toggle) -->
+            <div id="answerChoicesGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+                <!-- Populated dynamically with 6 button choices -->
+            </div>
+
+            <!-- Footer: Autonomy Trigger Mode Selector -->
+            <div class="pt-2.5 border-t border-gray-800 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
+                <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-gray-300">⚙️ 채굴 중 문제 등장 방식(내 마음대로 설정):</span>
+                    <select id="triggerModeSelect" class="px-2 py-1 rounded bg-gray-800 border border-gray-600 text-white font-bold text-[11px]">
+                        <option value="magic_only">💎 마법 크리스탈 광석 캘 때만 등장 (기본·추천)</option>
+                        <option value="all_ores">⚡ 철/금/다이아 광석 캘 때도 보너스 찬스 등장</option>
+                        <option value="manual_only">🎮 채굴 중엔 안 뜨고 내가 Q키를 누를 때만 풀기</option>
+                    </select>
+                </div>
+                <button id="btnOpenGrowthFromMath" class="text-purple-300 hover:underline font-bold">
+                    📈 어제의 나 vs 오늘의 나 성장 보기 →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ⑤ VISIBLE GROWTH MUSEUM MODAL (PRESS G: YESTERDAY VS TODAY) ==================== -->
+    <div id="growthModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+        <div class="mc-panel max-w-2xl w-full p-5 my-auto border-2 border-purple-400">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-700">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-purple-300 flex items-center gap-2">
+                        <span>📈 나의 덧셈 성장 박물관 (어제의 나 vs 오늘의 나)</span>
+                    </h2>
+                    <p class="text-xs text-gray-300">남들과 비교하지 않고, 처음 시작할 때의 나보다 오늘 얼마나 더 자랐는지 눈으로 확인해요!</p>
+                </div>
+                <button id="btnCloseGrowthModal" class="mc-btn px-3 py-1 text-xs">닫기 (G)</button>
+            </div>
+
+            <!-- Before vs Now Comparison Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-3.5">
+                    <div class="text-xs font-black text-gray-400 mb-1">🌱 처음 출발할 때의 나 (첫 기록)</div>
+                    <div id="growthFirstLevel" class="text-base font-black text-white">Lv.1 씨앗 광부</div>
+                    <div id="growthFirstEquation" class="text-xs text-gray-300 mt-1">처음 성공한 덧셈: <span class="font-mono text-amber-300">기록 대기 중</span></div>
+                    <div id="growthFirstSpeed" class="text-xs text-gray-400 mt-0.5">초기 평균 풀이 시간: -</div>
+                </div>
+                <div class="bg-emerald-950/60 border-2 border-emerald-400 rounded-lg p-3.5">
+                    <div class="text-xs font-black text-emerald-300 mb-1">🚀 지금의 성장한 나 (현재 기록)</div>
+                    <div id="growthCurrentLevel" class="text-base font-black text-emerald-200">Lv.1 씨앗 광부</div>
+                    <div id="growthBestEquation" class="text-xs text-gray-100 mt-1">최근 정복한 최고 난이도: <span class="font-mono text-amber-300 font-bold">도전 중!</span></div>
+                    <div id="growthCurrentSpeed" class="text-xs text-emerald-300 mt-0.5">최근 평균 풀이 속도: - (누적 해결: 0문제)</div>
+                </div>
+            </div>
+
+            <!-- Visual Growth Trajectory Graph & Overcome History -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-3 flex flex-col items-center">
+                    <div class="w-full text-xs font-black text-cyan-300 mb-1.5 flex justify-between">
+                        <span>📊 나의 실력 계단 성장 그래프</span>
+                        <span id="growthTotalSolvedLabel" class="text-white">총 0문제 해결</span>
+                    </div>
+                    <canvas id="growthChartCanvas" width="280" height="130" class="w-full h-32 rounded bg-gray-950 border border-gray-800"></canvas>
+                </div>
+
+                <!-- Overcome Problems Hall of Fame (Safe Failure -> Mastery) -->
+                <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-3 flex flex-col justify-between">
+                    <div>
+                        <div class="text-xs font-black text-amber-300 mb-1">🌟 힌트와 재도전으로 마침내 정복한 문제들</div>
+                        <p class="text-[11px] text-gray-400 mb-2">처음엔 헷갈렸지만 포기하지 않고 10칸 상자 전략으로 스스로 풀어낸 자랑스러운 기록이에요!</p>
+                        <div id="overcomeProblemsList" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                            <span class="text-xs text-gray-500">아직 재도전 정복 기록이 없어요. 어려운 문제도 안심하고 도전해 보세요!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8 Unlockable Miner Math Badges -->
+            <div class="bg-gray-900/90 border border-gray-700 rounded-lg p-3">
+                <div class="text-xs font-black text-yellow-300 mb-2">🏅 마인크래프트 덧셈 마스터 훈장 도감</div>
+                <div id="badgeCollectionGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <!-- Populated by JS -->
+                </div>
             </div>
         </div>
     </div>
@@ -568,6 +828,46 @@
                 });
             } catch (e) {}
         }
+        playMathSuccess() {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.065);
+                    gain.gain.setValueAtTime(0.18, now + idx * 0.065);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.065 + 0.22);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.065);
+                    osc.stop(now + idx * 0.065 + 0.22);
+                });
+            } catch (e) {}
+        }
+        playGentleHint() {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [392.0, 440.0].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                    gain.gain.setValueAtTime(0.12, now + idx * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.09);
+                    osc.stop(now + idx * 0.09 + 0.18);
+                });
+            } catch (e) {}
+        }
     }
     const sfx = new SoundFX();
 
@@ -630,52 +930,57 @@
         GOLD_BLOCK: 15,
         PINE_TREE: 16,
         CACTUS: 17,
-        OBSIDIAN: 18
+        OBSIDIAN: 18,
+        MAGIC_CRYSTAL: 19,
+        RAINBOW_BLOCK: 20
     };
 
     // Detailed Block Metadata (Hardness, required pickaxe tier, drops)
     const BLOCK_INFO = {
-        [BLOCK.AIR]:          { name: '빈 공간', hp: 0, solid: false, minTier: 0 },
-        [BLOCK.TREE]:         { name: '참나무 (원목 획득)', hp: 55, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#15803d', particleColor: '#854d0e' },
-        [BLOCK.PINE_TREE]:    { name: '설원 가문비나무 (원목 획득)', hp: 60, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#065f46', particleColor: '#064e3b' },
-        [BLOCK.CACTUS]:       { name: '사막 선인장 (원목 섬유 획득)', hp: 45, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#16a34a', particleColor: '#4ade80' },
-        [BLOCK.STONE]:        { name: '바위 블록 (조약돌 획득)', hp: 85, solid: true, minTier: 0, dropType: 'res', dropKey: 'cobble', dropCount: 2, dropLabel: '조약돌', sfx: 'stone', minColor: '#9ca3af', particleColor: '#9ca3af' },
-        [BLOCK.COAL_ORE]:     { name: '석탄 광석', hp: 110, solid: true, minTier: 0, dropType: 'res', dropKey: 'coal', dropCount: 2, dropLabel: '석탄', sfx: 'ore', minColor: '#374151', particleColor: '#1f2937' },
-        [BLOCK.IRON_ORE]:     { name: '철 광석 (돌 곡괭이 이상)', hp: 140, solid: true, minTier: 1, dropType: 'res', dropKey: 'iron', dropCount: 2, dropLabel: '철광석', sfx: 'ore', minColor: '#fdba74', particleColor: '#fed7aa' },
-        [BLOCK.GOLD_ORE]:     { name: '금 광석 (철 곡괭이 이상)', hp: 175, solid: true, minTier: 2, dropType: 'res', dropKey: 'gold', dropCount: 2, dropLabel: '금광석', sfx: 'ore', minColor: '#facc15', particleColor: '#fef08a' },
-        [BLOCK.DIAMOND_ORE]:  { name: '다이아몬드 광석 (철 곡괭이 이상)', hp: 220, solid: true, minTier: 2, dropType: 'res', dropKey: 'diamond', dropCount: 1, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#22d3ee', particleColor: '#67e8f9' },
-        [BLOCK.OBSIDIAN]:     { name: '흑요석 (다이아 곡괭이 전용)', hp: 320, solid: true, minTier: 4, dropType: 'res', dropKey: 'obsidian', dropCount: 1, dropLabel: '흑요석', sfx: 'ore', minColor: '#581c87', particleColor: '#a855f7' },
-        [BLOCK.PLANKS_WALL]:  { name: '나무 판자 벽', hp: 65, solid: true, minTier: 0, dropType: 'item', dropKey: 'planks', dropCount: 1, dropLabel: '나무 판자', sfx: 'wood', minColor: '#d97706', particleColor: '#b45309' },
-        [BLOCK.COBBLE_WALL]:  { name: '조약돌 성벽', hp: 105, solid: true, minTier: 0, dropType: 'item', dropKey: 'cobbleWall', dropCount: 1, dropLabel: '조약돌 벽', sfx: 'stone', minColor: '#6b7280', particleColor: '#6b7280' },
-        [BLOCK.STONE_BRICKS]: { name: '석재 벽돌 블록', hp: 125, solid: true, minTier: 0, dropType: 'item', dropKey: 'bricks', dropCount: 1, dropLabel: '석재 벽돌', sfx: 'stone', minColor: '#94a3b8', particleColor: '#cbd5e1' },
-        [BLOCK.GLASS]:        { name: '유리 블록', hp: 35, solid: true, minTier: 0, dropType: 'item', dropKey: 'glass', dropCount: 1, dropLabel: '유리 블록', sfx: 'ore', minColor: '#bae6fd', particleColor: '#e0f2fe' },
-        [BLOCK.TORCH]:        { name: '횃불 (광원)', hp: 15, solid: false, minTier: 0, light: 215, dropType: 'item', dropKey: 'torch', dropCount: 1, dropLabel: '횃불', sfx: 'wood', minColor: '#fbbf24', particleColor: '#f59e0b' },
-        [BLOCK.CRAFT_TABLE]:  { name: '제작대 (우클릭 또는 E키)', hp: 70, solid: true, minTier: 0, dropType: 'item', dropKey: 'craftTable', dropCount: 1, dropLabel: '제작대', sfx: 'wood', minColor: '#b45309', particleColor: '#92400e' },
-        [BLOCK.DOOR_CLOSED]:  { name: '나무 문 (우클릭 개폐)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
-        [BLOCK.DOOR_OPEN]:    { name: '열린 나무 문', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
-        [BLOCK.GOLD_BLOCK]:   { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde047' }
+        [BLOCK.AIR]:           { name: '빈 공간', hp: 0, solid: false, minTier: 0 },
+        [BLOCK.TREE]:          { name: '참나무 (원목 획득)', hp: 55, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#15803d', particleColor: '#854d0e' },
+        [BLOCK.PINE_TREE]:     { name: '설원 가문비나무 (원목 획득)', hp: 60, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#065f46', particleColor: '#064e3b' },
+        [BLOCK.CACTUS]:        { name: '사막 선인장 (원목 섬유 획득)', hp: 45, solid: true, minTier: 0, dropType: 'res', dropKey: 'wood', dropCount: 2, dropLabel: '원목', sfx: 'wood', minColor: '#16a34a', particleColor: '#4ade80' },
+        [BLOCK.STONE]:         { name: '바위 블록 (조약돌 획득)', hp: 85, solid: true, minTier: 0, dropType: 'res', dropKey: 'cobble', dropCount: 2, dropLabel: '조약돌', sfx: 'stone', minColor: '#9ca3af', particleColor: '#9ca3af' },
+        [BLOCK.COAL_ORE]:      { name: '석탄 광석', hp: 110, solid: true, minTier: 0, dropType: 'res', dropKey: 'coal', dropCount: 2, dropLabel: '석탄', sfx: 'ore', minColor: '#374151', particleColor: '#1f2937' },
+        [BLOCK.IRON_ORE]:      { name: '철 광석 (돌 곡괭이 이상)', hp: 140, solid: true, minTier: 1, dropType: 'res', dropKey: 'iron', dropCount: 2, dropLabel: '철광석', sfx: 'ore', minColor: '#fdba74', particleColor: '#fed7aa' },
+        [BLOCK.GOLD_ORE]:      { name: '금 광석 (철 곡괭이 이상)', hp: 175, solid: true, minTier: 2, dropType: 'res', dropKey: 'gold', dropCount: 2, dropLabel: '금광석', sfx: 'ore', minColor: '#facc15', particleColor: '#fef08a' },
+        [BLOCK.DIAMOND_ORE]:   { name: '다이아몬드 광석 (철 곡괭이 이상)', hp: 220, solid: true, minTier: 2, dropType: 'res', dropKey: 'diamond', dropCount: 1, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#22d3ee', particleColor: '#67e8f9' },
+        [BLOCK.OBSIDIAN]:      { name: '흑요석 (다이아 곡괭이 이상)', hp: 320, solid: true, minTier: 4, dropType: 'res', dropKey: 'obsidian', dropCount: 1, dropLabel: '흑요석', sfx: 'ore', minColor: '#581c87', particleColor: '#a855f7' },
+        [BLOCK.MAGIC_CRYSTAL]: { name: '✨ 덧셈 마법 크리스탈 광석 (모든 곡괭이 채굴 가능! 보석 대량 획득)', hp: 75, solid: true, minTier: 0, light: 170, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '마법 다이아몬드', sfx: 'ore', minColor: '#f472b6', particleColor: '#f472b6' },
+        [BLOCK.PLANKS_WALL]:   { name: '나무 판자 벽', hp: 65, solid: true, minTier: 0, dropType: 'item', dropKey: 'planks', dropCount: 1, dropLabel: '나무 판자', sfx: 'wood', minColor: '#d97706', particleColor: '#b45309' },
+        [BLOCK.COBBLE_WALL]:   { name: '조약돌 성벽', hp: 105, solid: true, minTier: 0, dropType: 'item', dropKey: 'cobbleWall', dropCount: 1, dropLabel: '조약돌 벽', sfx: 'stone', minColor: '#6b7280', particleColor: '#6b7280' },
+        [BLOCK.STONE_BRICKS]:  { name: '석재 벽돌 블록', hp: 125, solid: true, minTier: 0, dropType: 'item', dropKey: 'bricks', dropCount: 1, dropLabel: '석재 벽돌', sfx: 'stone', minColor: '#94a3b8', particleColor: '#cbd5e1' },
+        [BLOCK.GLASS]:         { name: '유리 블록', hp: 35, solid: true, minTier: 0, dropType: 'item', dropKey: 'glass', dropCount: 1, dropLabel: '유리 블록', sfx: 'ore', minColor: '#bae6fd', particleColor: '#e0f2fe' },
+        [BLOCK.TORCH]:         { name: '횃불 (광원)', hp: 15, solid: false, minTier: 0, light: 215, dropType: 'item', dropKey: 'torch', dropCount: 1, dropLabel: '횃불', sfx: 'wood', minColor: '#fbbf24', particleColor: '#f59e0b' },
+        [BLOCK.CRAFT_TABLE]:   { name: '제작대 (우클릭 또는 E키)', hp: 70, solid: true, minTier: 0, dropType: 'item', dropKey: 'craftTable', dropCount: 1, dropLabel: '제작대', sfx: 'wood', minColor: '#b45309', particleColor: '#92400e' },
+        [BLOCK.DOOR_CLOSED]:   { name: '나무 문 (우클릭 개폐)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.DOOR_OPEN]:     { name: '열린 나무 문', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.GOLD_BLOCK]:    { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde047' },
+        [BLOCK.RAINBOW_BLOCK]: { name: '🌈 무지개 덧셈 마스터 블록 (발광 트로피 건축 블록)', hp: 90, solid: true, minTier: 0, light: 190, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 1, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ec4899', particleColor: '#f472b6' }
     };
 
-    // 5 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond)
+    // 6 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond -> Math Master Rainbow Pickaxe)
     const PICKAXE_TIERS = [
-        { level: 0, name: '나무 곡괭이',   speed: 1.0,  color: '#a16207', headColor: '#b45309' },
-        { level: 1, name: '돌 곡괭이',     speed: 1.8,  color: '#9ca3af', headColor: '#9ca3af' },
-        { level: 2, name: '철 곡괭이',     speed: 2.8,  color: '#e5e7eb', headColor: '#f3f4f6' },
-        { level: 3, name: '황금 곡괭이',   speed: 4.0,  color: '#eab308', headColor: '#facc15' },
-        { level: 4, name: '다이아 곡괭이', speed: 5.5,  color: '#22d3ee', headColor: '#67e8f9' }
+        { level: 0, name: '나무 곡괭이',         speed: 1.0,  color: '#a16207', headColor: '#b45309' },
+        { level: 1, name: '돌 곡괭이',           speed: 1.8,  color: '#9ca3af', headColor: '#9ca3af' },
+        { level: 2, name: '철 곡괭이',           speed: 2.8,  color: '#e5e7eb', headColor: '#f3f4f6' },
+        { level: 3, name: '황금 곡괭이',         speed: 4.0,  color: '#eab308', headColor: '#facc15' },
+        { level: 4, name: '다이아 곡괭이',       speed: 5.5,  color: '#22d3ee', headColor: '#67e8f9' },
+        { level: 5, name: '✨ 덧셈 마스터 곡괭이', speed: 8.0,  color: '#f472b6', headColor: '#f472b6' }
     ];
 
     // 9 Hotbar Slots
     const HOTBAR_SLOTS = [
-        { slot: 0, key: 'pickaxe',    type: 'tool',  name: '곡괭이 (채굴 도구)' },
-        { slot: 1, key: 'planks',     type: 'block', blockId: BLOCK.PLANKS_WALL, name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
-        { slot: 2, key: 'cobbleWall', type: 'block', blockId: BLOCK.COBBLE_WALL, name: '조약돌 성벽 (물/용암 위: 돌다리 / 땅: 성벽)' },
-        { slot: 3, key: 'bricks',     type: 'block', blockId: BLOCK.STONE_BRICKS, name: '석재 벽돌 블록' },
-        { slot: 4, key: 'glass',      type: 'block', blockId: BLOCK.GLASS,       name: '유리 블록' },
-        { slot: 5, key: 'torch',      type: 'block', blockId: BLOCK.TORCH,       name: '횃불 (밤 조명)' },
-        { slot: 6, key: 'door',       type: 'block', blockId: BLOCK.DOOR_CLOSED, name: '나무 문 (출입문)' },
-        { slot: 7, key: 'craftTable', type: 'block', blockId: BLOCK.CRAFT_TABLE, name: '제작대 블록' },
-        { slot: 8, key: 'goldBlock',  type: 'block', blockId: BLOCK.GOLD_BLOCK,  name: '황금 보물 블록' }
+        { slot: 0, key: 'pickaxe',      type: 'tool',  name: '곡괭이 (채굴 도구)' },
+        { slot: 1, key: 'planks',       type: 'block', blockId: BLOCK.PLANKS_WALL,   name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
+        { slot: 2, key: 'cobbleWall',   type: 'block', blockId: BLOCK.COBBLE_WALL,   name: '조약돌 성벽 (물/용암 위: 돌다리 / 땅: 성벽)' },
+        { slot: 3, key: 'bricks',       type: 'block', blockId: BLOCK.STONE_BRICKS,  name: '석재 벽돌 블록' },
+        { slot: 4, key: 'glass',        type: 'block', blockId: BLOCK.GLASS,         name: '유리 블록' },
+        { slot: 5, key: 'torch',        type: 'block', blockId: BLOCK.TORCH,         name: '횃불 (밤 조명)' },
+        { slot: 6, key: 'door',         type: 'block', blockId: BLOCK.DOOR_CLOSED,   name: '나무 문 (출입문)' },
+        { slot: 7, key: 'goldBlock',    type: 'block', blockId: BLOCK.GOLD_BLOCK,    name: '황금 보물 블록' },
+        { slot: 8, key: 'rainbowBlock', type: 'block', blockId: BLOCK.RAINBOW_BLOCK, name: '🌈 무지개 덧셈 마스터 블록' }
     ];
 
     // Crafting Recipes
@@ -1100,6 +1405,48 @@
             tileSprites['block_' + BLOCK.GOLD_BLOCK] = c;
         }
 
+        // ✨ Magic Crystal Ore Sprite (Glowing Magenta/Cyan Addition Crystal)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#311042';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#581c87';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 6);
+            const crystals = [
+                [8, 8, 10, 14, '#f472b6'],
+                [26, 6, 12, 16, '#22d3ee'],
+                [16, 22, 14, 16, '#e879f9'],
+                [6, 28, 10, 10, '#38bdf8'],
+                [32, 26, 10, 12, '#facc15']
+            ];
+            crystals.forEach(([x, y, w, h, col]) => {
+                g.fillStyle = col;
+                g.fillRect(x, y, w, h);
+                g.fillStyle = '#ffffff';
+                g.fillRect(x + 2, y + 2, 4, 4);
+            });
+            g.strokeStyle = '#f472b6';
+            g.lineWidth = 2;
+            g.strokeRect(1, 1, TILE_SIZE - 2, TILE_SIZE - 2);
+            tileSprites['block_' + BLOCK.MAGIC_CRYSTAL] = c;
+        }
+
+        // 🌈 Rainbow Math Trophy Block Sprite
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            const stripes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7'];
+            for (let i = 0; i < 6; i++) {
+                g.fillStyle = stripes[i];
+                g.fillRect(2, 2 + i * 7, TILE_SIZE - 4, 7);
+            }
+            g.strokeStyle = '#fef08a';
+            g.lineWidth = 3;
+            g.strokeRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            tileSprites['block_' + BLOCK.RAINBOW_BLOCK] = c;
+        }
+
         // 10 Stages of Block Mining Cracks
         for (let stage = 0; stage < 10; stage++) {
             const c = createOffscreenCanvas();
@@ -1226,13 +1573,16 @@
                         world.blocks[i] = BLOCK.CRAFT_TABLE;
                     } else if (x === SPAWN_X - 2 && y === SPAWN_Y) {
                         world.blocks[i] = BLOCK.GOLD_BLOCK;
+                    } else if ((x === SPAWN_X && y === SPAWN_Y - 4) || (x === SPAWN_X && y === SPAWN_Y + 4) ||
+                               (x === SPAWN_X - 4 && y === SPAWN_Y) || (x === SPAWN_X + 4 && y === SPAWN_Y)) {
+                        world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
                     }
                     continue;
                 }
                 if (distSpawn < 15) {
                     world.floors[i] = FLOOR.GRASS;
                     const r = fastHash(x, y, GLOBAL_WORLD_SEED + 9);
-                    world.blocks[i] = r < 0.08 ? BLOCK.TREE : BLOCK.AIR;
+                    world.blocks[i] = r < 0.06 ? BLOCK.MAGIC_CRYSTAL : (r < 0.13 ? BLOCK.TREE : BLOCK.AIR);
                     continue;
                 }
 
@@ -1255,12 +1605,14 @@
                 if (y < 270 + smoothNoise(x, y, 0.05, 99) * 35) {
                     world.floors[i] = elev > 0.65 ? FLOOR.STONE_GROUND : FLOOR.SNOW;
                     if (elev > 0.65) {
-                        if (detail < 0.07) world.blocks[i] = BLOCK.DIAMOND_ORE;
-                        else if (detail < 0.22) world.blocks[i] = BLOCK.IRON_ORE;
+                        if (detail < 0.04) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                        else if (detail < 0.09) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                        else if (detail < 0.24) world.blocks[i] = BLOCK.IRON_ORE;
                         else if (detail < 0.45) world.blocks[i] = BLOCK.COAL_ORE;
                         else if (detail < 0.78) world.blocks[i] = BLOCK.STONE;
                     } else {
-                        if (detail < 0.12) world.blocks[i] = BLOCK.PINE_TREE;
+                        if (detail < 0.025) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                        else if (detail < 0.12) world.blocks[i] = BLOCK.PINE_TREE;
                         else if (detail < 0.15) world.blocks[i] = BLOCK.STONE;
                     }
                     continue;
@@ -1269,9 +1621,10 @@
                 // Biome 2: SE Golden Desert (x > 640, y > 600)
                 if (x > 640 - smoothNoise(x, y, 0.04, 55) * 40 && y > 600) {
                     world.floors[i] = FLOOR.SAND;
-                    if (detail < 0.07) world.blocks[i] = BLOCK.CACTUS;
-                    else if (detail < 0.11) world.blocks[i] = BLOCK.GOLD_ORE;
-                    else if (detail < 0.15) world.blocks[i] = BLOCK.STONE;
+                    if (detail < 0.03) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                    else if (detail < 0.08) world.blocks[i] = BLOCK.CACTUS;
+                    else if (detail < 0.12) world.blocks[i] = BLOCK.GOLD_ORE;
+                    else if (detail < 0.16) world.blocks[i] = BLOCK.STONE;
                     continue;
                 }
 
@@ -1282,8 +1635,9 @@
                         world.blocks[i] = BLOCK.AIR;
                     } else {
                         world.floors[i] = FLOOR.BASALT;
-                        if (detail < 0.06) world.blocks[i] = BLOCK.OBSIDIAN;
-                        else if (detail < 0.14) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                        if (detail < 0.04) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                        else if (detail < 0.08) world.blocks[i] = BLOCK.OBSIDIAN;
+                        else if (detail < 0.15) world.blocks[i] = BLOCK.DIAMOND_ORE;
                         else if (detail < 0.26) world.blocks[i] = BLOCK.GOLD_ORE;
                         else if (detail < 0.48) world.blocks[i] = BLOCK.STONE;
                     }
@@ -1293,9 +1647,10 @@
                 // Biome 4: Rocky Mountains & Ore Ridges
                 if (elev > 0.63) {
                     world.floors[i] = FLOOR.STONE_GROUND;
-                    if (detail < 0.06) world.blocks[i] = BLOCK.DIAMOND_ORE;
-                    else if (detail < 0.16) world.blocks[i] = BLOCK.GOLD_ORE;
-                    else if (detail < 0.34) world.blocks[i] = BLOCK.IRON_ORE;
+                    if (detail < 0.045) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                    else if (detail < 0.09) world.blocks[i] = BLOCK.DIAMOND_ORE;
+                    else if (detail < 0.18) world.blocks[i] = BLOCK.GOLD_ORE;
+                    else if (detail < 0.35) world.blocks[i] = BLOCK.IRON_ORE;
                     else if (detail < 0.54) world.blocks[i] = BLOCK.COAL_ORE;
                     else if (detail < 0.82) world.blocks[i] = BLOCK.STONE;
                     continue;
@@ -1310,7 +1665,8 @@
 
                 // Biome 5: Lush Forest & Plains
                 world.floors[i] = FLOOR.GRASS;
-                if (detail < 0.13) world.blocks[i] = BLOCK.TREE;
+                if (detail < 0.028) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                else if (detail < 0.13) world.blocks[i] = BLOCK.TREE;
                 else if (detail < 0.17) world.blocks[i] = BLOCK.STONE;
                 else if (detail < 0.195) world.blocks[i] = BLOCK.COAL_ORE;
                 else if (detail < 0.21) world.blocks[i] = BLOCK.IRON_ORE;
@@ -1390,6 +1746,7 @@
         y: SPAWN_Y * TILE_SIZE + TILE_SIZE / 2,
         angle: 0,
         pickaxeTier: 0,
+        mathLevel: 1,
         selectedSlot: 0,
         isMining: false,
         swingProgress: 0,
@@ -1416,12 +1773,9 @@
         torch: 8,
         door: 2,
         craftTable: 1,
-        goldBlock: 1
+        goldBlock: 1,
+        rainbowBlock: 6
     };
-
-    const remotePlayers = new Map();
-    const particles = [];
-    const floatingTexts = [];
 
     const miningState = {
         tx: -1,
@@ -1431,26 +1785,690 @@
         hitSoundTimer: 0
     };
 
+    let clickActionMode = 'both'; // 'both' | 'mine' | 'build'
     let isNight = false;
     let darknessAlpha = 0;
-    let clickActionMode = 'both';
 
-    // ==================== 6. ZERO-CODE AUTOMATIC GLOBAL WORLD NETWORKING ====================
-    // Uses a deterministic Hub Peer ID ('mc2d-global-world-hub-v2') + automatic failover
-    // + BroadcastChannel for instant local multi-tab sync.
+    const particles = [];
+    const floatingTexts = [];
+
+    // ==================== 6. GLOBAL SERVERLESS AUTO-MATCHMAKING (PEERJS + BROADCASTCHANNEL) ====================
     const GLOBAL_HUB_PEER_ID = 'mc2d-global-world-hub-v2';
     let peer = null;
-    let netRole = 'connecting'; // 'hub' | 'client' | 'connecting'
+    let netRole = 'connecting'; // 'connecting' | 'hub' | 'client'
     let hubConn = null;
     const clientConns = new Map();
+    const remotePlayers = new Map();
     let reconnectTimer = null;
 
-    // Local BroadcastChannel for zero-latency multi-tab testing on same device
-    const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mc2d_global_shared_world_v2') : null;
-    if (localChannel) {
+    let localChannel = null;
+    try {
+        localChannel = new BroadcastChannel('mc2d_global_shared_world_v2');
         localChannel.onmessage = (ev) => {
-            if (ev.data) handleNetworkPacket(ev.data, ev.data.senderId || 'local_tab', true);
+            if (ev.data) handleNetworkPacket(ev.data, null, true);
         };
+    } catch (e) {}
+
+    // ==================== 5-B. CHILDREN'S ADDITION FLOW ENGINE (5 CORE PRINCIPLES) ====================
+    const MATH_LEVEL_CURRICULUM = {
+        1: { level: 1, title: 'Lv.1 씨앗 광부', desc: '합이 5 이하인 기초 덧셈 (1+2, 2+3)' },
+        2: { level: 2, title: 'Lv.2 새싹 광부', desc: '합이 9 이하인 한 자리 덧셈 (4+3, 5+4)' },
+        3: { level: 3, title: 'Lv.3 열매 광부', desc: '합이 10이 되는 짝꿍수 (7+3, 6+4)' },
+        4: { level: 4, title: 'Lv.4 철광석 광부', desc: '10 만들어 더하기 (받아올림: 8+5, 7+6)' },
+        5: { level: 5, title: 'Lv.5 황금 광부', desc: '십몇 + 한 자리 수 (12+5, 14+3)' },
+        6: { level: 6, title: 'Lv.6 에메랄드 광부', desc: '받아올림 있는 십몇 + 한 자리 (16+7)' },
+        7: { level: 7, title: 'Lv.7 다이아 광부', desc: '두 자리 수 기초 덧셈 (20+30, 14+15)' },
+        8: { level: 8, title: 'Lv.8 마스터 건축가', desc: '두 자리 받아올림 & 세 수의 덧셈 (26+17)' }
+    };
+
+    const MICRO_GOAL_TYPES = {
+        speed: {
+            id: 'speed',
+            title: '덧셈 마법 3번 성공 → 💎다이아x4 + ⚡광속버프',
+            target: 3,
+            rewardDesc: '다이아몬드 4개 + 45초 번개 채굴 2.5배 버프'
+        },
+        rainbow: {
+            id: 'rainbow',
+            title: '덧셈 마법 3번 성공 → 🌈무지개 블록 15개 + 🪵원목x6',
+            target: 3,
+            rewardDesc: '무지개 블록 15개 + 원목 6개'
+        },
+        gold: {
+            id: 'gold',
+            title: '덧셈 마법 3번 성공 → 🥇황금x5 + 🥈철광석x5',
+            target: 3,
+            rewardDesc: '황금 5개 + 철광석 5개'
+        }
+    };
+
+    const MINER_BADGES = [
+        { id: 'first_spark',   icon: '🌱', name: '첫 덧셈 마법사', desc: '첫 번째 덧셈 문제를 스스로 해결했어요!' },
+        { id: 'make10_hero',   icon: '🔟', name: '10 묶음 달인', desc: '10칸 광물 상자 전략으로 5문제를 정복했어요!' },
+        { id: 'retry_victor',  icon: '🛡️', name: '불굴의 탐험가', desc: '실수를 힌트 삼아 재도전으로 정답을 찾아냈어요!' },
+        { id: 'micro_champ',   icon: '⚡', name: '초단기 미션 챔피언', desc: '3문제 초단기 미션을 완수해 특별 보상을 받았어요!' },
+        { id: 'mental_ace',    icon: '🚀', name: '번개 암산 에이스', desc: '블록 힌트 없이 암산 도전 모드에서 성공했어요!' },
+        { id: 'goldilocks_up', icon: '🎯', name: '골디락스 점프업', desc: '실력이 자라나 다음 광부 등급으로 승급했어요!' },
+        { id: 'crystal_miner', icon: '💎', name: '크리스탈 수집가', desc: '누적 15문제 이상 덧셈 에너지를 충전했어요!' },
+        { id: 'master_arch',   icon: '👑', name: '전설의 덧셈 건축가', desc: 'Lv.5 이상 고난도 덧셈 영역에 도달했어요!' }
+    ];
+
+    const mathFlowState = {
+        level: 1,
+        triggerMode: 'magic_only', // 'magic_only' | 'all_ores' | 'manual_only'
+        strategy: 'tenframe',      // 'tenframe' | 'make10' | 'mental'
+        microGoalKey: 'speed',
+        microGoalProgress: 0,
+        buffRemainingSec: 0,
+        buffMaxSec: 45,
+        consecutiveFirstTry: 0,
+        recentResults: [],         // { firstTry, timeSec }
+        currentProblem: null,      // { a, b, c, answer, eqText, hadRetry, startedAt, contextTx, contextTy }
+        tenFrameAnimProgress: 0,   // 0 to 1 for animating blocks moving to complete 10
+        tenFrameAnimating: false,
+        // Persistent Growth Museum Data (Yesterday vs Today)
+        growth: {
+            firstLevel: 1,
+            firstEquation: null,
+            firstAvgSec: null,
+            bestLevel: 1,
+            bestEquation: null,
+            totalSolved: 0,
+            recentSolveTimes: [],
+            levelHistory: [1],
+            overcomeEquations: [], // Equations that needed a retry/hint and were then conquered!
+            unlockedBadges: {}
+        }
+    };
+
+    function loadMathGrowthState() {
+        try {
+            const raw = localStorage.getItem('mc2d_math_growth_v1');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') {
+                    Object.assign(mathFlowState.growth, parsed);
+                    mathFlowState.level = mathFlowState.growth.bestLevel || 1;
+                    localPlayer.mathLevel = mathFlowState.level;
+                    const sel = document.getElementById('initialMathLevelSelect');
+                    if (sel) sel.value = String(mathFlowState.level);
+                }
+            }
+        } catch (e) {}
+    }
+
+    function saveMathGrowthState() {
+        try {
+            localStorage.setItem('mc2d_math_growth_v1', JSON.stringify(mathFlowState.growth));
+        } catch (e) {}
+    }
+
+    function unlockBadge(badgeId) {
+        if (!mathFlowState.growth.unlockedBadges[badgeId]) {
+            mathFlowState.growth.unlockedBadges[badgeId] = Date.now();
+            const bObj = MINER_BADGES.find(b => b.id === badgeId);
+            if (bObj) {
+                showToast(`🏅 새 훈장 획득! [${bObj.icon} ${bObj.name}] - ${bObj.desc}`, 'amber');
+            }
+            saveMathGrowthState();
+        }
+    }
+
+    // ① GOLDILOCKS PROBLEM GENERATOR (+4%~10% Optimal Challenge)
+    function generateGoldilocksProblem(lvl) {
+        let a = 1, b = 2, c = 0;
+        const rInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+        switch (lvl) {
+            case 1: // Sum <= 5
+                a = rInt(1, 3);
+                b = rInt(1, 5 - a);
+                break;
+            case 2: // Sum 6 ~ 9
+                a = rInt(2, 6);
+                b = rInt(Math.max(1, 6 - a), 9 - a);
+                break;
+            case 3: // Make 10 friends (합이 10이 되는 짝꿍수)
+                a = rInt(1, 9);
+                b = 10 - a;
+                break;
+            case 4: // Single digit bridging 10 (8+5, 7+6, 9+4)
+                a = rInt(6, 9);
+                b = rInt(11 - a, 9);
+                break;
+            case 5: // Teen + single digit without carry (12+5)
+                a = rInt(11, 16);
+                b = rInt(2, 19 - a);
+                break;
+            case 6: // Teen + single digit with carry (16+7)
+                a = rInt(13, 19);
+                b = rInt(21 - a, 9);
+                break;
+            case 7: // Two-digit no carry (14+15, 20+30)
+                a = rInt(11, 25);
+                b = rInt(10, 24);
+                if ((a % 10) + (b % 10) >= 10) b -= ((a % 10) + (b % 10) - 8);
+                break;
+            case 8: // Two-digit with carry or 3-number addition
+            default:
+                if (Math.random() < 0.45) {
+                    a = rInt(6, 9);
+                    b = 10 - a;
+                    c = rInt(4, 9);
+                } else {
+                    a = rInt(15, 28);
+                    b = rInt(14, 26);
+                }
+                break;
+        }
+
+        const answer = a + b + c;
+        const eqText = c > 0 ? `${a} + ${b} + ${c}` : `${a} + ${b}`;
+        return {
+            a,
+            b,
+            c,
+            answer,
+            eqText,
+            hadRetry: false,
+            startedAt: performance.now()
+        };
+    }
+
+    function buildSmartChoices(answer) {
+        const set = new Set([answer]);
+        const offsets = [-2, -1, 1, 2, 10, -10, 3, -3];
+        for (const off of offsets) {
+            if (set.size >= 6) break;
+            const cand = answer + off;
+            if (cand >= 1 && cand !== answer) set.add(cand);
+        }
+        while (set.size < 6) {
+            set.add(Math.max(1, answer + Math.floor(Math.random() * 9) - 4));
+        }
+        return Array.from(set).sort((x, y) => x - y);
+    }
+
+    function updateFlowHud() {
+        const curInfo = MATH_LEVEL_CURRICULUM[mathFlowState.level] || MATH_LEVEL_CURRICULUM[1];
+        document.getElementById('mathLevelBadgeHud').textContent = curInfo.title;
+        document.getElementById('modalMathLevelBadge').textContent = curInfo.title;
+
+        // Goldilocks Zone Status calculation
+        const recent = mathFlowState.recentResults.slice(-5);
+        let zoneText = '🎯 골디락스 최적 몰입 (+6% 도전)';
+        let modalZoneText = `🧠 골디락스 밸런스: ${curInfo.desc} (내 실력에 딱 맞는 +6% 도전 구간!)`;
+        if (recent.length >= 3) {
+            const firstTryRate = recent.filter(r => r.firstTry).length / recent.length;
+            const avgTime = recent.reduce((s, r) => s + r.timeSec, 0) / recent.length;
+            if (firstTryRate >= 0.85 && avgTime < 5.5) {
+                zoneText = '🚀 실력 쑥쑥! 곧 다음 단계로 점프업';
+                modalZoneText = '🚀 골디락스 감지: 문제가 술술 풀리네요! 연속 성공 시 한 단계 멋진 도전이 열려요!';
+            } else if (firstTryRate < 0.45) {
+                zoneText = '🛡️ 10칸 광물 상자 힌트 지원 중';
+                modalZoneText = '🛡️ 골디락스 케어: 천천히 10칸 상자 그림을 보며 풀어도 괜찮아요!';
+            }
+        }
+        document.getElementById('goldilocksZoneBadge').textContent = zoneText;
+        document.getElementById('modalGoldilocksStatus').textContent = modalZoneText;
+
+        // Micro-Goal HUD update
+        const goalObj = MICRO_GOAL_TYPES[mathFlowState.microGoalKey] || MICRO_GOAL_TYPES.speed;
+        document.getElementById('microGoalTitleHud').textContent = goalObj.title;
+        document.getElementById('modalMicroGoalCounter').textContent = `${mathFlowState.microGoalProgress} / ${goalObj.target} 달성`;
+
+        const pipsHtml = [];
+        for (let i = 0; i < goalObj.target; i++) {
+            const filled = i < mathFlowState.microGoalProgress;
+            pipsHtml.push(`<span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black border ${
+                filled ? 'bg-emerald-400 border-white text-gray-950 shadow-[0_0_8px_#34d399]' : 'bg-gray-800 border-gray-600 text-gray-500'
+            }">${filled ? '★' : i + 1}</span>`);
+        }
+        document.getElementById('microGoalPipsHud').innerHTML = pipsHtml.join('');
+
+        // Highlight active goal & strategy buttons in modal
+        document.querySelectorAll('.goal-select-btn').forEach(btn => {
+            const active = btn.getAttribute('data-goal') === mathFlowState.microGoalKey;
+            btn.className = `goal-select-btn px-1.5 py-1 rounded text-[10px] font-bold border ${
+                active ? 'border-emerald-400 bg-emerald-950/90 text-emerald-200' : 'border-gray-700 bg-gray-800 text-gray-300'
+            }`;
+        });
+
+        document.querySelectorAll('.strategy-select-btn').forEach(btn => {
+            const active = btn.getAttribute('data-strategy') === mathFlowState.strategy;
+            btn.className = `strategy-select-btn px-1.5 py-1 rounded text-[10px] font-bold border ${
+                active ? 'border-cyan-400 bg-cyan-950/90 text-cyan-200' : 'border-gray-700 bg-gray-800 text-gray-300'
+            }`;
+        });
+
+        const stratBadge = document.getElementById('strategyBonusBadge');
+        if (mathFlowState.strategy === 'mental') {
+            stratBadge.textContent = '🚀 암산 도전 중 (보석 보상 +50%!)';
+        } else if (mathFlowState.strategy === 'make10') {
+            stratBadge.textContent = '🔟 10 만들어 더하기 힌트 켜짐';
+        } else {
+            stratBadge.textContent = '🧱 10칸 광물 상자 블록 보기 켜짐';
+        }
+    }
+
+    // Draw the Interactive Minecraft 10-Frame Visualizer (10칸 광물 상자)
+    function renderTenFrameCanvas() {
+        const tfCanvas = document.getElementById('tenFrameCanvas');
+        if (!tfCanvas || !mathFlowState.currentProblem) return;
+        const g = tfCanvas.getContext('2d');
+        const prob = mathFlowState.currentProblem;
+
+        g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
+
+        const wrap = document.getElementById('tenFrameVisualizerWrap');
+        const make10Banner = document.getElementById('make10DecompositionBanner');
+
+        // Hide visualizer only if player explicitly chose Mental Math AND hasn't made a mistake yet
+        if (mathFlowState.strategy === 'mental' && !prob.hadRetry) {
+            wrap.classList.add('hidden');
+            make10Banner.classList.add('hidden');
+            return;
+        }
+        wrap.classList.remove('hidden');
+
+        // Show Make-10 decomposition hint if strategy === 'make10' or if they had a retry or if bridging 10
+        const aMod = prob.a % 10;
+        const needTo10 = aMod > 0 ? 10 - aMod : 0;
+        if ((mathFlowState.strategy === 'make10' || prob.hadRetry) && needTo10 > 0 && prob.b >= needTo10 && prob.c === 0) {
+            const nextTen = prob.a + needTo10;
+            const remainB = prob.b - needTo10;
+            make10Banner.classList.remove('hidden');
+            make10Banner.innerHTML = `💡 10 만들기 힌트: <strong>${prob.a}</strong>에 <strong>${prob.b}</strong>에서 <span class="text-amber-300 font-black">${needTo10}</span>만큼 먼저 옮겨 <span class="text-emerald-300 font-black">${nextTen}</span>을 채우고, 남은 <span class="text-cyan-300 font-black">${remainB}</span>을 더해요! (<strong>${nextTen} + ${remainB}</strong>)`;
+        } else {
+            make10Banner.classList.add('hidden');
+        }
+
+        // For numbers <= 20, draw two 10-slot Minecraft chests side by side
+        const totalA = Math.min(20, prob.a);
+        const totalB = Math.min(20, prob.b + prob.c);
+        const animT = mathFlowState.tenFrameAnimProgress; // 0 -> 1
+
+        const drawTray = (startX, startY, title, borderColor) => {
+            g.fillStyle = '#111827';
+            g.fillRect(startX, startY, 194, 82);
+            g.strokeStyle = borderColor;
+            g.lineWidth = 2;
+            g.strokeRect(startX, startY, 194, 82);
+
+            g.font = 'bold 11px "Noto Sans KR", sans-serif';
+            g.fillStyle = '#d1d5db';
+            g.fillText(title, startX + 4, startY - 5);
+
+            for (let s = 0; s < 10; s++) {
+                const col = s % 5;
+                const row = Math.floor(s / 5);
+                const sx = startX + 8 + col * 36;
+                const sy = startY + 8 + row * 34;
+                g.fillStyle = '#1f2937';
+                g.fillRect(sx, sy, 30, 28);
+                g.strokeStyle = '#374151';
+                g.lineWidth = 1;
+                g.strokeRect(sx, sy, 30, 28);
+            }
+        };
+
+        const tray1Title = prob.a > 10 ? `첫째 상자 (${prob.a} 중 1의자리 ${prob.a % 10}개 + 10묶음)` : `첫째 상자 (${prob.a}개)`;
+        const tray2Title = `둘째 상자 (+${prob.b + prob.c}개)`;
+        drawTray(16, 24, tray1Title, animT > 0.9 ? '#facc15' : '#10b981');
+        drawTray(230, 24, tray2Title, '#38bdf8');
+
+        const slotCoord = (trayIndex, slotIdx) => {
+            const baseX = trayIndex === 0 ? 16 : 230;
+            const col = slotIdx % 5;
+            const row = Math.floor(slotIdx / 5);
+            return {
+                x: baseX + 8 + col * 36 + 3,
+                y: 24 + 8 + row * 34 + 2
+            };
+        };
+
+        const dispA = prob.a > 10 ? (prob.a % 10 === 0 ? 10 : prob.a % 10) : prob.a;
+        const dispB = Math.min(10, prob.b + prob.c);
+        const emptyInTray1 = Math.max(0, 10 - dispA);
+        const transferCount = Math.min(emptyInTray1, dispB);
+
+        // Draw A blocks (Green Emeralds)
+        for (let i = 0; i < dispA; i++) {
+            const pos = slotCoord(0, i);
+            g.fillStyle = '#10b981';
+            g.fillRect(pos.x, pos.y, 24, 24);
+            g.fillStyle = '#6ee7b7';
+            g.fillRect(pos.x + 3, pos.y + 3, 8, 8);
+        }
+
+        // Draw B blocks (Cyan Diamonds - some animate hopping into Tray 1 to complete 10!)
+        for (let i = 0; i < dispB; i++) {
+            const fromPos = slotCoord(1, i);
+            let drawX = fromPos.x;
+            let drawY = fromPos.y;
+
+            if (i < transferCount && animT > 0) {
+                const toPos = slotCoord(0, dispA + i);
+                drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
+                drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
+            }
+
+            g.fillStyle = '#06b6d4';
+            g.fillRect(drawX, drawY, 24, 24);
+            g.fillStyle = '#a5f3fc';
+            g.fillRect(drawX + 3, drawY + 3, 8, 8);
+        }
+    }
+
+    function triggerMake10Animation() {
+        if (mathFlowState.tenFrameAnimating) return;
+        mathFlowState.tenFrameAnimating = true;
+        mathFlowState.tenFrameAnimProgress = 0;
+        sfx.playGentleHint();
+
+        const step = () => {
+            mathFlowState.tenFrameAnimProgress += 0.06;
+            if (mathFlowState.tenFrameAnimProgress >= 1) {
+                mathFlowState.tenFrameAnimProgress = 1;
+                mathFlowState.tenFrameAnimating = false;
+                renderTenFrameCanvas();
+                return;
+            }
+            renderTenFrameCanvas();
+            requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+
+    function openMathStudioModal(contextTitle = '✨ 마법 크리스탈 덧셈 에너지 충전소', tx = -1, ty = -1) {
+        const modal = document.getElementById('mathModal');
+        modal.classList.remove('hidden');
+        isLeftMouseDown = false;
+        isRightMouseDown = false;
+
+        document.getElementById('mathModalContextTitle').textContent = contextTitle;
+        startNewMathProblem(tx, ty);
+    }
+
+    function startNewMathProblem(tx = -1, ty = -1) {
+        const prob = generateGoldilocksProblem(mathFlowState.level);
+        prob.contextTx = tx;
+        prob.contextTy = ty;
+        mathFlowState.currentProblem = prob;
+        mathFlowState.tenFrameAnimProgress = 0;
+        mathFlowState.tenFrameAnimating = false;
+
+        document.getElementById('mathEquationDisplay').innerHTML =
+            `${prob.eqText} = <span id="answerSlotDisplay" class="inline-block min-w-[64px] px-3 py-0.5 rounded-lg bg-amber-500/20 border-2 border-amber-400 text-amber-300">?</span>`;
+
+        const banner = document.getElementById('safeFeedbackBanner');
+        banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-gray-900/90 border border-gray-700 text-xs sm:text-sm font-bold text-gray-200 flex items-center justify-between gap-2';
+        document.getElementById('safeFeedbackText').textContent =
+            '👇 아래 숫자 블록을 클릭하거나 키보드 숫자키를 눌러 마법 에너지를 충전해 보세요!';
+        document.getElementById('btnNextProblem').classList.add('hidden');
+
+        const choices = buildSmartChoices(prob.answer);
+        const grid = document.getElementById('answerChoicesGrid');
+        grid.innerHTML = '';
+        choices.forEach(val => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mc-btn py-3 text-lg sm:text-xl font-black text-white hover:border-amber-400';
+            btn.textContent = val;
+            btn.onclick = () => submitMathAnswer(val, btn);
+            grid.appendChild(btn);
+        });
+
+        updateFlowHud();
+        renderTenFrameCanvas();
+    }
+
+    function submitMathAnswer(selectedVal, btnEl) {
+        const prob = mathFlowState.currentProblem;
+        if (!prob || prob.solved) return;
+
+        const slotEl = document.getElementById('answerSlotDisplay');
+        if (slotEl) slotEl.textContent = selectedVal;
+
+        if (selectedVal === prob.answer) {
+            // ② IMMEDIATE POSITIVE FEEDBACK (< 1 second sensory & gameplay reward)
+            prob.solved = true;
+            const solveSec = Math.max(0.8, (performance.now() - prob.startedAt) / 1000);
+            sfx.playMathSuccess();
+
+            if (btnEl) {
+                btnEl.classList.add('mc-btn-green', 'ring-2', 'ring-yellow-300');
+            }
+
+            // Record growth & check badges
+            const g = mathFlowState.growth;
+            g.totalSolved = (g.totalSolved || 0) + 1;
+            g.recentSolveTimes.push(Number(solveSec.toFixed(1)));
+            if (g.recentSolveTimes.length > 20) g.recentSolveTimes.shift();
+
+            const fullEq = `${prob.eqText} = ${prob.answer}`;
+            if (!g.firstEquation) {
+                g.firstLevel = mathFlowState.level;
+                g.firstEquation = fullEq;
+                g.firstAvgSec = Number(solveSec.toFixed(1));
+            }
+            if (mathFlowState.level >= (g.bestLevel || 1)) {
+                g.bestLevel = mathFlowState.level;
+                g.bestEquation = fullEq;
+            }
+            g.levelHistory.push(mathFlowState.level);
+            if (g.levelHistory.length > 25) g.levelHistory.shift();
+
+            unlockBadge('first_spark');
+            if (g.totalSolved >= 15) unlockBadge('crystal_miner');
+            if (mathFlowState.strategy === 'mental' && !prob.hadRetry) unlockBadge('mental_ace');
+            if (mathFlowState.strategy === 'make10' && g.totalSolved >= 5) unlockBadge('make10_hero');
+
+            if (prob.hadRetry) {
+                unlockBadge('retry_victor');
+                if (!g.overcomeEquations.includes(fullEq)) {
+                    g.overcomeEquations.unshift(fullEq);
+                    if (g.overcomeEquations.length > 12) g.overcomeEquations.pop();
+                }
+            }
+
+            // Goldilocks Auto-Flow Balancing (+4~10% challenge adjustment)
+            mathFlowState.recentResults.push({ firstTry: !prob.hadRetry, timeSec: solveSec });
+            if (!prob.hadRetry) {
+                mathFlowState.consecutiveFirstTry++;
+            } else {
+                mathFlowState.consecutiveFirstTry = 0;
+            }
+
+            let levelUpMsg = '';
+            if (mathFlowState.consecutiveFirstTry >= 3 && mathFlowState.level < 8) {
+                mathFlowState.level++;
+                localPlayer.mathLevel = mathFlowState.level;
+                mathFlowState.consecutiveFirstTry = 0;
+                if (mathFlowState.level > g.bestLevel) g.bestLevel = mathFlowState.level;
+                unlockBadge('goldilocks_up');
+                if (mathFlowState.level >= 5) unlockBadge('master_arch');
+                levelUpMsg = ` 🎉 실력이 자라나 [${MATH_LEVEL_CURRICULUM[mathFlowState.level].title}] 단계로 승급했어요!`;
+            }
+
+            // Instant Reward Calculation
+            const isMentalBonus = (mathFlowState.strategy === 'mental' && !prob.hadRetry);
+            const bonusGem = isMentalBonus ? 3 : 2;
+            resources.diamond = (resources.diamond || 0) + bonusGem;
+            resources.gold = (resources.gold || 0) + 2;
+            blockInventory.rainbowBlock = (blockInventory.rainbowBlock || 0) + 4;
+
+            // Activate 2.5x Lightning Mining Speed Buff
+            mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 30);
+            mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
+
+            // Micro-Goal Progress
+            mathFlowState.microGoalProgress++;
+            const activeGoal = MICRO_GOAL_TYPES[mathFlowState.microGoalKey] || MICRO_GOAL_TYPES.speed;
+            let microGoalCompleteMsg = '';
+            if (mathFlowState.microGoalProgress >= activeGoal.target) {
+                mathFlowState.microGoalProgress = 0;
+                unlockBadge('micro_champ');
+                if (activeGoal.id === 'speed') {
+                    resources.diamond += 4;
+                    mathFlowState.buffRemainingSec = 60;
+                    // Also unlock Master Pickaxe if at least Lv.3!
+                    if (localPlayer.pickaxeTier < 5 && g.totalSolved >= 6) {
+                        localPlayer.pickaxeTier = 5;
+                        microGoalCompleteMsg = ' 🌟 [초단기 미션 달성!] 다이아 4개 + ✨덧셈 마스터 곡괭이 획득!';
+                    } else {
+                        microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 4개 + 60초 광속 버프 충전!';
+                    }
+                } else if (activeGoal.id === 'rainbow') {
+                    blockInventory.rainbowBlock += 15;
+                    resources.wood += 6;
+                    microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 🌈무지개 블록 15개 + 원목 6개 획득!';
+                } else {
+                    resources.gold += 5;
+                    resources.iron += 5;
+                    microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 🥇황금 5개 + 🥈철광석 5개 획득!';
+                }
+            }
+
+            saveMathGrowthState();
+            updateResourceUI();
+            updateFlowHud();
+
+            // Celebration Fireworks on Canvas & Multiplayer Broadcast
+            spawnParticles(localPlayer.x, localPlayer.y, '#facc15', 22);
+            spawnParticles(localPlayer.x, localPlayer.y, '#22d3ee', 18);
+            spawnFloatingText(localPlayer.x, localPlayer.y - 28, `✨ 정답! ${fullEq} (+💎${bonusGem})`, '#fde047');
+
+            sendGlobalPacket({
+                type: 'MATH_CELEBRATE',
+                playerName: localPlayer.name,
+                mathLevel: localPlayer.mathLevel,
+                x: localPlayer.x,
+                y: localPlayer.y
+            });
+
+            // Process-praising feedback banner
+            const praiseProcess = prob.hadRetry
+                ? `👏 포기하지 않고 10칸 광물 상자 힌트로 끝까지 답(${prob.answer})을 찾아냈어요!`
+                : isMentalBonus
+                ? `⚡ 대단해요! 블록 없이 머릿속 암산으로 ${solveSec.toFixed(1)}초 만에 정확히 풀었어요!`
+                : `🎯 정확해요! ${prob.eqText} = ${prob.answer}! 보석 +${bonusGem}개와 무지개 블록 4개가 지급되었어요!`;
+
+            const banner = document.getElementById('safeFeedbackBanner');
+            banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-emerald-950/95 border-2 border-emerald-400 text-xs sm:text-sm font-bold text-emerald-200 flex items-center justify-between gap-2';
+            document.getElementById('safeFeedbackText').textContent = praiseProcess + levelUpMsg + microGoalCompleteMsg;
+            document.getElementById('btnNextProblem').classList.remove('hidden');
+
+            // Animate 10-frame completion for visual reinforcement
+            triggerMake10Animation();
+
+        } else {
+            // ④ SAFE FAILURE (낮은 심리적 비용: 실수를 능력이 아닌 '전략 수정 힌트'로 전환)
+            prob.hadRetry = true;
+            sfx.playGentleHint();
+
+            if (btnEl) {
+                btnEl.classList.add('opacity-40');
+            }
+
+            const diff = selectedVal - prob.answer;
+            const diffHint = diff > 0
+                ? `선택한 ${selectedVal}은(는) 정답보다 ${Math.abs(diff)}만큼 조금 더 커요!`
+                : `선택한 ${selectedVal}은(는) 정답보다 ${Math.abs(diff)}만큼 조금 더 작아요!`;
+
+            const banner = document.getElementById('safeFeedbackBanner');
+            banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-amber-950/90 border-2 border-amber-400 text-xs sm:text-sm font-bold text-amber-200 flex items-center justify-between gap-2';
+            document.getElementById('safeFeedbackText').textContent =
+                `💡 좋은 시도예요! ${diffHint} 위 10칸 광물 상자에서 블록이 빈칸을 어떻게 채우는지 보고 다시 골라 볼까요?`;
+
+            renderTenFrameCanvas();
+            triggerMake10Animation();
+        }
+    }
+
+    function renderGrowthMuseumModal() {
+        const g = mathFlowState.growth;
+        const firstInfo = MATH_LEVEL_CURRICULUM[g.firstLevel || 1] || MATH_LEVEL_CURRICULUM[1];
+        const curInfo = MATH_LEVEL_CURRICULUM[mathFlowState.level] || MATH_LEVEL_CURRICULUM[1];
+
+        document.getElementById('growthFirstLevel').textContent = firstInfo.title;
+        document.getElementById('growthFirstEquation').innerHTML =
+            `처음 성공한 덧셈: <span class="font-mono text-amber-300">${g.firstEquation || '첫 문제를 풀어보세요!'}</span>`;
+        document.getElementById('growthFirstSpeed').textContent =
+            g.firstAvgSec ? `첫 풀이 기록 시간: ${g.firstAvgSec}초` : '초기 평균 풀이 시간: 기록 전';
+
+        document.getElementById('growthCurrentLevel').textContent = curInfo.title;
+        document.getElementById('growthBestEquation').innerHTML =
+            `최근 정복한 최고 난이도: <span class="font-mono text-amber-300 font-bold">${g.bestEquation || '도전 중!'}</span>`;
+
+        const avgNow = g.recentSolveTimes.length > 0
+            ? (g.recentSolveTimes.reduce((a, b) => a + b, 0) / g.recentSolveTimes.length).toFixed(1)
+            : '-';
+        document.getElementById('growthCurrentSpeed').textContent =
+            `최근 평균 풀이 속도: ${avgNow}초 (누적 해결: ${g.totalSolved || 0}문제)`;
+        document.getElementById('growthTotalSolvedLabel').textContent = `총 ${g.totalSolved || 0}문제 해결`;
+
+        // Overcome problems list
+        const overWrap = document.getElementById('overcomeProblemsList');
+        if (g.overcomeEquations && g.overcomeEquations.length > 0) {
+            overWrap.innerHTML = g.overcomeEquations.map(eq =>
+                `<span class="px-2 py-1 rounded bg-amber-500/20 border border-amber-400 text-amber-200 font-mono font-bold text-xs">🌟 ${escapeHtml(eq)}</span>`
+            ).join('');
+        } else {
+            overWrap.innerHTML = `<span class="text-xs text-gray-400">아직 재도전 정복 기록이 없어요. 어려운 문제도 틀릴 걱정 없이 마음껏 도전해 보세요!</span>`;
+        }
+
+        // Draw Growth Chart Canvas
+        const c = document.getElementById('growthChartCanvas');
+        if (c) {
+            const ctxG = c.getContext('2d');
+            ctxG.clearRect(0, 0, c.width, c.height);
+            ctxG.strokeStyle = '#1f2937';
+            ctxG.lineWidth = 1;
+            for (let row = 1; row <= 4; row++) {
+                const y = c.height - (row / 4) * (c.height - 24) - 12;
+                ctxG.beginPath();
+                ctxG.moveTo(10, y);
+                ctxG.lineTo(c.width - 10, y);
+                ctxG.stroke();
+            }
+
+            const hist = (g.levelHistory && g.levelHistory.length > 0) ? g.levelHistory : [1];
+            ctxG.strokeStyle = '#34d399';
+            ctxG.lineWidth = 3;
+            ctxG.beginPath();
+            hist.forEach((lv, i) => {
+                const x = 16 + (i / Math.max(1, hist.length - 1)) * (c.width - 32);
+                const y = c.height - 16 - ((lv - 1) / 7) * (c.height - 34);
+                if (i === 0) ctxG.moveTo(x, y);
+                else ctxG.lineTo(x, y);
+            });
+            ctxG.stroke();
+
+            hist.forEach((lv, i) => {
+                const x = 16 + (i / Math.max(1, hist.length - 1)) * (c.width - 32);
+                const y = c.height - 16 - ((lv - 1) / 7) * (c.height - 34);
+                ctxG.fillStyle = '#facc15';
+                ctxG.beginPath();
+                ctxG.arc(x, y, 4, 0, Math.PI * 2);
+                ctxG.fill();
+            });
+        }
+
+        // Render Badges
+        const badgeGrid = document.getElementById('badgeCollectionGrid');
+        badgeGrid.innerHTML = MINER_BADGES.map(b => {
+            const unlocked = !!g.unlockedBadges[b.id];
+            return `
+                <div class="p-2 rounded border ${unlocked ? 'bg-amber-950/50 border-amber-400 text-white' : 'bg-gray-950/60 border-gray-800 text-gray-500 opacity-60'}">
+                    <div class="font-black text-xs flex items-center gap-1">
+                        <span>${b.icon}</span>
+                        <span>${b.name}</span>
+                    </div>
+                    <div class="text-[10px] mt-0.5 leading-snug">${b.desc}</div>
+                </div>
+            `;
+        }).join('');
     }
 
     function showToast(msg, color = 'emerald') {
@@ -1651,6 +2669,7 @@
             y: Math.round(p.y),
             angle: Number(p.angle.toFixed(2)),
             pickaxeTier: p.pickaxeTier,
+            mathLevel: p.mathLevel || 1,
             heldKey: slotInfo.key,
             isMining: p.isMining,
             swingProgress: Number(p.swingProgress.toFixed(2)),
@@ -1764,6 +2783,17 @@
             }
             case 'CHAT': {
                 addChatMessage(data.sender, data.text, data.color || '#60a5fa', !!data.isSystem);
+                if (netRole === 'hub' && !fromBroadcastChannel) {
+                    broadcastFromHub(data, senderPeerKey);
+                }
+                break;
+            }
+            case 'MATH_CELEBRATE': {
+                if (data.x && data.y) {
+                    spawnParticles(data.x, data.y, '#facc15', 20);
+                    spawnParticles(data.x, data.y, '#f472b6', 16);
+                    spawnFloatingText(data.x, data.y - 25, `🎉 ${data.playerName}님 덧셈 마법 성공!`, '#fde047');
+                }
                 if (netRole === 'hub' && !fromBroadcastChannel) {
                     broadcastFromHub(data, senderPeerKey);
                 }
@@ -2229,7 +3259,9 @@
         const tcy = targetTy * TILE_SIZE + TILE_SIZE / 2;
         localPlayer.angle = Math.atan2(tcy - localPlayer.y, tcx - localPlayer.x);
 
-        const pickSpeed = PICKAXE_TIERS[localPlayer.pickaxeTier].speed;
+        const basePickSpeed = PICKAXE_TIERS[localPlayer.pickaxeTier].speed;
+        const mathBuffMult = mathFlowState.buffRemainingSec > 0 ? 2.5 : 1.0;
+        const pickSpeed = basePickSpeed * mathBuffMult;
         miningState.progress += dt * 78 * pickSpeed;
 
         miningState.hitSoundTimer -= dt;
@@ -2265,9 +3297,11 @@
             applyWorldModification(tx, ty, undefined, BLOCK.AIR, true);
             spawnParticles(wx, wy, info.particleColor || '#ffffff', 16);
 
+            const buffBonus = mathFlowState.buffRemainingSec > 0 ? 2 : 1;
             if (info.dropType === 'res') {
-                resources[info.dropKey] = (resources[info.dropKey] || 0) + info.dropCount;
-                spawnFloatingText(wx, wy - 10, `+${info.dropCount} ${info.dropLabel}`, '#fde047');
+                const gain = info.dropCount * buffBonus;
+                resources[info.dropKey] = (resources[info.dropKey] || 0) + gain;
+                spawnFloatingText(wx, wy - 10, `+${gain} ${info.dropLabel}${buffBonus > 1 ? ' (⚡버프2배!)' : ''}`, '#fde047');
             } else if (info.dropType === 'item') {
                 blockInventory[info.dropKey] = (blockInventory[info.dropKey] || 0) + info.dropCount;
                 spawnFloatingText(wx, wy - 10, `+${info.dropCount} ${info.dropLabel}`, '#4ade80');
@@ -2281,6 +3315,14 @@
                 blockId: BLOCK.AIR,
                 effectColor: info.particleColor
             });
+
+            // ③ Autonomy-Respected Math Trigger on Magic Crystal or Rare Ores
+            if (blockId === BLOCK.MAGIC_CRYSTAL && mathFlowState.triggerMode !== 'manual_only') {
+                openMathStudioModal('✨ 덧셈 마법 크리스탈을 발견했어요! 에너지를 충전해 볼까요?', tx, ty);
+            } else if (mathFlowState.triggerMode === 'all_ores' &&
+                       (blockId === BLOCK.IRON_ORE || blockId === BLOCK.GOLD_ORE || blockId === BLOCK.DIAMOND_ORE)) {
+                openMathStudioModal(`⛏️ [${info.name}] 보너스 잭팟 찬스!`, tx, ty);
+            }
         } else if (floorId === FLOOR.WOOD_BRIDGE || floorId === FLOOR.COBBLE_BRIDGE) {
             const restoredFloor = FLOOR.WATER;
             applyWorldModification(tx, ty, restoredFloor, BLOCK.AIR, true);
@@ -2551,19 +3593,21 @@
         ctx.fillStyle = '#111827';
         ctx.fillRect(5, -5, 3, 3);
         ctx.fillRect(5, 2, 3, 3);
-        ctx.strokeRect(-9, -9, 18, 18);
-
         ctx.restore();
 
-        // Nametag
-        ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+        // Nametag + Math Level Badge above character
+        ctx.font = 'bold 11px "Noto Sans KR", sans-serif';
         ctx.textAlign = 'center';
-        const label = p.name || '플레이어';
-        const tw = ctx.measureText(label).width + 12;
-        ctx.fillStyle = 'rgba(17, 24, 39, 0.82)';
-        ctx.fillRect(-tw / 2, -34, tw, 18);
+        const mLv = p.mathLevel || 1;
+        const label = `[Lv.${mLv}] ${p.name || '플레이어'}`;
+        const tw = ctx.measureText(label).width + 14;
+        ctx.fillStyle = 'rgba(17, 24, 39, 0.85)';
+        ctx.fillRect(-tw / 2, -36, tw, 19);
+        ctx.strokeStyle = isLocal ? '#34d399' : '#60a5fa';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-tw / 2, -36, tw, 19);
         ctx.fillStyle = isLocal ? '#4ade80' : '#ffffff';
-        ctx.fillText(label, 0, -21);
+        ctx.fillText(label, 0, -22);
 
         ctx.restore();
     }
@@ -2639,7 +3683,7 @@
                 const bSprite = tileSprites['block_' + b];
                 if (bSprite) ctx.drawImage(bSprite, wx, wy);
 
-                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK) {
+                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.MAGIC_CRYSTAL || b === BLOCK.RAINBOW_BLOCK) {
                     const flicker = Math.sin(timeSec * 12 + tx * 3 + ty * 5) * 8;
                     lightSources.push({
                         x: wx + 24,
@@ -2825,6 +3869,18 @@
             const targetDark = isNight ? 0.78 : 0.0;
             darknessAlpha += (targetDark - darknessAlpha) * dt * 3;
 
+            // Update active Math Lightning Mining Buff timer bar
+            const buffBox = document.getElementById('mathBuffBarContainer');
+            if (mathFlowState.buffRemainingSec > 0) {
+                mathFlowState.buffRemainingSec = Math.max(0, mathFlowState.buffRemainingSec - dt);
+                buffBox.classList.remove('hidden');
+                document.getElementById('mathBuffTimerText').textContent = `${Math.ceil(mathFlowState.buffRemainingSec)}초`;
+                const pct = Math.min(100, (mathFlowState.buffRemainingSec / mathFlowState.buffMaxSec) * 100);
+                document.getElementById('mathBuffProgressFill').style.width = `${pct}%`;
+            } else {
+                buffBox.classList.add('hidden');
+            }
+
             netSyncAccum += dt;
             if (netSyncAccum >= 0.07) {
                 netSyncAccum = 0;
@@ -2850,13 +3906,20 @@
     function enterSharedGlobalWorld() {
         const nameVal = document.getElementById('playerNameInput').value.trim();
         if (nameVal) localPlayer.name = nameVal;
+        const initLv = parseInt(document.getElementById('initialMathLevelSelect').value, 10) || 1;
+        mathFlowState.level = initLv;
+        localPlayer.mathLevel = initLv;
+        if (!mathFlowState.growth.firstEquation) {
+            mathFlowState.growth.firstLevel = initLv;
+        }
         document.getElementById('lobbyModal').classList.add('hidden');
         gameStarted = true;
         sfx.init();
         ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
         updateResourceUI();
+        updateFlowHud();
         connectToGlobalWorld();
-        addChatMessage('시스템', `🌍 1,000 × 1,000 글로벌 공유 월드(X:500, Y:500 광장)에 입장했습니다! M키로 전체 지도를 열거나 우측 접속자 목록에서 다른 유저에게 즉시 이동할 수 있습니다.`, '#34d399', true);
+        addChatMessage('시스템', `🌍 1,000 × 1,000 글로벌 공유 월드(X:500, Y:500 광장)에 입장했습니다! 광장 주변의 반짝이는 [✨덧셈 마법 크리스탈]을 캐거나 Q키를 눌러 덧셈 마법을 충전해 보세요!`, '#34d399', true);
     }
 
     function toggleCraftingModal(forceState) {
@@ -2918,6 +3981,84 @@
     document.getElementById('btnReturnSpawn').addEventListener('click', () => {
         teleportToTile(SPAWN_X, SPAWN_Y, '중앙 스폰 광장');
     });
+    document.getElementById('btnOpenMathStudio').addEventListener('click', () => {
+        openMathStudioModal('✨ 자율 덧셈 마법 충전소 (원하는 미션과 전략을 골라보세요!)');
+    });
+    document.getElementById('btnCloseMathModal').addEventListener('click', () => {
+        document.getElementById('mathModal').classList.add('hidden');
+    });
+    document.getElementById('btnNextProblem').addEventListener('click', () => {
+        startNewMathProblem();
+    });
+    document.getElementById('btnAnimateMake10').addEventListener('click', () => {
+        triggerMake10Animation();
+    });
+
+    // Autonomy: Manual difficulty adjustment buttons
+    document.getElementById('btnMathEasier').addEventListener('click', () => {
+        if (mathFlowState.level > 1) {
+            mathFlowState.level--;
+            localPlayer.mathLevel = mathFlowState.level;
+            showToast(`🔽 내가 선택한 난이도: [${MATH_LEVEL_CURRICULUM[mathFlowState.level].title}]로 조절했어요!`, 'blue');
+            startNewMathProblem();
+        }
+    });
+    document.getElementById('btnMathHarder').addEventListener('click', () => {
+        if (mathFlowState.level < 8) {
+            mathFlowState.level++;
+            localPlayer.mathLevel = mathFlowState.level;
+            showToast(`🔼 새로운 도전! [${MATH_LEVEL_CURRICULUM[mathFlowState.level].title}] 단계로 올렸어요!`, 'amber');
+            startNewMathProblem();
+        }
+    });
+
+    // Autonomy: Micro-goal & Strategy selection buttons
+    document.querySelectorAll('.goal-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            mathFlowState.microGoalKey = btn.getAttribute('data-goal');
+            updateFlowHud();
+            showToast(`🎯 오늘의 초단기 미션을 새로 골랐어요!`, 'emerald');
+        });
+    });
+    document.getElementById('btnChangeMicroGoal').addEventListener('click', () => {
+        const keysOrder = ['speed', 'rainbow', 'gold'];
+        const nextIdx = (keysOrder.indexOf(mathFlowState.microGoalKey) + 1) % keysOrder.length;
+        mathFlowState.microGoalKey = keysOrder[nextIdx];
+        updateFlowHud();
+        showToast(`🎯 초단기 미션 변경: ${MICRO_GOAL_TYPES[mathFlowState.microGoalKey].title}`, 'emerald');
+    });
+    document.querySelectorAll('.strategy-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            mathFlowState.strategy = btn.getAttribute('data-strategy');
+            updateFlowHud();
+            renderTenFrameCanvas();
+        });
+    });
+    document.getElementById('triggerModeSelect').addEventListener('change', (e) => {
+        mathFlowState.triggerMode = e.target.value;
+        showToast('⚙️ 덧셈 마법 등장 방식이 내 설정대로 변경되었습니다!', 'blue');
+    });
+
+    // Growth Museum Modal (Yesterday vs Today)
+    function toggleGrowthModal(forceState) {
+        const modal = document.getElementById('growthModal');
+        const show = typeof forceState === 'boolean' ? forceState : modal.classList.contains('hidden');
+        if (show) {
+            renderGrowthMuseumModal();
+            modal.classList.remove('hidden');
+            isLeftMouseDown = false;
+            isRightMouseDown = false;
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+    document.getElementById('btnOpenGrowthModal').addEventListener('click', () => toggleGrowthModal(true));
+    document.getElementById('btnCloseGrowthModal').addEventListener('click', () => toggleGrowthModal(false));
+    document.getElementById('btnOpenGrowthFromMath').addEventListener('click', () => {
+        document.getElementById('mathModal').classList.add('hidden');
+        toggleGrowthModal(true);
+    });
+
     document.getElementById('btnToggleCraft').addEventListener('click', () => toggleCraftingModal());
     document.getElementById('btnCloseCraft').addEventListener('click', () => toggleCraftingModal(false));
     document.getElementById('btnToggleWorldMap').addEventListener('click', () => toggleWorldMapModal());
@@ -3011,6 +4152,21 @@
             toggleCraftingModal();
             return;
         }
+        if (e.code === 'KeyQ') {
+            e.preventDefault();
+            const mathModal = document.getElementById('mathModal');
+            if (mathModal.classList.contains('hidden')) {
+                openMathStudioModal('✨ 자율 덧셈 마법 충전소');
+            } else {
+                mathModal.classList.add('hidden');
+            }
+            return;
+        }
+        if (e.code === 'KeyG') {
+            e.preventDefault();
+            toggleGrowthModal();
+            return;
+        }
         if (e.code === 'KeyM') {
             e.preventDefault();
             toggleWorldMapModal();
@@ -3024,6 +4180,8 @@
         if (e.key === 'Escape') {
             toggleCraftingModal(false);
             toggleWorldMapModal(false);
+            toggleGrowthModal(false);
+            document.getElementById('mathModal').classList.add('hidden');
         }
         if (e.code.startsWith('Digit')) {
             const num = parseInt(e.code.replace('Digit', ''), 10);
@@ -3098,8 +4256,10 @@
     window.onload = function () {
         generateAllSprites();
         loadPersistedDeltas();
+        loadMathGrowthState();
         ensureAreaGenerated(SPAWN_X, SPAWN_Y, 4);
         updateResourceUI();
+        updateFlowHud();
         drawRadarMinimap();
         requestAnimationFrame(gameLoop);
     };
