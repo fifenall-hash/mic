@@ -1,0 +1,30 @@
+{
+  "name": "2D 마인크래프트 덧셈 탐험대",
+  "short_name": "MC2D 덧셈탐험",
+  "description": "1,000x1,000 오픈월드 어린이 덧셈 몬스터 배틀 & 멀티플레이 건축 게임",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
