@@ -2423,8 +2423,9 @@
         requestAnimationFrame(step);
     }
 
-    // 몹 배틀 체력바(HP Bar) UI를 모달 내부에 생성 및 갱신하는 보조 함수
+    // 몹 머리 위에 체력바(HP Bar)가 위치한 배틀 스테이지 UI 렌더링
     function updateMobBattleBannerUI() {
+        ensureMobBattleStyles();
         const eqDisplay = document.getElementById('mathEquationDisplay');
         if (!eqDisplay) return;
 
@@ -2432,7 +2433,7 @@
         if (!mobBox) {
             mobBox = document.createElement('div');
             mobBox.id = 'mobBattleStatusBox';
-            mobBox.className = 'mb-3 p-2.5 rounded-lg bg-gray-950/90 border-2 border-red-500/70 flex flex-col sm:flex-row items-center justify-between gap-2';
+            mobBox.className = 'mb-3 p-3 rounded-xl bg-gradient-to-b from-gray-900 via-gray-950 to-black border-2 border-red-500/80 shadow-lg flex flex-col items-center justify-center relative overflow-hidden';
             eqDisplay.parentNode.insertBefore(mobBox, eqDisplay);
         }
 
@@ -2443,32 +2444,98 @@
         }
         mobBox.classList.remove('hidden');
 
-        const hpPct = Math.max(0, (bState.hp / bState.maxHp) * 100);
+        const tierObj = MOB_TIERS[bState.level] || MOB_TIERS[1];
         const hearts = Array.from({ length: bState.maxHp }, (_, idx) =>
             idx < bState.hp ? '❤️' : '🖤'
-        ).join(' ');
+        ).join('');
+
+        // 3칸 분할 체력바 HTML 생성 (몹 머리 바로 위에 배치)
+        const segmentsHtml = Array.from({ length: bState.maxHp }, (_, idx) => {
+            const filled = idx < bState.hp;
+            return `<div class="h-3 flex-1 rounded-sm transition-all duration-300 ${
+                filled
+                    ? 'bg-gradient-to-t from-red-600 via-red-500 to-amber-300 shadow-[0_0_8px_#ef4444]'
+                    : 'bg-gray-800/90'
+            }"></div>`;
+        }).join('');
 
         mobBox.innerHTML = `
-            <div class="flex items-center gap-2.5">
-                <div class="text-2xl sm:text-3xl bg-gray-900 p-1.5 rounded-lg border border-gray-700">${bState.icon}</div>
-                <div class="text-left">
-                    <div class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
-                        <span class="px-1.5 py-0.5 rounded bg-red-600 text-white text-[10px]">Lv.${bState.level} 몬스터</span>
-                        <span>${bState.name}</span>
+            <!-- 상단 배틀 안내 배지 -->
+            <div class="w-full flex items-center justify-between text-[11px] font-bold text-gray-300 mb-1 px-1">
+                <span class="px-2 py-0.5 rounded bg-red-950/90 border border-red-500/60 text-red-200 font-black">
+                    ⚔️ Lv.${bState.level} ${bState.name}
+                </span>
+                <span class="text-amber-300 font-black">
+                    ${bState.hp > 0 ? `🎯 ${bState.hp}문제 더 맞히면 처치!` : `🎉 몬스터 처치 성공!`}
+                </span>
+            </div>
+
+            <!-- 👾 몹 캐릭터 & 머리 위 체력바 컨테이너 -->
+            <div id="mobStageCenter" class="relative flex flex-col items-center justify-center py-1 px-6">
+                <!-- ① 몹 머리 바로 위: 이름표 & 3칸 체력바(HP Bar) -->
+                <div id="mobOverheadHpWrap" class="flex flex-col items-center mb-1.5 z-10 transition-transform duration-200">
+                    <div class="text-[11px] font-black text-white drop-shadow mb-0.5 flex items-center gap-1">
+                        <span>${hearts}</span>
+                        <span class="text-amber-300 font-mono">(HP ${bState.hp}/${bState.maxHp})</span>
                     </div>
-                    <div class="text-[11px] text-amber-300 font-bold mt-0.5">
-                        ${bState.hp > 0 ? `⚔️ 문제를 맞혀 공격하세요! (${bState.hp}문제 더 맞히면 처치!)` : `🎉 몬스터 처치 완료!`}
+                    <div class="w-36 sm:w-44 bg-gray-950 p-1 rounded-md border-2 border-gray-600 shadow-md flex gap-1">
+                        ${segmentsHtml}
                     </div>
+                </div>
+
+                <!-- ② 몹 본체 (필드와 동일한 이미지 + 오라 발판 + 피격 이펙트 레이어) -->
+                <div class="relative flex items-center justify-center w-24 h-20">
+                    <!-- 발밑 속성 오라 발판 -->
+                    <div class="absolute bottom-1 w-20 h-5 rounded-full opacity-55 blur-[2px]"
+                         style="background:${tierObj.bodyColor}; box-shadow: 0 0 16px ${tierObj.bodyColor};"></div>
+                    <!-- 몹 아이콘 본체 -->
+                    <div id="mobBattleSpriteEl" class="text-5xl sm:text-6xl select-none mob-idle-anim z-10 drop-shadow-[0_6px_8px_rgba(0,0,0,0.85)]">
+                        ${bState.icon}
+                    </div>
+                    <!-- 타격 이펙트(참격/데미지 팝업)가 꽂히는 오버레이 -->
+                    <div id="mobHitFxOverlay" class="absolute inset-0 pointer-events-none z-20"></div>
                 </div>
             </div>
-            <div class="w-full sm:w-48 bg-gray-900 p-2 rounded border border-gray-700">
-                <div class="flex justify-between text-[11px] font-black mb-1">
-                    <span class="text-red-300">👾 몹 체력(HP)</span>
-                    <span class="text-white">${hearts} (${bState.hp}/${bState.maxHp})</span>
-                </div>
-                <div class="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden border border-gray-600">
-                    <div class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 h-full transition-all duration-300" style="width:${hpPct}%"></div>
-                </div>
+        `;
+    }
+
+    // 문제를 맞혔을 때 몹이 타격받는 생동감 있는 연출 실행 함수
+    function triggerMobHitAnimation(bState, isDefeated) {
+        const spriteEl = document.getElementById('mobBattleSpriteEl');
+        const fxOverlay = document.getElementById('mobHitFxOverlay');
+        const stageBox = document.getElementById('mobBattleStatusBox');
+        if (!spriteEl || !fxOverlay) return;
+
+        // 1) 스테이지 전체 타격 플래시 테두리 효과
+        if (stageBox) {
+            stageBox.classList.add('ring-4', 'ring-red-400', 'bg-red-950/60');
+            setTimeout(() => {
+                stageBox.classList.remove('ring-4', 'ring-red-400', 'bg-red-950/60');
+            }, 380);
+        }
+
+        // 2) 몹 흔들림(피격) 또는 처치(KO) 애니메이션 적용
+        spriteEl.classList.remove('mob-idle-anim', 'mob-hit-anim', 'mob-ko-anim');
+        void spriteEl.offsetWidth; // reflow 강제하여 애니메이션 즉시 재시작
+        if (isDefeated) {
+            spriteEl.classList.add('mob-ko-anim');
+        } else {
+            spriteEl.classList.add('mob-hit-anim');
+            setTimeout(() => {
+                if (spriteEl) {
+                    spriteEl.classList.remove('mob-hit-anim');
+                    spriteEl.classList.add('mob-idle-anim');
+                }
+            }, 680);
+        }
+
+        // 3) 참격/폭발 스파크 및 머리 위 '-1 HP!' 데미지 팝업 생성
+        fxOverlay.innerHTML = `
+            <div class="mob-slash-fx absolute left-1/2 top-1/2 text-4xl sm:text-5xl select-none">
+                ${isDefeated ? '💥⚡🎉' : '⚔️💥'}
+            </div>
+            <div class="mob-dmg-popup absolute left-1/2 -top-3 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-red-600 border-2 border-yellow-300 text-white font-black text-xs sm:text-sm shadow-lg">
+                ${isDefeated ? '💥 -1 HP! 몬스터 처치!!' : '💥 -1 HP! 크리티컬 명중!'}
             </div>
         `;
     }
@@ -2480,7 +2547,8 @@
         isRightMouseDown = false;
 
         if (tx >= 0 && ty >= 0 && getBlockAt(tx, ty) === BLOCK.MAGIC_CRYSTAL) {
-            // 월드 맵의 실제 몹과 조우한 경우: 해당 몹의 난이도와 남은 체력을 불러옴
+            // 근접 자동 진입 시 ESC로 닫은 직후 재발동하지 않도록 현재 몹 타일 기억
+            mathFlowState.lastProximityMobKey = idx(tx, ty);
             const mob = getMobDataAt(tx, ty);
             mathFlowState.level = mob.level;
             localPlayer.mathLevel = mob.level;
@@ -2499,7 +2567,6 @@
             document.getElementById('mathModalContextTitle').textContent =
                 `⚔️ [Lv.${mob.level} ${mob.name}] 등장! (3문제를 풀어 처치하세요)`;
         } else {
-            // Q키 등으로 자율 훈련 배틀을 연 경우: 현재 내 레벨에 맞는 훈련용 몹(체력 3) 소환
             const mob = MOB_TIERS[mathFlowState.level] || MOB_TIERS[1];
             mathFlowState.activeMobBattle = {
                 tx: -1,
@@ -2518,6 +2585,50 @@
         }
 
         startNewMathProblem(tx, ty);
+    }
+
+    // 몹 배틀 피격/처치 애니메이션용 CSS 스타일 자동 주입 (최초 1회)
+    function ensureMobBattleStyles() {
+        if (document.getElementById('mobBattleAnimStyles')) return;
+        const style = document.createElement('style');
+        style.id = 'mobBattleAnimStyles';
+        style.textContent = `
+            @keyframes mobIdleFloat {
+                0%, 100% { transform: translateY(0px) scale(1); }
+                50% { transform: translateY(-5px) scale(1.04, 0.97); }
+            }
+            @keyframes mobHitShake {
+                0%   { transform: translate(0, 0) scale(1) rotate(0deg); filter: brightness(1); }
+                15%  { transform: translate(-12px, -6px) scale(1.25, 0.8) rotate(-14deg); filter: brightness(2.5) drop-shadow(0 0 16px #ef4444); }
+                30%  { transform: translate(12px, 4px) scale(0.85, 1.2) rotate(12deg); filter: sepia(1) hue-rotate(-50deg) saturate(6); }
+                45%  { transform: translate(-9px, 2px) scale(1.15, 0.9) rotate(-8deg); }
+                65%  { transform: translate(7px, -3px) scale(0.95, 1.05) rotate(6deg); }
+                85%  { transform: translate(-4px, 1px) scale(1.02) rotate(-3deg); }
+                100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: brightness(1); }
+            }
+            @keyframes mobDefeatKO {
+                0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+                30%  { transform: translate(-10px, -14px) scale(1.3) rotate(-25deg); filter: brightness(3) drop-shadow(0 0 20px #facc15); opacity: 1; }
+                100% { transform: translate(18px, 22px) scale(0.15) rotate(540deg); filter: blur(3px); opacity: 0; }
+            }
+            @keyframes dmgPopupFloat {
+                0%   { transform: translate(-50%, 6px) scale(0.5); opacity: 0; }
+                20%  { transform: translate(-50%, -10px) scale(1.25); opacity: 1; }
+                80%  { transform: translate(-50%, -28px) scale(1); opacity: 1; }
+                100% { transform: translate(-50%, -38px) scale(0.85); opacity: 0; }
+            }
+            @keyframes slashBurst {
+                0%   { transform: translate(-50%, -50%) scale(0.3) rotate(-25deg); opacity: 1; }
+                50%  { transform: translate(-50%, -50%) scale(1.35) rotate(10deg); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(1.7) rotate(25deg); opacity: 0; }
+            }
+            .mob-idle-anim { animation: mobIdleFloat 1.8s ease-in-out infinite; }
+            .mob-hit-anim { animation: mobHitShake 0.65s cubic-bezier(.36,.07,.19,.97) both; }
+            .mob-ko-anim { animation: mobDefeatKO 0.85s ease-in forwards; }
+            .mob-dmg-popup { animation: dmgPopupFloat 0.95s ease-out forwards; }
+            .mob-slash-fx { animation: slashBurst 0.5s ease-out forwards; }
+        `;
+        document.head.appendChild(style);
     }
 
     function startNewMathProblem(tx = -1, ty = -1) {
@@ -2613,7 +2724,7 @@
                 }
             }
 
-            // 몹 데미지 처리 (1문제 정답 = 체력 1 감소, 총 3문제 맞히면 몹 처치!)
+            // 몹 데미지 처리 (1문제 정답 = 체력 1 감소, 3문제 맞히면 처치!)
             const bState = mathFlowState.activeMobBattle;
             let mobBattleMsg = '';
             let isMobDefeated = false;
@@ -2628,10 +2739,14 @@
                         mobHpMap.delete(key);
                     }
                 }
-                updateMobBattleBannerUI();
 
-                if (bState.hp <= 0) {
-                    isMobDefeated = true;
+                isMobDefeated = (bState.hp <= 0);
+
+                // 머리 위 체력바 즉시 갱신 후 생동감 있는 피격/처치 애니메이션 실행!
+                updateMobBattleBannerUI();
+                triggerMobHitAnimation(bState, isMobDefeated);
+
+                if (isMobDefeated) {
                     sfx.playBreak();
 
                     // 월드 몹인 경우 맵에서 제거하고 멀티플레이 동기화
@@ -2652,22 +2767,19 @@
                         });
                     }
 
-                    // 몹 처치 완료 전리품 지급
                     const isMentalBonus = (mathFlowState.strategy === 'mental' && !prob.hadRetry);
                     const totalDia = bState.dropDia + (isMentalBonus ? 2 : 0);
                     resources.diamond = (resources.diamond || 0) + totalDia;
                     resources.gold = (resources.gold || 0) + bState.dropGold;
                     blockInventory.rainbowBlock = (blockInventory.rainbowBlock || 0) + 5;
 
-                    // 채굴 가속 버프 충전
                     mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 35);
                     mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
 
-                    mobBattleMsg = ` 🎉 [3연속 타격 성공!] ${bState.icon} ${bState.name}을(를) 완전히 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개, 🌈무지개블록 5개를 획득했어요!`;
+                    mobBattleMsg = ` 🎉 [몬스터 처치 완료!] ${bState.icon} ${bState.name}을(를) 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개, 🌈무지개블록 5개를 획득했어요!`;
                 } else {
-                    // 아직 체력이 남은 경우 (2/3 또는 1/3)
                     resources.gold = (resources.gold || 0) + 1;
-                    mobBattleMsg = ` ⚔️ 명중! ${bState.icon} ${bState.name}의 체력이 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp}) 다음 문제를 풀어 마저 공격하세요!`;
+                    mobBattleMsg = ` ⚔️ 신나는 타격! ${bState.icon} ${bState.name}의 체력이 1칸 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp})`;
                 }
             }
 
@@ -3862,6 +3974,71 @@
         const nty = Math.floor(localPlayer.y / TILE_SIZE);
         document.getElementById('coordsDisplay').textContent = `X:${ntx} Y:${nty}`;
         document.getElementById('biomeBadge').textContent = getBiomeNameAt(ntx, nty);
+
+        // 이동 후 주변에 밀착한 몹이 있는지 감지하여 배틀 전환
+        checkMobProximityEncounter();
+    }
+    // 캐릭터가 몹에 가까이 붙었을 때 자동으로 문제풀이 배틀로 진입하는 함수
+    function checkMobProximityEncounter() {
+        if (!gameStarted || mathFlowState.triggerMode === 'manual_only') return;
+
+        // 이미 모달 창이 열려 있는 동안에는 중복 실행 방지
+        const mathModal = document.getElementById('mathModal');
+        const craftModal = document.getElementById('craftModal');
+        const mapModal = document.getElementById('worldMapModal');
+        const growthModal = document.getElementById('growthModal');
+        if (!mathModal.classList.contains('hidden') ||
+            !craftModal.classList.contains('hidden') ||
+            !mapModal.classList.contains('hidden') ||
+            !growthModal.classList.contains('hidden')) {
+            return;
+        }
+
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+
+        let closestMob = null;
+        let minDist = Infinity;
+
+        // 플레이어 주변 3x3 타일 검사
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const tx = ptx + dx;
+                const ty = pty + dy;
+                if (!inBounds(tx, ty)) continue;
+                if (getBlockAt(tx, ty) === BLOCK.MAGIC_CRYSTAL) {
+                    const mcx = tx * TILE_SIZE + TILE_SIZE / 2;
+                    const mcy = ty * TILE_SIZE + TILE_SIZE / 2;
+                    const dist = Math.hypot(localPlayer.x - mcx, localPlayer.y - mcy);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestMob = { tx, ty, key: idx(tx, ty), dist };
+                    }
+                }
+            }
+        }
+
+        // 이전에 ESC로 후퇴했던 몹에게서 한 걸음(1.38타일) 이상 떨어지면 재조우 잠금 해제
+        if (mathFlowState.lastProximityMobKey !== undefined && mathFlowState.lastProximityMobKey !== null) {
+            if (!closestMob || (closestMob.key === mathFlowState.lastProximityMobKey && closestMob.dist > TILE_SIZE * 1.38)) {
+                mathFlowState.lastProximityMobKey = null;
+            }
+        }
+
+        // 몹과 가까이 붙었을 때 (중심 간 거리 1.12타일 = 약 53px 이내) 배틀 시작!
+        if (closestMob && closestMob.dist <= TILE_SIZE * 1.12) {
+            if (mathFlowState.lastProximityMobKey === closestMob.key) return;
+
+            mathFlowState.lastProximityMobKey = closestMob.key;
+            // 이동 키 눌림 해제 (모달이 열린 동안 캐릭터가 계속 걷지 않도록 방지)
+            keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
+            keys['ArrowUp'] = keys['ArrowDown'] = keys['ArrowLeft'] = keys['ArrowRight'] = false;
+            touchDirs.up = touchDirs.down = touchDirs.left = touchDirs.right = false;
+
+            sfx.playHit('ore');
+            const mob = getMobDataAt(closestMob.tx, closestMob.ty);
+            openMathStudioModal(`⚔️ [Lv.${mob.level} ${mob.name}] 조우!`, closestMob.tx, closestMob.ty);
+        }
     }
 
     function checkCircleTileCollision(cx, cy, r) {
@@ -4050,21 +4227,36 @@
                 const wx = tx * TILE_SIZE;
                 const wy = ty * TILE_SIZE;
 
-                // 👾 덧셈 몬스터(구 마법 크리스탈) 렌더링: 통통 튀는 애니메이션 + 레벨 이름표 + 3칸 체력바
+                // 👾 덧셈 몬스터: 문제풀이 창과 동일한 아이콘(mob.icon) + 발밑 오라 + 머리 위 체력바로 렌더링
                 if (b === BLOCK.MAGIC_CRYSTAL) {
                     const mob = getMobDataAt(tx, ty);
-                    const bounceY = Math.sin(timeSec * 5 + tx * 1.7 + ty * 2.3) * 3;
-                    const mobSprite = tileSprites['mob_' + mob.level] || tileSprites['block_' + BLOCK.MAGIC_CRYSTAL];
-                    if (mobSprite) {
-                        ctx.drawImage(mobSprite, wx, wy + bounceY);
-                    }
+                    const bounceY = Math.sin(timeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3.5;
 
-                    // 몹 3칸 체력바 (HP Bar)
+                    ctx.save();
+                    // 발밑 그림자 & 등급 색상 마법진 오라
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                    ctx.beginPath();
+                    ctx.ellipse(wx + 24, wy + 40, 16, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = mob.bodyColor;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(wx + 24, wy + 39, 17 + Math.sin(timeSec * 4) * 1.5, 6.5, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    // 문제풀이 창과 100% 동일한 몹 아이콘 렌더링
+                    ctx.font = '32px "Noto Sans KR", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(mob.icon, wx + 24, wy + 24 + bounceY);
+
+                    // 몹 머리 위 3칸 체력바 (HP Bar)
                     const barW = 38;
                     const barH = 6;
                     const barX = wx + (TILE_SIZE - barW) / 2;
-                    const barY = wy - 8 + bounceY;
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                    const barY = wy - 7 + bounceY;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
                     ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
 
                     const segW = (barW - 4) / 3;
@@ -4073,11 +4265,16 @@
                         ctx.fillRect(barX + 1 + h * (segW + 1), barY, segW, barH);
                     }
 
-                    // 몹 레벨 배지
+                    // 몹 레벨 및 이름표
                     ctx.font = '900 10px "Noto Sans KR", sans-serif';
-                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'alphabetic';
+                    const tagText = `Lv.${mob.level} ${mob.name}`;
+                    const tagW = ctx.measureText(tagText).width + 8;
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+                    ctx.fillRect(wx + 24 - tagW / 2, barY - 14, tagW, 12);
                     ctx.fillStyle = '#fef08a';
-                    ctx.fillText(`Lv.${mob.level} ${mob.name}`, wx + 24, barY - 3);
+                    ctx.fillText(tagText, wx + 24, barY - 4);
+                    ctx.restore();
 
                     lightSources.push({ x: wx + 24, y: wy + 24, r: 150 });
                     continue;
