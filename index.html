@@ -5313,37 +5313,9 @@
         saveCurrentProfileState();
     };
 
-    // 코드 업데이트 시 반영 지연이 발생하지 않는 Network-First PWA 초기화 함수
+    // 실제 manifest.json 파일을 유지하면서 지연 없는(Network-First) 서비스 워커만 등록하는 함수
     function initZeroDelayPWA() {
         try {
-            // 1) icon.png & icon.ico를 사용하는 동적 Web App Manifest 생성
-            const iconPngUrl = new URL('icon.png', window.location.href).href;
-            const iconIcoUrl = new URL('icon.ico', window.location.href).href;
-            const startUrl = window.location.href.split('#')[0];
-
-            const manifestObj = {
-                name: '2D 마인크래프트 덧셈 탐험대',
-                short_name: 'MC2D 덧셈탐험',
-                description: '1,000x1,000 오픈월드 어린이 덧셈 몬스터 배틀 & 멀티플레이 건축 게임',
-                start_url: startUrl,
-                display: 'standalone',
-                orientation: 'any',
-                background_color: '#0b0f19',
-                theme_color: '#0b0f19',
-                icons: [
-                    { src: iconPngUrl, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-                    { src: iconPngUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-                    { src: iconIcoUrl, sizes: '48x48 32x32 16x16', type: 'image/x-icon' }
-                ]
-            };
-
-            const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-            const manifestLink = document.getElementById('pwaManifestLink');
-            if (manifestLink) {
-                manifestLink.href = URL.createObjectURL(blob);
-            }
-
-            // 2) 서비스 워커 등록 (updateViaCache: 'none'으로 브라우저 HTTP 캐시 무시 & 즉시 업데이트)
             if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
                     reg.update();
@@ -5365,7 +5337,7 @@
             }
         } catch (e) {}
     }
-
+        
     window.onload = function () {
         // 좌클릭 기본 모드를 '채굴 전용'으로 UI 초기화
         clickActionMode = 'mine';
