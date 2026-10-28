@@ -5313,13 +5313,95 @@
         saveCurrentProfileState();
     };
 
-    // 실제 manifest.json 파일을 유지하면서 지연 없는(Network-First) 서비스 워커만 등록하는 함수
+    // 원클릭 PWA 설치 프롬프트 저장 변수
+    let deferredPwaPrompt = null;
+
+    // 실제 manifest.json 유지 + '📲 앱으로 설치하기' 원클릭 버튼 생성 + 지연 없는(Network-First) 업데이트 보장
     function initZeroDelayPWA() {
         try {
+            // 현재 이미 설치된 앱(Standalone) 모드로 실행 중인지 확인
+            const isStandalone =
+                window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true;
+
+            // 1) 로비 모달 및 좌측 상단 HUD에 [📲 앱으로 설치하기] 버튼 자동 주입
+            const enterBtn = document.getElementById('btnEnterGlobalWorld');
+            if (enterBtn && !document.getElementById('btnInstallPwaLobby')) {
+                const lobbyInstallBtn = document.createElement('button');
+                lobbyInstallBtn.id = 'btnInstallPwaLobby';
+                lobbyInstallBtn.type = 'button';
+                lobbyInstallBtn.className = `mc-btn mc-btn-blue w-full py-2.5 px-4 mt-2.5 flex items-center justify-between text-left shadow-md ${isStandalone ? 'hidden' : ''}`;
+                lobbyInstallBtn.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <img src="icon.png" alt="앱 아이콘" onerror="this.style.display='none'" class="w-7 h-7 rounded border border-cyan-300 bg-gray-900 object-contain">
+                        <div>
+                            <div id="lobbyInstallBtnTitle" class="text-xs sm:text-sm font-black text-white">
+                                📲 홈 화면 / PC에 앱으로 설치하기 (원클릭)
+                            </div>
+                            <div id="lobbyInstallBtnSub" class="text-[10px] text-cyan-200 font-normal">
+                                설치 후 전체화면으로 더 넓고 쾌적하게 덧셈 월드를 탐험해요!
+                            </div>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-cyan-400 text-gray-950 text-xs font-black shrink-0">설치 ⬇</span>
+                `;
+                lobbyInstallBtn.addEventListener('click', handleOneClickPwaInstall);
+                enterBtn.parentNode.insertBefore(lobbyInstallBtn, enterBtn.nextSibling);
+            }
+
+            const soundBtn = document.getElementById('btnSoundToggle');
+            if (soundBtn && !document.getElementById('btnInstallPwaHud')) {
+                const hudInstallBtn = document.createElement('button');
+                hudInstallBtn.id = 'btnInstallPwaHud';
+                hudInstallBtn.type = 'button';
+                hudInstallBtn.className = `mc-btn mc-btn-blue px-2 py-1 text-xs flex items-center gap-1 ${isStandalone ? 'hidden' : ''}`;
+                hudInstallBtn.title = '기기에 게임 앱 설치하기';
+                hudInstallBtn.innerHTML = `<span>📲 앱 설치</span>`;
+                hudInstallBtn.addEventListener('click', handleOneClickPwaInstall);
+                soundBtn.parentNode.appendChild(hudInstallBtn);
+            }
+
+            // 2) 브라우저가 원클릭 설치 준비를 마쳤을 때 이벤트 가로채기 (Android / PC Chrome, Edge 등)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPwaPrompt = e;
+
+                const lobbyBtn = document.getElementById('btnInstallPwaLobby');
+                const hudBtn = document.getElementById('btnInstallPwaHud');
+                const titleEl = document.getElementById('lobbyInstallBtnTitle');
+                if (lobbyBtn && !isStandalone) {
+                    lobbyBtn.classList.remove('hidden');
+                    lobbyBtn.classList.add('ring-2', 'ring-cyan-300');
+                }
+                if (hudBtn && !isStandalone) {
+                    hudBtn.classList.remove('hidden');
+                }
+                if (titleEl) {
+                    titleEl.textContent = '📲 앱으로 설치하기 (지금 바로 원클릭 설치 가능!)';
+                }
+            });
+
+            // 3) 설치가 완료되면 설치 버튼 숨김 및 축하 안내
+            window.addEventListener('appinstalled', () => {
+                deferredPwaPrompt = null;
+                const lobbyBtn = document.getElementById('btnInstallPwaLobby');
+                const hudBtn = document.getElementById('btnInstallPwaHud');
+                if (lobbyBtn) lobbyBtn.classList.add('hidden');
+                if (hudBtn) hudBtn.classList.add('hidden');
+                showToast('🎉 앱 설치가 완료되었습니다! 이제 바탕화면/홈 화면 아이콘으로 바로 접속하세요!', 'emerald');
+            });
+
+            // 4) 서비스 워커 등록 (updateViaCache: 'none'으로 모바일/태블릿/PC 코드 수정 즉시 반영)
             if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
                     reg.update();
+
+                    // 창 포커스 시 & 모바일 앱 화면 전환 복귀 시 즉시 최신 코드 확인
                     window.addEventListener('focus', () => reg.update());
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') reg.update();
+                    });
+
                     if (reg.waiting) {
                         reg.waiting.postMessage({ type: 'SKIP_WAITING' });
                     }
@@ -5336,6 +5418,44 @@
                 }).catch(() => {});
             }
         } catch (e) {}
+    }
+
+    // [📲 앱으로 설치하기] 버튼 클릭 시 실행되는 원클릭 설치 핸들러
+    async function handleOneClickPwaInstall() {
+        const isStandalone =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true;
+
+        if (isStandalone) {
+            showToast('✅ 이미 앱으로 설치되어 실행 중입니다!', 'emerald');
+            return;
+        }
+
+        // Case 1: 안드로이드 / PC(크롬, 엣지, 삼성인터넷 등) 원클릭 설치 지원 시 즉시 실행
+        if (deferredPwaPrompt) {
+            try {
+                deferredPwaPrompt.prompt();
+                const { outcome } = await deferredPwaPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPwaPrompt = null;
+                    showToast('📲 앱 설치를 시작합니다!', 'emerald');
+                } else {
+                    showToast('언제든 다시 [📲 앱 설치] 버튼을 눌러 설치할 수 있어요.', 'blue');
+                }
+            } catch (err) {}
+            return;
+        }
+
+        // Case 2: 아이폰 / 아이패드(iOS Safari) 환경 감지 시 맞춤 안내
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIos) {
+            showToast('🍎 아이폰/아이패드: 브라우저의 [공유 📤] 버튼을 누른 뒤 [홈 화면에 추가 ➕]를 선택하면 앱으로 설치됩니다!', 'amber');
+            return;
+        }
+
+        // Case 3: 이미 설치되어 있거나 브라우저 주소창 설치 아이콘을 써야 하는 경우
+        showToast('💡 브라우저 주소창 오른쪽 끝의 [앱 설치 🖥️/➕] 아이콘을 누르거나 메뉴에서 [앱 설치]를 선택해 주세요!', 'blue');
     }
         
     window.onload = function () {
