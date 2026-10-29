@@ -892,7 +892,7 @@
     const TILE_SIZE = 48;
     const REACH_TILES = 4.8;
 
-    // Ground/Floor Layer IDs
+   // Ground/Floor Layer IDs
     const FLOOR = {
         DEEP_WATER: 0,
         WATER: 1,
@@ -905,7 +905,8 @@
         BASALT: 8,
         LAVA: 9,
         PLAZA_FLOOR: 10,
-        COBBLE_BRIDGE: 11
+        COBBLE_BRIDGE: 11,
+        NUMBER_LAND: 12 // 🔢 넘버블록스 바이옴 전용 바닥
     };
 
     const FLOOR_INFO = {
@@ -920,7 +921,8 @@
         [FLOOR.BASALT]:        { name: '화산 현무암 대지', walkable: true,  color: '#334155' },
         [FLOOR.LAVA]:          { name: '용암 지대 (조약돌로 다리 건설 가능)', walkable: false, color: '#ea580c' },
         [FLOOR.PLAZA_FLOOR]:   { name: '중앙 스폰 광장 포장석', walkable: true,  color: '#94a3b8' },
-        [FLOOR.COBBLE_BRIDGE]: { name: '조약돌 돌다리', walkable: true,  color: '#64748b' }
+        [FLOOR.COBBLE_BRIDGE]: { name: '조약돌 돌다리', walkable: true,  color: '#64748b' },
+        [FLOOR.NUMBER_LAND]:   { name: '🔢 넘버블록스 파스텔 타일 땅', walkable: true,  color: '#f472b6' }
     };
 
     // Object/Block Layer IDs
@@ -945,7 +947,10 @@
         CACTUS: 17,
         OBSIDIAN: 18,
         MAGIC_CRYSTAL: 19,
-        RAINBOW_BLOCK: 20
+        RAINBOW_BLOCK: 20,
+        NUMBERBLOCK: 21,  // 🔢 넘버블록스 친구
+        NUMBERBLOB: 22,   // 🟣 넘버블롭스
+        NUMBER_HOUSE: 23  // 🏠 넘버블록스 집
     };
 
     // Detailed Block Metadata (Hardness, required pickaxe tier, drops)
@@ -960,7 +965,7 @@
         [BLOCK.GOLD_ORE]:      { name: '금 광석 (철 곡괭이 이상)', hp: 175, solid: true, minTier: 2, dropType: 'res', dropKey: 'gold', dropCount: 2, dropLabel: '금광석', sfx: 'ore', minColor: '#facc15', particleColor: '#fef08a' },
         [BLOCK.DIAMOND_ORE]:   { name: '다이아몬드 광석 (철 곡괭이 이상)', hp: 220, solid: true, minTier: 2, dropType: 'res', dropKey: 'diamond', dropCount: 1, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#22d3ee', particleColor: '#67e8f9' },
         [BLOCK.OBSIDIAN]:      { name: '흑요석 (다이아 곡괭이 이상)', hp: 320, solid: true, minTier: 4, dropType: 'res', dropKey: 'obsidian', dropCount: 1, dropLabel: '흑요석', sfx: 'ore', minColor: '#581c87', particleColor: '#a855f7' },
-        [BLOCK.MAGIC_CRYSTAL]: { name: '✨ 덧셈 마법 크리스탈 광석 (모든 곡괭이 채굴 가능! 보석 대량 획득)', hp: 75, solid: true, minTier: 0, light: 170, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '마법 다이아몬드', sfx: 'ore', minColor: '#f472b6', particleColor: '#f472b6' },
+        [BLOCK.MAGIC_CRYSTAL]: { name: '👾 덧셈 몬스터 (3문제 배틀 처치!)', hp: 75, solid: true, minTier: 0, light: 170, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '마법 다이아몬드', sfx: 'ore', minColor: '#f472b6', particleColor: '#f472b6' },
         [BLOCK.PLANKS_WALL]:   { name: '나무 판자 벽', hp: 65, solid: true, minTier: 0, dropType: 'item', dropKey: 'planks', dropCount: 1, dropLabel: '나무 판자', sfx: 'wood', minColor: '#d97706', particleColor: '#b45309' },
         [BLOCK.COBBLE_WALL]:   { name: '조약돌 성벽', hp: 105, solid: true, minTier: 0, dropType: 'item', dropKey: 'cobbleWall', dropCount: 1, dropLabel: '조약돌 벽', sfx: 'stone', minColor: '#6b7280', particleColor: '#6b7280' },
         [BLOCK.STONE_BRICKS]:  { name: '석재 벽돌 블록', hp: 125, solid: true, minTier: 0, dropType: 'item', dropKey: 'bricks', dropCount: 1, dropLabel: '석재 벽돌', sfx: 'stone', minColor: '#94a3b8', particleColor: '#cbd5e1' },
@@ -969,8 +974,11 @@
         [BLOCK.CRAFT_TABLE]:   { name: '제작대 (우클릭 또는 E키)', hp: 70, solid: true, minTier: 0, dropType: 'item', dropKey: 'craftTable', dropCount: 1, dropLabel: '제작대', sfx: 'wood', minColor: '#b45309', particleColor: '#92400e' },
         [BLOCK.DOOR_CLOSED]:   { name: '나무 문 (우클릭 개폐)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
         [BLOCK.DOOR_OPEN]:     { name: '열린 나무 문', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
-        [BLOCK.GOLD_BLOCK]:    { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde047' },
-        [BLOCK.RAINBOW_BLOCK]: { name: '🌈 무지개 덧셈 마스터 블록 (발광 트로피 건축 블록)', hp: 90, solid: true, minTier: 0, light: 190, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 1, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ec4899', particleColor: '#f472b6' }
+        [BLOCK.GOLD_BLOCK]:    { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde08a' },
+        [BLOCK.RAINBOW_BLOCK]: { name: '🌈 무지개 덧셈 마스터 블록', hp: 90, solid: true, minTier: 0, light: 190, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 1, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ec4899', particleColor: '#f472b6' },
+        [BLOCK.NUMBERBLOCK]:   { name: '🔢 넘버블록스 캐릭터 블록 (채굴 시 무지개블록 획득)', hp: 80, solid: true, minTier: 0, light: 160, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 2, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ef4444', particleColor: '#facc15' },
+        [BLOCK.NUMBERBLOB]:    { name: '🟣 넘버블롭스 (채굴 시 다이아몬드 획득)', hp: 65, solid: true, minTier: 0, light: 140, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#c084fc', particleColor: '#e879f9' },
+        [BLOCK.NUMBER_HOUSE]:  { name: '🏠 넘버블록스 하우스 (채굴 시 황금보물블록 획득)', hp: 130, solid: true, minTier: 0, light: 180, dropType: 'item', dropKey: 'goldBlock', dropCount: 2, dropLabel: '황금 블록', sfx: 'wood', minColor: '#38bdf8', particleColor: '#fef08a' }
     };
 
     // 6 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond -> Math Master Rainbow Pickaxe)
@@ -1104,6 +1112,7 @@
         diamond: '💎다이아',
         obsidian: '🟪흑요석',
         sand: '🏖️모래'
+        circle: '⭕써클'
     };
 
     // ==================== 2-B. ADDITION MOB (MONSTER) DEFINITIONS & HP STATE ====================
@@ -1123,26 +1132,47 @@
     // 타일 인덱스(ty * WORLD_SIZE + tx)별 몹의 남은 체력을 저장하는 맵
     const mobHpMap = new Map();
 
-    // 특정 좌표(tx, ty)에 있는 몹의 난이도(Lv.1~8)와 현재 체력(1~3)을 반환
+    // 특정 좌표(tx, ty)에 있는 몹의 난이도를 [1/(2n) 유저 맞춤 난이도 + 자연 난이도]로 실시간 산출
     function getMobDataAt(tx, ty) {
         if (!inBounds(tx, ty)) return { ...MOB_TIERS[1], hp: MOB_MAX_HP, maxHp: MOB_MAX_HP };
         const key = idx(tx, ty);
         const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
         const r = fastHash(tx, ty, GLOBAL_WORLD_SEED + 777);
 
-        let lvl = 1;
+        // 1) 기본 바이옴 자연 난이도 계산
+        let naturalLvl = 1;
         if (distSpawn < 12) {
-            // 스폰 광장 바로 안쪽은 초보용 Lv.1 ~ Lv.3 몹 배치
-            lvl = (Math.floor(r * 3) % 3) + 1;
+            naturalLvl = (Math.floor(r * 3) % 3) + 1;
         } else if (distSpawn < 32) {
-            // 광장 주변 평원은 Lv.1 ~ Lv.5 몹 배치
-            lvl = (Math.floor(r * 5) % 5) + 1;
+            naturalLvl = (Math.floor(r * 5) % 5) + 1;
         } else if (ty < 270 || (tx < 360 && ty > 600)) {
-            // 북부 설원 및 남서 화산 지대는 고난도 Lv.5 ~ Lv.8 몹 집중 배치
-            lvl = 5 + (Math.floor(r * 4) % 4);
+            naturalLvl = 5 + (Math.floor(r * 4) % 4);
         } else {
-            // 그 외 일반 월드는 Lv.1 ~ Lv.8 골고루 등장
-            lvl = (Math.floor(r * 8) % 8) + 1;
+            naturalLvl = (Math.floor(r * 8) % 8) + 1;
+        }
+
+        // 2) 접속 유저 수(n)에 따른 n등분 및 각 구역 내 50%(= 전체의 1/2n) 유저 난이도 동적 매칭
+        let activePlayers = [{ id: localPlayer.id || 'local', mathLevel: localPlayer.mathLevel || mathFlowState.level || 1 }];
+        if (typeof remotePlayers !== 'undefined' && remotePlayers.size > 0) {
+            remotePlayers.forEach(rp => {
+                if (rp && rp.id) {
+                    activePlayers.push({ id: rp.id, mathLevel: rp.mathLevel || 1 });
+                }
+            });
+            activePlayers.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        }
+
+        const n = activePlayers.length;
+        const assignHash = fastHash(tx, ty, GLOBAL_WORLD_SEED + 31337); // [0, 1) 균등 해시
+        const scaled = assignHash * n;
+        const playerBucketIdx = Math.min(n - 1, Math.floor(scaled)); // 전체 몹을 n등분 (각 1/n)
+        const fractionInBucket = scaled - playerBucketIdx;           // 해당 유저 할당분 내부 비율 [0, 1)
+
+        let lvl = naturalLvl;
+        // 할당된 1/n 구역 중 50%(즉 전체 몹의 1/2n)를 해당 유저의 현재 풀이 난이도로 설정!
+        if (fractionInBucket < 0.5) {
+            const targetUserLevel = activePlayers[playerBucketIdx].mathLevel || 1;
+            lvl = Math.max(1, Math.min(8, targetUserLevel));
         }
 
         const tierInfo = MOB_TIERS[lvl] || MOB_TIERS[1];
@@ -1534,6 +1564,117 @@
             tileSprites['block_' + BLOCK.RAINBOW_BLOCK] = c;
         }
 
+        // 🔢 넘버블록스 바이옴 바닥 타일 (파스텔 체크무늬)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#fdf2f8';
+            g.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.fillStyle = '#fbcfe8';
+            g.fillRect(0, 0, 24, 24);
+            g.fillRect(24, 24, 24, 24);
+            g.fillStyle = '#e0f2fe';
+            g.fillRect(24, 0, 24, 24);
+            g.fillRect(0, 24, 24, 24);
+            g.strokeStyle = '#f472b6';
+            g.lineWidth = 1;
+            g.strokeRect(0.5, 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+            tileSprites['floor_' + FLOOR.NUMBER_LAND] = c;
+        }
+
+        // 🔢 넘버블록스 캐릭터 블록 (Numberblocks Stacked Character)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+            for (let i = 0; i < 4; i++) {
+                const by = 34 - i * 8;
+                g.fillStyle = colors[i];
+                g.fillRect(13, by, 22, 8);
+                g.strokeStyle = '#111827';
+                g.lineWidth = 1.5;
+                g.strokeRect(13, by, 22, 8);
+            }
+            // 귀여운 눈과 미소
+            g.fillStyle = '#ffffff';
+            g.fillRect(16, 13, 6, 6);
+            g.fillRect(26, 13, 6, 6);
+            g.fillStyle = '#111827';
+            g.fillRect(18, 15, 3, 3);
+            g.fillRect(28, 15, 3, 3);
+            // 머리 위 넘버링(Numberling) 표시
+            g.fillStyle = '#111827';
+            g.font = '900 10px sans-serif';
+            g.textAlign = 'center';
+            g.fillText('4', 24, 9);
+            tileSprites['block_' + BLOCK.NUMBERBLOCK] = c;
+        }
+
+        // 🟣 넘버블롭스 (Numberblobs 귀여운 동글이 캐릭터)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = 'rgba(0,0,0,0.3)';
+            g.beginPath();
+            g.ellipse(24, 39, 15, 5, 0, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#c084fc';
+            g.beginPath();
+            g.arc(24, 26, 15, 0, Math.PI * 2);
+            g.fill();
+            g.lineWidth = 2;
+            g.strokeStyle = '#581c87';
+            g.stroke();
+            // 눈과 볼터치
+            g.fillStyle = '#ffffff';
+            g.beginPath();
+            g.arc(19, 23, 4, 0, Math.PI * 2);
+            g.arc(29, 23, 4, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#111827';
+            g.beginPath();
+            g.arc(19, 23, 2, 0, Math.PI * 2);
+            g.arc(29, 23, 2, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#f472b6';
+            g.fillRect(13, 27, 4, 2);
+            g.fillRect(31, 27, 4, 2);
+            tileSprites['block_' + BLOCK.NUMBERBLOB] = c;
+        }
+
+        // 🏠 넘버블록스 집 (Numberblocks House)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            // 지붕
+            g.fillStyle = '#ef4444';
+            g.beginPath();
+            g.moveTo(4, 20);
+            g.lineTo(24, 4);
+            g.lineTo(44, 20);
+            g.closePath();
+            g.fill();
+            g.strokeStyle = '#111827';
+            g.lineWidth = 2;
+            g.stroke();
+            // 집 본체 (블록 칸막이 디자인)
+            g.fillStyle = '#fef08a';
+            g.fillRect(8, 20, 32, 24);
+            g.strokeRect(8, 20, 32, 24);
+            // 숫자 문과 창문
+            g.fillStyle = '#3b82f6';
+            g.fillRect(19, 29, 10, 15);
+            g.strokeRect(19, 29, 10, 15);
+            g.fillStyle = '#bae6fd';
+            g.fillRect(11, 23, 6, 6);
+            g.fillRect(31, 23, 6, 6);
+            g.fillStyle = '#ffffff';
+            g.font = '900 9px sans-serif';
+            g.textAlign = 'center';
+            g.fillText('10', 24, 16);
+            tileSprites['block_' + BLOCK.NUMBER_HOUSE] = c;
+        }
+
         // 10 Stages of Block Mining Cracks
         for (let stage = 0; stage < 10; stage++) {
             const c = createOffscreenCanvas();
@@ -1620,6 +1761,9 @@
     function getBiomeNameAt(tx, ty) {
         const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
         if (distSpawn < 16) return '🏛️ 중앙 스폰 광장';
+        if (isNumberblocksBiomeAt(tx, ty)) {
+            return isNumberblocksBiomeUnlocked() ? '🔢 넘버블록스 랜드 (해금됨!)' : '🔒 넘버블록스 랜드 (써클 50개 필요)';
+        }
         if (ty < 270) return '❄️ 북부 설원 툰드라';
         if (tx > 660 && ty > 620) return '🌵 남동 황금 사막';
         if (tx < 340 && ty > 620) return '🌋 남서 화산 지대';
@@ -1628,7 +1772,7 @@
         return '🌲 푸른 숲과 평원';
     }
 
-    // Generate a 10x10 chunk on demand in microseconds (and pre-warm around player)
+    // Generate a 10x10 chunk on demand in microseconds (including Numberblocks Biome!)
     function ensureChunkGenerated(cx, cy) {
         if (cx < 0 || cy < 0 || cx >= 100 || cy >= 100) return;
         const cIdx = cy * 100 + cx;
@@ -1641,7 +1785,6 @@
         for (let y = startY; y < startY + 10; y++) {
             for (let x = startX; x < startX + 10; x++) {
                 const i = idx(x, y);
-                // If modified by a player delta, respect the delta!
                 if (worldDeltas.has(i)) {
                     const [df, db] = worldDeltas.get(i);
                     world.floors[i] = df;
@@ -1650,7 +1793,7 @@
                 }
 
                 const distSpawn = Math.hypot(x - SPAWN_X, y - SPAWN_Y);
-                // 1. Central Spawn Plaza (500, 500) where all players meet
+                // 1. Central Spawn Plaza (500, 500)
                 if (distSpawn < 8.5) {
                     world.floors[i] = FLOOR.PLAZA_FLOOR;
                     world.blocks[i] = BLOCK.AIR;
@@ -1675,6 +1818,23 @@
 
                 const elev = smoothNoise(x, y, 0.032, GLOBAL_WORLD_SEED) * 0.7 + smoothNoise(x, y, 0.09, GLOBAL_WORLD_SEED + 7) * 0.3;
                 const detail = fastHash(x, y, GLOBAL_WORLD_SEED + 33);
+
+                // 🔢 Biome 0: NE Numberblocks Land (x > 660, y < 300)
+                if (isNumberblocksBiomeAt(x, y)) {
+                    world.floors[i] = FLOOR.NUMBER_LAND;
+                    // 랜드마크 중심부(820, 160)는 광장처럼 비워둠
+                    if (Math.hypot(x - 820, y - 160) < 5) {
+                        world.blocks[i] = (x === 820 && y === 157) ? BLOCK.NUMBER_HOUSE : BLOCK.AIR;
+                        continue;
+                    }
+                    if (detail < 0.04) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
+                    else if (detail < 0.095) world.blocks[i] = BLOCK.NUMBERBLOCK;
+                    else if (detail < 0.145) world.blocks[i] = BLOCK.NUMBERBLOB;
+                    else if (detail < 0.17) world.blocks[i] = BLOCK.NUMBER_HOUSE;
+                    else if (detail < 0.19) world.blocks[i] = BLOCK.RAINBOW_BLOCK;
+                    else world.blocks[i] = BLOCK.AIR;
+                    continue;
+                }
 
                 // River / Lake channels
                 if (elev < 0.19) {
@@ -1759,6 +1919,16 @@
                 else if (detail < 0.21) world.blocks[i] = BLOCK.IRON_ORE;
             }
         }
+    }
+
+    // 특정 좌표가 넘버블록스 바이옴(북동부 X > 660, Y < 300)인지 확인
+    function isNumberblocksBiomeAt(tx, ty) {
+        return tx > 660 && ty < 300;
+    }
+
+    // '⭕써클' 50개를 모아 넘버블록스 바이옴이 잠금 해제되었는지 확인
+    function isNumberblocksBiomeUnlocked() {
+        return !!mathFlowState.numberblocksUnlocked || (resources.circle || 0) >= 50;
     }
 
     function ensureAreaGenerated(centerTx, centerTy, radiusChunks = 4) {
@@ -2699,11 +2869,13 @@
         if (bState) {
             tx = bState.tx;
             ty = bState.ty;
+            // 자율 훈련이거나 내 적정 난이도가 조정된 경우 반영
             mathFlowState.level = bState.level;
             localPlayer.mathLevel = bState.level;
         }
 
         const prob = generateGoldilocksProblem(mathFlowState.level);
+        prob.problemLevel = mathFlowState.level; // 문제 출제 시점의 난이도 기록
         prob.contextTx = tx;
         prob.contextTy = ty;
         mathFlowState.currentProblem = prob;
@@ -2717,7 +2889,7 @@
         banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-gray-900/90 border border-gray-700 text-xs sm:text-sm font-bold text-gray-200 flex items-center justify-between gap-2';
         document.getElementById('safeFeedbackText').textContent =
             bState
-                ? `⚔️ 정답을 맞히면 [${bState.name}]의 체력이 1칸 깎입니다! (남은 체력: ${bState.hp}/${bState.maxHp})`
+                ? `⚔️ 정답을 맞히면 [${bState.name}]의 체력이 1칸 깎입니다! (30초 안에 풀면 난이도 유지/상승!)`
                 : '👇 아래 숫자 블록을 클릭하여 공격 에너지를 충전해 보세요!';
         document.getElementById('btnNextProblem').classList.add('hidden');
 
@@ -2748,6 +2920,8 @@
         if (selectedVal === prob.answer) {
             prob.solved = true;
             const solveSec = Math.max(0.8, (performance.now() - prob.startedAt) / 1000);
+            const isOver30Sec = solveSec > 30; // ⏱️ 30초 초과 여부 판정
+
             sfx.playHit('ore');
             sfx.playMathSuccess();
 
@@ -2771,6 +2945,45 @@
                 g.bestLevel = mathFlowState.level;
                 g.bestEquation = fullEq;
             }
+
+            // ★ 핵심 규칙: 풀이 시간이 30초를 넘으면 '어려움'으로 구분하여 직전 난이도를 적정 난이도로 산정!
+            let difficultyAdjustMsg = '';
+            const currentProbLevel = prob.problemLevel || mathFlowState.level;
+
+            if (isOver30Sec) {
+                const properLevel = Math.max(1, currentProbLevel - 1);
+                mathFlowState.level = properLevel;
+                localPlayer.mathLevel = properLevel;
+                mathFlowState.consecutiveFirstTry = 0;
+
+                if (mathFlowState.activeMobBattle) {
+                    mathFlowState.activeMobBattle.level = properLevel;
+                }
+                difficultyAdjustMsg = ` ⏱️ (풀이 시간 ${solveSec.toFixed(0)}초: 30초를 넘어 직전 단계인 [Lv.${properLevel}]을 적정 난이도로 맞춤 조정했어요!)`;
+                showToast(`🛡️ 풀이 시간이 30초를 넘어 적정 난이도를 [Lv.${properLevel}]로 맞춤 조정했습니다.`, 'amber');
+            } else {
+                // 30초 이내 해결 시: 연속 정답에 따라 유저 난이도(및 필드 50% 몹 난이도) 상승!
+                mathFlowState.recentResults.push({ firstTry: !prob.hadRetry, timeSec: solveSec });
+                if (!prob.hadRetry) {
+                    mathFlowState.consecutiveFirstTry++;
+                } else {
+                    mathFlowState.consecutiveFirstTry = 0;
+                }
+
+                if (mathFlowState.consecutiveFirstTry >= 3 && mathFlowState.level < 8) {
+                    mathFlowState.level++;
+                    localPlayer.mathLevel = mathFlowState.level;
+                    mathFlowState.consecutiveFirstTry = 0;
+                    if (mathFlowState.level > (g.bestLevel || 1)) g.bestLevel = mathFlowState.level;
+                    if (mathFlowState.activeMobBattle) {
+                        mathFlowState.activeMobBattle.level = mathFlowState.level;
+                    }
+                    unlockBadge('goldilocks_up');
+                    if (mathFlowState.level >= 5) unlockBadge('master_arch');
+                    difficultyAdjustMsg = ` 🎉 [실력 상승!] 적정 난이도가 [Lv.${mathFlowState.level}]로 올라가 필드 몹들도 더 강해졌어요!`;
+                }
+            }
+
             g.levelHistory.push(mathFlowState.level);
             if (g.levelHistory.length > 25) g.levelHistory.shift();
 
@@ -2805,21 +3018,34 @@
 
                 isMobDefeated = (bState.hp <= 0);
 
-                // 머리 위 체력바 즉시 갱신 후 생동감 있는 피격/처치 애니메이션 실행!
                 updateMobBattleBannerUI();
                 triggerMobHitAnimation(bState, isMobDefeated);
 
                 if (isMobDefeated) {
                     sfx.playBreak();
 
-                    // 월드 몹인 경우 맵에서 제거하고 멀티플레이 동기화
+                    // ★ 핵심 규칙: 몹 처치 시 50% 확률로 '⭕써클' 아이템 드롭! (50개 모으면 넘버블록스 바이옴 해금)
+                    const gotCircle = Math.random() < 0.5;
+                    let circleDropText = '';
+                    if (gotCircle) {
+                        resources.circle = (resources.circle || 0) + 1;
+                        circleDropText = ` + ⭕써클 1개 획득!(${resources.circle}/50)`;
+                        if (resources.circle >= 50 && !mathFlowState.numberblocksUnlocked) {
+                            mathFlowState.numberblocksUnlocked = true;
+                            showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다! (M키 지도에서 이동 가능)', 'emerald');
+                            addChatMessage('시스템', `🎊 ${localPlayer.name}님이 '⭕써클' 50개를 모아 [🔢 넘버블록스 바이옴]의 봉인을 해제했습니다!`, '#f472b6', true);
+                        } else {
+                            showToast(`⭕ 행운의 '써클' 아이템 드롭! (현재 ${resources.circle}/50개)`, 'amber');
+                        }
+                    }
+
                     if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
                         applyWorldModification(bState.tx, bState.ty, undefined, BLOCK.AIR, true);
                         const wx = bState.tx * TILE_SIZE + 24;
                         const wy = bState.ty * TILE_SIZE + 24;
                         spawnParticles(wx, wy, '#ef4444', 24);
                         spawnParticles(wx, wy, '#facc15', 20);
-                        spawnFloatingText(wx, wy - 18, `💥 ${bState.name} 처치! (+💎${bState.dropDia})`, '#fde047');
+                        spawnFloatingText(wx, wy - 18, `💥 ${bState.name} 처치! (+💎${bState.dropDia}${gotCircle ? ' +⭕써클!' : ''})`, '#fde047');
 
                         sendGlobalPacket({
                             type: 'WORLD_MOD',
@@ -2839,10 +3065,10 @@
                     mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 35);
                     mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
 
-                    mobBattleMsg = ` 🎉 [몬스터 처치 완료!] ${bState.icon} ${bState.name}을(를) 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개, 🌈무지개블록 5개를 획득했어요!`;
+                    mobBattleMsg = ` 🎉 [몬스터 처치!] ${bState.icon} ${bState.name}을(를) 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개${circleDropText}를 획득했어요!`;
                 } else {
                     resources.gold = (resources.gold || 0) + 1;
-                    mobBattleMsg = ` ⚔️ 신나는 타격! ${bState.icon} ${bState.name}의 체력이 1칸 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp})`;
+                    mobBattleMsg = ` ⚔️ 타격 성공! ${bState.icon} ${bState.name}의 체력이 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp})`;
                 }
             }
 
@@ -2882,7 +3108,7 @@
             const banner = document.getElementById('safeFeedbackBanner');
             banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-emerald-950/95 border-2 border-emerald-400 text-xs sm:text-sm font-bold text-emerald-200 flex items-center justify-between gap-2';
             document.getElementById('safeFeedbackText').textContent =
-                `🎯 정답(${fullEq})!` + mobBattleMsg + microGoalCompleteMsg;
+                `🎯 정답(${fullEq})!` + mobBattleMsg + difficultyAdjustMsg + microGoalCompleteMsg;
 
             const nextBtn = document.getElementById('btnNextProblem');
             nextBtn.classList.remove('hidden');
@@ -2902,7 +3128,7 @@
             triggerMake10Animation();
 
         } else {
-            // ④ 안전한 시행착오: 오답 시 감점 없이 10칸 상자 힌트 제공
+            // ④ 안전한 시행착오
             prob.hadRetry = true;
             sfx.playGentleHint();
 
@@ -3360,9 +3586,17 @@
     function teleportToTile(tx, ty, label = '') {
         const clampedX = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(tx)));
         const clampedY = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(ty)));
+
+        // 🔒 넘버블록스 바이옴 잠금 체크 (⭕써클 50개 필요)
+        if (isNumberblocksBiomeAt(clampedX, clampedY) && !isNumberblocksBiomeUnlocked()) {
+            const curCircles = resources.circle || 0;
+            sfx.playGentleHint();
+            showToast(`🔒 [넘버블록스 바이옴 잠김] 몬스터를 처치해 '⭕써클' 50개를 모아야 입장할 수 있어요! (현재: ${curCircles}/50개)`, 'amber');
+            return;
+        }
+
         ensureAreaGenerated(clampedX, clampedY, 3);
 
-        // Ensure destination tile is walkable (if water/lava, place temporary wood/cobble bridge)
         const f = getFloorAt(clampedX, clampedY);
         if (!FLOOR_INFO[f]?.walkable) {
             applyWorldModification(clampedX, clampedY, FLOOR.WOOD_BRIDGE, BLOCK.AIR, true);
@@ -3990,9 +4224,19 @@
     let isLeftMouseDown = false;
     let isRightMouseDown = false;
     let rightPlaceCooldown = 0;
+    let lockedBiomeToastCooldown = 0;
 
     function isTileSolidForPlayer(tx, ty) {
         if (!inBounds(tx, ty)) return true;
+        // 🔒 써클 50개 미만일 때 넘버블록스 바이옴 결계 작동
+        if (isNumberblocksBiomeAt(tx, ty) && !isNumberblocksBiomeUnlocked()) {
+            const now = performance.now();
+            if (now - lockedBiomeToastCooldown > 2500) {
+                lockedBiomeToastCooldown = now;
+                showToast(`🔒 결계로 막혀 있습니다! 몹을 잡아 '⭕써클' 50개를 모으면 넘버블록스 바이옴이 열립니다. (${resources.circle || 0}/50)`, 'amber');
+            }
+            return true;
+        }
         const f = getFloorAt(tx, ty);
         if (!FLOOR_INFO[f]?.walkable) return true;
         const b = getBlockAt(tx, ty);
@@ -4931,7 +5175,7 @@
         });
     });
 
-    // ==================== 14. MULTI-PROFILE ACCOUNT SYSTEM (LOCALSTORAGE) & INSTANT-UPDATE PWA ====================
+    // ==================== 14. MULTI-PROFILE ACCOUNT, RESPONSIVE FIT & INSTANT-UPDATE PWA ====================
     const PROFILES_STORAGE_KEY = 'mc2d_user_profiles_v1';
     const ACTIVE_PROFILE_ID_KEY = 'mc2d_active_profile_id_v1';
     let currentProfileId = null;
@@ -4968,7 +5212,6 @@
         } catch (e) {}
     }
 
-    // 현재 플레이 중인 캐릭터의 모든 상태(위치, 자원, 블록, 곡괭이, 덧셈 성장 기록)를 즉시 저장
     function saveCurrentProfileState() {
         if (!currentProfileId) return;
         const profiles = loadAllProfiles();
@@ -4988,6 +5231,7 @@
             blockInventory: { ...blockInventory },
             mathFlow: {
                 level: mathFlowState.level,
+                numberblocksUnlocked: !!mathFlowState.numberblocksUnlocked || (resources.circle || 0) >= 50,
                 triggerMode: mathFlowState.triggerMode,
                 strategy: mathFlowState.strategy,
                 microGoalKey: mathFlowState.microGoalKey,
@@ -5009,7 +5253,6 @@
         } catch (e) {}
     }
 
-    // 선택한 캐릭터 프로필 데이터를 게임 상태에 복원
     function applyProfileToGame(profile) {
         if (!profile) return;
         currentProfileId = profile.id;
@@ -5024,7 +5267,6 @@
         localPlayer.pickaxeTier = profile.pickaxeTier || 0;
         localPlayer.selectedSlot = profile.selectedSlot || 0;
 
-        // 좌클릭 기본 모드를 'mine'(채굴 전용)으로 복원
         clickActionMode = profile.clickActionMode || 'mine';
         const modeLabel = document.getElementById('actionModeLabel');
         if (modeLabel) {
@@ -5033,22 +5275,20 @@
                 clickActionMode === 'build' ? '🧱 좌클릭: 건설 전용' : '🖱️ 좌:채굴/우:건설';
         }
 
-        // 자원 복원
-        const defaultRes = { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2 };
+        const defaultRes = { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0 };
         Object.keys(defaultRes).forEach(k => {
             resources[k] = (profile.resources && typeof profile.resources[k] === 'number') ? profile.resources[k] : defaultRes[k];
         });
 
-        // 블록 인벤토리 복원
         const defaultInv = { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 };
         Object.keys(defaultInv).forEach(k => {
             blockInventory[k] = (profile.blockInventory && typeof profile.blockInventory[k] === 'number') ? profile.blockInventory[k] : defaultInv[k];
         });
 
-        // 덧셈 플로우 & 성장 박물관 기록 복원
         const mf = profile.mathFlow || {};
         mathFlowState.level = mf.level || profile.mathLevel || 1;
         localPlayer.mathLevel = mathFlowState.level;
+        mathFlowState.numberblocksUnlocked = !!mf.numberblocksUnlocked || (resources.circle || 0) >= 50;
         mathFlowState.triggerMode = mf.triggerMode || 'magic_only';
         mathFlowState.strategy = mf.strategy || 'tenframe';
         mathFlowState.microGoalKey = mf.microGoalKey || 'speed';
@@ -5056,7 +5296,6 @@
         mathFlowState.buffRemainingSec = mf.buffRemainingSec || 0;
         mathFlowState.growth = Object.assign(getDefaultGrowthObject(mathFlowState.level), mf.growth || {});
 
-        // 로비 입력 폼 동기화
         const nameInp = document.getElementById('playerNameInput');
         if (nameInp) nameInp.value = localPlayer.name;
         const lvSel = document.getElementById('initialMathLevelSelect');
@@ -5078,33 +5317,130 @@
         drawRadarMinimap();
     }
 
-    // 로비 모달에 [계정(캐릭터) 선택 및 새 캐릭터 생성] UI 주입 및 렌더링
+    // ★ 화면 잘림 방지 반응형 레이아웃 + 깃허브 배포 안내 제거 + '⭕써클' 및 '넘버블록스 바이옴' UI 초기화
+    function setupResponsiveAndCleanUI() {
+        // 1) 깃허브 배포 안내 버튼 및 모달 완전 제거
+        const ghBtn = document.getElementById('btnOpenGithubGuide');
+        if (ghBtn) ghBtn.remove();
+        const ghModal = document.getElementById('githubGuideModal');
+        if (ghModal) ghModal.remove();
+
+        // 2) 자원 가방에 '⭕써클 (0/50)' 표시 슬롯 동적 추가
+        const sandEl = document.getElementById('res_sand');
+        if (sandEl && !document.getElementById('res_circle')) {
+            const gridWrap = sandEl.parentNode.parentNode;
+            gridWrap.className = 'grid grid-cols-5 sm:grid-cols-9 gap-1 text-center text-xs';
+            const circleCard = document.createElement('div');
+            circleCard.className = 'bg-pink-950/90 rounded p-1 border border-pink-400 col-span-2 sm:col-span-1';
+            circleCard.title = '몬스터 처치 시 50% 확률 드롭! 50개를 모으면 넘버블록스 바이옴이 열립니다.';
+            circleCard.innerHTML = `
+                <div class="text-[10px] text-pink-300 font-bold">⭕써클</div>
+                <div id="res_circle" class="font-black text-amber-300">0/50</div>
+            `;
+            gridWrap.appendChild(circleCard);
+        }
+
+        // 3) 전체 지도(M) 모달에 [🔢 넘버블록스 랜드] 순간이동 버튼 추가
+        const tpButtons = document.querySelectorAll('.landmark-tp-btn');
+        if (tpButtons.length > 0 && !document.getElementById('btnTpNumberblocks')) {
+            const parentGrid = tpButtons[0].parentNode;
+            const nbBtn = document.createElement('button');
+            nbBtn.id = 'btnTpNumberblocks';
+            nbBtn.type = 'button';
+            nbBtn.className = 'landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between border-pink-400 bg-pink-950/80 text-pink-200';
+            nbBtn.innerHTML = `<span>🔢 북동 넘버블록스 랜드</span><span id="nbBiomeLockBadge" class="font-mono text-[10px] text-amber-300">⭕50개 해금</span>`;
+            nbBtn.onclick = () => {
+                teleportToTile(820, 160, '🔢 넘버블록스 랜드');
+                if (isNumberblocksBiomeUnlocked()) {
+                    toggleWorldMapModal(false);
+                }
+            };
+            parentGrid.appendChild(nbBtn);
+        }
+
+        // 4) 기기 화면 크기(모바일/태블릿/작은 창)에 맞춰 UI가 절대 잘리지 않도록 반응형 CSS 및 자동 배율 적용
+        if (!document.getElementById('responsiveViewportStyles')) {
+            const st = document.createElement('style');
+            st.id = 'responsiveViewportStyles';
+            st.textContent = `
+                html, body {
+                    width: 100vw;
+                    height: 100dvh;
+                    max-width: 100vw;
+                    max-height: 100dvh;
+                    overflow: hidden;
+                    position: fixed;
+                    inset: 0;
+                }
+                #lobbyModal > .mc-panel,
+                #mathModal > .mc-panel,
+                #growthModal > .mc-panel,
+                #worldMapModal > .mc-panel,
+                #craftModal > .mc-panel {
+                    max-height: 94dvh;
+                    max-width: 96vw;
+                    overflow-y: auto;
+                }
+                @media (max-height: 700px) {
+                    .hotbar-slot { width: 38px !important; height: 38px !important; }
+                    #minimapCanvas { width: 104px !important; height: 104px !important; }
+                }
+                @media (max-width: 480px) {
+                    .hotbar-slot { width: 34px !important; height: 34px !important; }
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        // 5) 화면 크기 변화 시 좌/우 상단 HUD와 하단 핫바가 화면 밖으로 잘리지 않도록 동적 스케일 조정
+        const fitHudToViewport = () => {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            canvas.width = vw;
+            canvas.height = vh;
+            lightCanvas.width = vw;
+            lightCanvas.height = vh;
+
+            const scale = Math.min(1, Math.min(vw / 420, vh / 680));
+            const topLeftHud = document.getElementById('netStatusDot')?.closest('.fixed.top-3.left-3');
+            const topRightHud = document.getElementById('minimapCanvas')?.closest('.fixed.top-3.right-3');
+            if (topLeftHud) {
+                topLeftHud.style.transformOrigin = 'top left';
+                topLeftHud.style.transform = scale < 0.92 ? `scale(${Math.max(0.72, scale)})` : '';
+            }
+            if (topRightHud) {
+                topRightHud.style.transformOrigin = 'top right';
+                topRightHud.style.transform = scale < 0.92 ? `scale(${Math.max(0.72, scale)})` : '';
+            }
+        };
+        window.addEventListener('resize', fitHudToViewport);
+        window.addEventListener('orientationchange', fitHudToViewport);
+        fitHudToViewport();
+    }
+
     function setupAccountManagerUI() {
         const lobbyPanel = document.querySelector('#lobbyModal .mc-panel');
         if (!lobbyPanel) return;
 
-        // 1) 로비 상단에 icon.png 아이콘 배지 추가
         const titleEl = lobbyPanel.querySelector('h1');
         if (titleEl && !document.getElementById('lobbyAppIconImg')) {
             const iconWrap = document.createElement('div');
             iconWrap.className = 'flex justify-center mb-2';
-            iconWrap.innerHTML = `<img id="lobbyAppIconImg" src="icon.png" alt="아이콘" onerror="this.src='icon.ico'; this.onerror=null;" class="w-14 h-14 rounded-xl border-2 border-amber-400 shadow-lg bg-gray-900 object-contain p-1">`;
+            iconWrap.innerHTML = `<img id="lobbyAppIconImg" src="icon.png" alt="아이콘" onerror="this.src='icon.ico'; this.onerror=null;" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-amber-400 shadow-lg bg-gray-900 object-contain p-1">`;
             titleEl.parentNode.insertBefore(iconWrap, titleEl);
         }
 
-        // 2) 캐릭터 선택/생성 컨테이너 삽입
         let accountBox = document.getElementById('accountSelectorSection');
         if (!accountBox) {
             accountBox = document.createElement('div');
             accountBox.id = 'accountSelectorSection';
-            accountBox.className = 'bg-gray-950/90 border-2 border-emerald-500/70 rounded-lg p-3.5 mb-3 text-left';
+            accountBox.className = 'bg-gray-950/90 border-2 border-emerald-500/70 rounded-lg p-3 mb-3 text-left';
             const formBox = document.getElementById('playerNameInput')?.closest('.bg-gray-900\\/85');
             if (formBox) {
                 formBox.parentNode.insertBefore(accountBox, formBox);
             }
         }
 
-        // 3) 좌측 상단 HUD에 [👤 캐릭터 전환] 버튼 추가
         const spawnBtn = document.getElementById('btnReturnSpawn');
         if (spawnBtn && !document.getElementById('btnSwitchAccountHud')) {
             const swBtn = document.createElement('button');
@@ -5146,25 +5482,25 @@
             const isSelected = (p.id === currentProfileId) || (!currentProfileId && p.id === savedActiveId);
             const ptx = Math.floor((p.x || SPAWN_X * TILE_SIZE) / TILE_SIZE);
             const pty = Math.floor((p.y || SPAWN_Y * TILE_SIZE) / TILE_SIZE);
-            const pickName = PICKAXE_TIERS[p.pickaxeTier || 0]?.name || '나무 곡괭이';
+            const circleCnt = p.resources?.circle || 0;
             const solvedCnt = p.mathFlow?.growth?.totalSolved || 0;
 
             return `
-                <div data-pid="${p.id}" class="profile-card cursor-pointer p-2.5 rounded-lg border-2 transition flex items-center justify-between gap-2 ${
+                <div data-pid="${p.id}" class="profile-card cursor-pointer p-2 rounded-lg border-2 transition flex items-center justify-between gap-2 ${
                     isSelected
                         ? 'bg-emerald-950/70 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.35)]'
                         : 'bg-gray-900/90 border-gray-700 hover:border-gray-500'
                 }">
-                    <div class="flex items-center gap-2.5 truncate">
+                    <div class="flex items-center gap-2 truncate">
                         <span class="w-8 h-8 rounded-lg border-2 border-white shrink-0 flex items-center justify-center font-black text-sm text-gray-950 shadow"
                               style="background:${p.color || '#06b6d4'}">${escapeHtml((p.name || '스')[0])}</span>
                         <div class="truncate">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-black text-sm text-white truncate">${escapeHtml(p.name)}</span>
+                                <span class="font-black text-xs sm:text-sm text-white truncate">${escapeHtml(p.name)}</span>
                                 <span class="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-[10px] font-black">Lv.${p.mathLevel || 1}</span>
                             </div>
                             <div class="text-[10px] text-gray-300 mt-0.5">
-                                ⛏️ ${pickName} · 📍(${ptx},${pty}) · ✨해결 ${solvedCnt}문제
+                                📍(${ptx},${pty}) · ⭕써클 ${circleCnt}/50 · ✨해결 ${solvedCnt}문제
                             </div>
                         </div>
                     </div>
@@ -5181,21 +5517,20 @@
         }).join('');
 
         accountBox.innerHTML = `
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-1.5">
                 <span class="text-xs font-black text-emerald-300">👥 저장된 캐릭터 선택 (클릭 시 이어하기)</span>
                 <button type="button" id="btnPrepareNewProfile" class="px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black shadow">
                     ➕ 새 캐릭터 만들기
                 </button>
             </div>
-            <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                 ${cardsHtml}
             </div>
-            <div id="profileModeNotice" class="text-[11px] text-amber-300 font-bold mt-2">
-                ${currentProfileId ? '✅ 선택된 캐릭터의 설정입니다. 아래에서 닉네임/색상을 수정하거나 바로 입장할 수 있어요.' : '✨ 새 캐릭터 생성 모드: 아래에 새 닉네임을 입력하고 입장 버튼을 누르세요!'}
+            <div id="profileModeNotice" class="text-[11px] text-amber-300 font-bold mt-1.5">
+                ${currentProfileId ? '✅ 선택된 캐릭터의 설정입니다. 바로 이어하거나 아래에서 수정할 수 있어요.' : '✨ 새 캐릭터 생성 모드: 아래에 새 닉네임을 입력하고 입장 버튼을 누르세요!'}
             </div>
         `;
 
-        // 카드 클릭 시 해당 캐릭터 선택
         accountBox.querySelectorAll('.profile-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-del-profile') || e.target.closest('.btn-resume-profile')) return;
@@ -5208,7 +5543,6 @@
             });
         });
 
-        // [▶ 이어하기] 버튼 클릭 시 즉시 해당 캐릭터로 월드 입장
         accountBox.querySelectorAll('.btn-resume-profile').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -5221,7 +5555,6 @@
             });
         });
 
-        // [🗑️] 삭제 버튼
         accountBox.querySelectorAll('.btn-del-profile').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -5237,7 +5570,6 @@
             });
         });
 
-        // [➕ 새 캐릭터 만들기] 버튼 클릭 시 입력 폼 초기화
         const newBtn = document.getElementById('btnPrepareNewProfile');
         if (newBtn) {
             newBtn.addEventListener('click', () => {
@@ -5249,7 +5581,7 @@
                     nameInp.select();
                 }
                 renderAccountListUI();
-                showToast('새 캐릭터 닉네임과 옷 색상을 고른 뒤 아래 입장 버튼을 눌러주세요!', 'blue');
+                showToast('새 캐릭터 닉네임과 옷 색상을 고른 뒤 입장 버튼을 눌러주세요!', 'blue');
             });
         }
     }
@@ -5259,7 +5591,6 @@
         const initLv = parseInt(document.getElementById('initialMathLevelSelect').value, 10) || 1;
 
         if (!currentProfileId) {
-            // 새 캐릭터(계정) 생성
             currentProfileId = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
             localPlayer.id = currentProfileId;
             localPlayer.name = nameVal;
@@ -5271,16 +5602,16 @@
             localPlayer.selectedSlot = 0;
             clickActionMode = 'mine';
 
-            Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2 });
+            Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0 });
             Object.assign(blockInventory, { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 });
 
             mathFlowState.level = initLv;
             localPlayer.mathLevel = initLv;
+            mathFlowState.numberblocksUnlocked = false;
             mathFlowState.microGoalProgress = 0;
             mathFlowState.buffRemainingSec = 0;
             mathFlowState.growth = getDefaultGrowthObject(initLv);
         } else {
-            // 기존 선택된 캐릭터에 닉네임/레벨 변경사항 반영
             localPlayer.name = nameVal;
             mathFlowState.level = initLv;
             localPlayer.mathLevel = initLv;
@@ -5299,13 +5630,23 @@
         }
         const ptx = Math.floor(localPlayer.x / TILE_SIZE);
         const pty = Math.floor(localPlayer.y / TILE_SIZE);
-        addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 이어갑니다! 모든 진행 상황은 자동 저장됩니다.`, '#34d399', true);
+        addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 시작합니다! 몹을 잡아 '⭕써클' 50개를 모으면 [🔢 넘버블록스 바이옴]이 열립니다!`, '#34d399', true);
     }
 
-    // 기존 saveMathGrowthState 및 updateResourceUI 호출 시 현재 캐릭터 프로필도 함께 자동 저장되도록 오버라이드
+    // updateResourceUI 호출 시 '⭕써클 (X/50)' 및 넘버블록스 해금 배지 동기화 + 프로필 자동 저장
     const _origUpdateResourceUI = updateResourceUI;
     updateResourceUI = function () {
         _origUpdateResourceUI();
+        const circleEl = document.getElementById('res_circle');
+        const cCnt = resources.circle || 0;
+        if (cCnt >= 50) mathFlowState.numberblocksUnlocked = true;
+        if (circleEl) {
+            circleEl.textContent = mathFlowState.numberblocksUnlocked ? `${cCnt} (해금!)` : `${cCnt}/50`;
+        }
+        const nbBadge = document.getElementById('nbBiomeLockBadge');
+        if (nbBadge) {
+            nbBadge.textContent = isNumberblocksBiomeUnlocked() ? '820, 160 (해금됨!)' : `🔒 써클 ${cCnt}/50`;
+        }
         saveCurrentProfileState();
     };
 
@@ -5313,24 +5654,20 @@
         saveCurrentProfileState();
     };
 
-    // 원클릭 PWA 설치 프롬프트 저장 변수
     let deferredPwaPrompt = null;
 
-    // 실제 manifest.json 유지 + '📲 앱으로 설치하기' 원클릭 버튼 생성 + 지연 없는(Network-First) 업데이트 보장
     function initZeroDelayPWA() {
         try {
-            // 현재 이미 설치된 앱(Standalone) 모드로 실행 중인지 확인
             const isStandalone =
                 window.matchMedia('(display-mode: standalone)').matches ||
                 window.navigator.standalone === true;
 
-            // 1) 로비 모달 및 좌측 상단 HUD에 [📲 앱으로 설치하기] 버튼 자동 주입
             const enterBtn = document.getElementById('btnEnterGlobalWorld');
             if (enterBtn && !document.getElementById('btnInstallPwaLobby')) {
                 const lobbyInstallBtn = document.createElement('button');
                 lobbyInstallBtn.id = 'btnInstallPwaLobby';
                 lobbyInstallBtn.type = 'button';
-                lobbyInstallBtn.className = `mc-btn mc-btn-blue w-full py-2.5 px-4 mt-2.5 flex items-center justify-between text-left shadow-md ${isStandalone ? 'hidden' : ''}`;
+                lobbyInstallBtn.className = `mc-btn mc-btn-blue w-full py-2.5 px-4 mt-2 flex items-center justify-between text-left shadow-md ${isStandalone ? 'hidden' : ''}`;
                 lobbyInstallBtn.innerHTML = `
                     <div class="flex items-center gap-2.5">
                         <img src="icon.png" alt="앱 아이콘" onerror="this.style.display='none'" class="w-7 h-7 rounded border border-cyan-300 bg-gray-900 object-contain">
@@ -5361,11 +5698,9 @@
                 soundBtn.parentNode.appendChild(hudInstallBtn);
             }
 
-            // 2) 브라우저가 원클릭 설치 준비를 마쳤을 때 이벤트 가로채기 (Android / PC Chrome, Edge 등)
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPwaPrompt = e;
-
                 const lobbyBtn = document.getElementById('btnInstallPwaLobby');
                 const hudBtn = document.getElementById('btnInstallPwaHud');
                 const titleEl = document.getElementById('lobbyInstallBtnTitle');
@@ -5373,38 +5708,27 @@
                     lobbyBtn.classList.remove('hidden');
                     lobbyBtn.classList.add('ring-2', 'ring-cyan-300');
                 }
-                if (hudBtn && !isStandalone) {
-                    hudBtn.classList.remove('hidden');
-                }
-                if (titleEl) {
-                    titleEl.textContent = '📲 앱으로 설치하기 (지금 바로 원클릭 설치 가능!)';
-                }
+                if (hudBtn && !isStandalone) hudBtn.classList.remove('hidden');
+                if (titleEl) titleEl.textContent = '📲 앱으로 설치하기 (지금 바로 원클릭 설치 가능!)';
             });
 
-            // 3) 설치가 완료되면 설치 버튼 숨김 및 축하 안내
             window.addEventListener('appinstalled', () => {
                 deferredPwaPrompt = null;
                 const lobbyBtn = document.getElementById('btnInstallPwaLobby');
                 const hudBtn = document.getElementById('btnInstallPwaHud');
                 if (lobbyBtn) lobbyBtn.classList.add('hidden');
                 if (hudBtn) hudBtn.classList.add('hidden');
-                showToast('🎉 앱 설치가 완료되었습니다! 이제 바탕화면/홈 화면 아이콘으로 바로 접속하세요!', 'emerald');
+                showToast('🎉 앱 설치가 완료되었습니다!', 'emerald');
             });
 
-            // 4) 서비스 워커 등록 (updateViaCache: 'none'으로 모바일/태블릿/PC 코드 수정 즉시 반영)
             if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
                     reg.update();
-
-                    // 창 포커스 시 & 모바일 앱 화면 전환 복귀 시 즉시 최신 코드 확인
                     window.addEventListener('focus', () => reg.update());
                     document.addEventListener('visibilitychange', () => {
                         if (document.visibilityState === 'visible') reg.update();
                     });
-
-                    if (reg.waiting) {
-                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    }
+                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         if (newWorker) {
@@ -5420,7 +5744,6 @@
         } catch (e) {}
     }
 
-    // [📲 앱으로 설치하기] 버튼 클릭 시 실행되는 원클릭 설치 핸들러
     async function handleOneClickPwaInstall() {
         const isStandalone =
             window.matchMedia('(display-mode: standalone)').matches ||
@@ -5430,8 +5753,6 @@
             showToast('✅ 이미 앱으로 설치되어 실행 중입니다!', 'emerald');
             return;
         }
-
-        // Case 1: 안드로이드 / PC(크롬, 엣지, 삼성인터넷 등) 원클릭 설치 지원 시 즉시 실행
         if (deferredPwaPrompt) {
             try {
                 deferredPwaPrompt.prompt();
@@ -5439,32 +5760,26 @@
                 if (outcome === 'accepted') {
                     deferredPwaPrompt = null;
                     showToast('📲 앱 설치를 시작합니다!', 'emerald');
-                } else {
-                    showToast('언제든 다시 [📲 앱 설치] 버튼을 눌러 설치할 수 있어요.', 'blue');
                 }
             } catch (err) {}
             return;
         }
-
-        // Case 2: 아이폰 / 아이패드(iOS Safari) 환경 감지 시 맞춤 안내
         const ua = window.navigator.userAgent.toLowerCase();
         const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIos) {
             showToast('🍎 아이폰/아이패드: 브라우저의 [공유 📤] 버튼을 누른 뒤 [홈 화면에 추가 ➕]를 선택하면 앱으로 설치됩니다!', 'amber');
             return;
         }
-
-        // Case 3: 이미 설치되어 있거나 브라우저 주소창 설치 아이콘을 써야 하는 경우
         showToast('💡 브라우저 주소창 오른쪽 끝의 [앱 설치 🖥️/➕] 아이콘을 누르거나 메뉴에서 [앱 설치]를 선택해 주세요!', 'blue');
     }
-        
+
     window.onload = function () {
-        // 좌클릭 기본 모드를 '채굴 전용'으로 UI 초기화
+        setupResponsiveAndCleanUI();
+
         clickActionMode = 'mine';
         const actionLbl = document.getElementById('actionModeLabel');
         if (actionLbl) actionLbl.textContent = '⛏️ 좌클릭: 채굴 전용';
 
-        // 기존 입장 버튼을 다중 계정 입장 함수로 연결
         const enterBtn = document.getElementById('btnEnterGlobalWorld');
         if (enterBtn) {
             enterBtn.replaceWith(enterBtn.cloneNode(true));
@@ -5474,7 +5789,6 @@
         generateAllSprites();
         loadPersistedDeltas();
 
-        // 저장된 캐릭터 프로필 불러오기 (최근 플레이한 캐릭터 자동 선택)
         const profiles = loadAllProfiles();
         const lastActiveId = localStorage.getItem(ACTIVE_PROFILE_ID_KEY);
         const initialProfile = profiles.find(p => p.id === lastActiveId) || profiles[0] || null;
@@ -5490,7 +5804,6 @@
         setupAccountManagerUI();
         initZeroDelayPWA();
 
-        // 2초마다 플레이어 위치 및 상태 자동 저장 + 창 닫기 직전 저장
         setInterval(() => {
             if (gameStarted) saveCurrentProfileState();
         }, 2000);
