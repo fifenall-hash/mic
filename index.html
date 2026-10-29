@@ -2535,7 +2535,7 @@
 
         // ==================== CASE 0: '3 + 5 = 4 + ?' 등호 균형(양팔저울) 문제 시각화 ====================
         if (prob.isBalance) {
-            const total = prob.totalSum; // a + b (좌변과 우변이 도달해야 할 같은 합)
+            const total = prob.totalSum;
             const boxesNeeded = Math.max(1, Math.ceil(total / 10));
             const rowH = 78;
             const topPad = 26;
@@ -2556,13 +2556,13 @@
             const trayH = 68;
             const baseXs = [16, 230];
 
+            g.textAlign = 'start';
             g.font = 'bold 11px "Noto Sans KR", sans-serif';
             g.fillStyle = '#6ee7b7';
             g.fillText(`⚖️ 왼쪽: ${prob.a} + ${prob.b} (합: ${total}개)`, baseXs[0] + 2, 16);
             g.fillStyle = '#fde047';
             g.fillText(`⚖️ 오른쪽: ${prob.d} + ? (${total}개 맞추기)`, baseXs[1] + 2, 16);
 
-            // 중앙에 큰 '=' 기호 표시
             g.font = '900 18px monospace';
             g.fillStyle = '#facc15';
             g.fillText('=', 214, topPad + 38);
@@ -2606,7 +2606,6 @@
                 };
             };
 
-            // 1) 왼쪽 상자: a(초록) + b(하늘) = total개 모두 그리기
             for (let i = 0; i < total; i++) {
                 const pos = getSlotPosBal(0, i);
                 const isFirstPart = i < prob.a;
@@ -2616,7 +2615,6 @@
                 g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
             }
 
-            // 2) 오른쪽 상자: 먼저 d개(주황 황금블록)를 그리고, 부족한 answer개('?')는 점선 테두리 & 애니메이션 블록으로 표시
             for (let i = 0; i < total; i++) {
                 const pos = getSlotPosBal(1, i);
                 if (i < prob.d) {
@@ -2625,7 +2623,6 @@
                     g.fillStyle = '#fef08a';
                     g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
                 } else {
-                    // 채워야 할 '?' 슬롯 (노란 점선 가이드)
                     g.save();
                     g.strokeStyle = '#facc15';
                     g.lineWidth = 1.5;
@@ -2664,6 +2661,7 @@
             tfCanvas.height = neededHeight;
         }
         g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
+        g.textAlign = 'start';
 
         const aMod = prob.a % 10;
         const needTo10 = aMod > 0 ? 10 - aMod : 0;
@@ -2685,7 +2683,7 @@
             }
         }
 
-        // ==================== CASE A: 항이 3개인 덧셈 (a + b + c) -> 3구획 & 모든 10묶음 표시 ====================
+        // ==================== CASE A: 항이 3개인 덧셈 (a + b + c) ====================
         if (isThreeTerms) {
             const trayW = 136;
             const trayH = 68;
@@ -2745,6 +2743,8 @@
 
             const remA = prob.a % 10;
             const emptyInA = remA > 0 ? (10 - remA) : 0;
+            const moveFromB = Math.min(prob.b, emptyInA);
+            const moveFromC = Math.min(prob.c, Math.max(0, emptyInA - moveFromB));
             let fillOffset = 0;
 
             for (let i = 0; i < prob.a; i++) {
@@ -2760,7 +2760,7 @@
                 let drawX = fromPos.x;
                 let drawY = fromPos.y;
 
-                if (animT > 0 && i >= prob.b - Math.min(prob.b, emptyInA - fillOffset)) {
+                if (animT > 0 && i >= prob.b - moveFromB) {
                     const targetIdxInA = prob.a + fillOffset;
                     fillOffset++;
                     const toPos = getSlotPos3(0, targetIdxInA);
@@ -2779,7 +2779,7 @@
                 let drawX = fromPos.x;
                 let drawY = fromPos.y;
 
-                if (animT > 0 && fillOffset < emptyInA && i >= prob.c - (emptyInA - fillOffset)) {
+                if (animT > 0 && i >= prob.c - moveFromC) {
                     const targetIdxInA = prob.a + fillOffset;
                     fillOffset++;
                     const toPos = getSlotPos3(0, targetIdxInA);
@@ -2795,7 +2795,7 @@
             return;
         }
 
-        // ==================== CASE B: 항이 2개인 덧셈 (a + b) -> 2구획 & 모든 10묶음 상자 표시 ====================
+        // ==================== CASE B: 항이 2개인 덧셈 (a + b) ====================
         const trayW2 = 194;
         const trayH2 = 68;
         const baseXs = [16, 230];
@@ -2894,31 +2894,7 @@
             g.fillRect(drawX + 3, drawY + 3, 7, 6);
         }
     }
-
-        // 2) 둘째 수(prob.b)의 모든 블록 그리기 (마법 이동 시 마지막 낱개들이 첫째 수의 빈칸을 채움)
-        const emptyInLastBoxA = onesA > 0 ? (10 - onesA) : 0;
-        const transferCount = Math.min(emptyInLastBoxA, prob.b);
-
-        for (let i = 0; i < prob.b; i++) {
-            const fromPos = getSlotPos2(1, i);
-            let drawX = fromPos.x;
-            let drawY = fromPos.y;
-
-            // 둘째 수의 마지막 낱개 블록들부터 차례대로 첫째 수의 빈칸으로 이동
-            const transferOrder = prob.b - 1 - i;
-            if (transferOrder < transferCount && animT > 0) {
-                const toPos = getSlotPos2(0, prob.a + transferOrder);
-                drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
-                drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
-            }
-
-            g.fillStyle = '#06b6d4';
-            g.fillRect(drawX, drawY, 24, 20);
-            g.fillStyle = '#a5f3fc';
-            g.fillRect(drawX + 3, drawY + 3, 7, 6);
-        }
-    }
-
+        
     function triggerMake10Animation() {
         if (mathFlowState.tenFrameAnimating) return;
         mathFlowState.tenFrameAnimating = true;
