@@ -1129,15 +1129,39 @@
         8: { level: 8, name: '엔더 드래곤',   icon: '🐉', bodyColor: '#9333ea', eyeColor: '#f472b6', accentColor: '#d8b4fe', dropDia: 8, dropGold: 8 }
     };
 
-    // 타일 인덱스(ty * WORLD_SIZE + tx)별 몹의 남은 체력을 저장하는 맵
+    // 타일 인덱스(ty * WORLD_SIZE + tx)별 몹의 남은 체력 및 이동 메타데이터를 저장하는 맵
     const mobHpMap = new Map();
+    const mobMetaMap = new Map(); // { originTx, originTy, fromWx, fromWy, moveStart, moveDur, nextMoveAt }
+
+    function ensureMobMeta(tx, ty) {
+        const key = idx(tx, ty);
+        let meta = mobMetaMap.get(key);
+        if (!meta) {
+            meta = {
+                originTx: tx,
+                originTy: ty,
+                fromWx: tx * TILE_SIZE,
+                fromWy: ty * TILE_SIZE,
+                moveStart: 0,
+                moveDur: 420,
+                nextMoveAt: performance.now() + 800 + Math.random() * 2200
+            };
+            mobMetaMap.set(key, meta);
+        }
+        return meta;
+    }
 
     // 특정 좌표(tx, ty)에 있는 몹의 난이도를 [1/(2n) 유저 맞춤 난이도 + 자연 난이도]로 실시간 산출
     function getMobDataAt(tx, ty) {
         if (!inBounds(tx, ty)) return { ...MOB_TIERS[1], hp: MOB_MAX_HP, maxHp: MOB_MAX_HP };
         const key = idx(tx, ty);
-        const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
-        const r = fastHash(tx, ty, GLOBAL_WORLD_SEED + 777);
+        const meta = ensureMobMeta(tx, ty);
+
+        // 몹이 걸어서 이동하더라도 최초 스폰 좌표(originTx, originTy)를 기준으로 난이도 해시를 유지함
+        const refTx = meta.originTx;
+        const refTy = meta.originTy;
+        const distSpawn = Math.hypot(refTx - SPAWN_X, refTy - SPAWN_Y);
+        const r = fastHash(refTx, refTy, GLOBAL_WORLD_SEED + 777);
 
         // 1) 기본 바이옴 자연 난이도 계산
         let naturalLvl = 1;
@@ -1145,7 +1169,7 @@
             naturalLvl = (Math.floor(r * 3) % 3) + 1;
         } else if (distSpawn < 32) {
             naturalLvl = (Math.floor(r * 5) % 5) + 1;
-        } else if (ty < 270 || (tx < 360 && ty > 600)) {
+        } else if (refTy < 270 || (refTx < 360 && refTy > 600)) {
             naturalLvl = 5 + (Math.floor(r * 4) % 4);
         } else {
             naturalLvl = (Math.floor(r * 8) % 8) + 1;
@@ -1163,13 +1187,12 @@
         }
 
         const n = activePlayers.length;
-        const assignHash = fastHash(tx, ty, GLOBAL_WORLD_SEED + 31337); // [0, 1) 균등 해시
+        const assignHash = fastHash(refTx, refTy, GLOBAL_WORLD_SEED + 31337);
         const scaled = assignHash * n;
-        const playerBucketIdx = Math.min(n - 1, Math.floor(scaled)); // 전체 몹을 n등분 (각 1/n)
-        const fractionInBucket = scaled - playerBucketIdx;           // 해당 유저 할당분 내부 비율 [0, 1)
+        const playerBucketIdx = Math.min(n - 1, Math.floor(scaled));
+        const fractionInBucket = scaled - playerBucketIdx;
 
         let lvl = naturalLvl;
-        // 할당된 1/n 구역 중 50%(즉 전체 몹의 1/2n)를 해당 유저의 현재 풀이 난이도로 설정!
         if (fractionInBucket < 0.5) {
             const targetUserLevel = activePlayers[playerBucketIdx].mathLevel || 1;
             lvl = Math.max(1, Math.min(8, targetUserLevel));
@@ -1182,9 +1205,100 @@
             ...tierInfo,
             tx,
             ty,
+            originTx: refTx,
+            originTy: refTy,
             hp: currentHp,
             maxHp: MOB_MAX_HP
         };
+    }
+
+    // ★ 연산량 최적화를 위해 '현재 유저 화면(뷰포트) 안에 있는 몹'만 이동시키는 함수
+    let mobRoamTickAccum = 0;
+    function updateViewportMobs(dt) {
+        if (!gameStarted) return;
+        mobRoamTickAccum += dt;
+        if (mobRoamTickAccum < 0.15) return; // 0.15초 주기로 가볍게 체크
+        mobRoamTickAccum = 0;
+
+        // 문제풀이 모달 등이 열려 있을 때는 전투 중인 몹이 이동하지 않도록 일시 정지
+        const mathModal = document.getElementById('mathModal');
+        if (mathModal && !mathModal.classList.contains('hidden')) return;
+
+        const now = performance.now();
+        const startTx = Math.max(2, Math.floor((camera.x - canvas.width / 2) / TILE_SIZE));
+        const endTx = Math.min(WORLD_SIZE - 3, Math.ceil((camera.x + canvas.width / 2) / TILE_SIZE));
+        const startTy = Math.max(2, Math.floor((camera.y - canvas.height / 2) / TILE_SIZE));
+        const endTy = Math.min(WORLD_SIZE - 3, Math.ceil((camera.y + canvas.height / 2) / TILE_SIZE));
+
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+
+        // 현재 화면 안에 있는 몹 좌표만 수집
+        const viewportMobs = [];
+        for (let ty = startTy; ty <= endTy; ty++) {
+            for (let tx = startTx; tx <= endTx; tx++) {
+                if (getBlockAt(tx, ty) === BLOCK.MAGIC_CRYSTAL) {
+                    viewportMobs.push([tx, ty]);
+                }
+            }
+        }
+
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        viewportMobs.forEach(([tx, ty]) => {
+            const oldKey = idx(tx, ty);
+            if (world.blocks[oldKey] !== BLOCK.MAGIC_CRYSTAL) return;
+
+            const meta = ensureMobMeta(tx, ty);
+            if (now < meta.nextMoveAt) return;
+
+            // 다음 이동 타이머 설정 (1.6초 ~ 3.8초 사이 랜덤)
+            meta.nextMoveAt = now + 1600 + Math.random() * 2200;
+
+            // 4방향을 무작위로 섞어서 이동 가능한 인접 타일 탐색
+            const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
+            for (const [dx, dy] of shuffled) {
+                const nx = tx + dx;
+                const ny = ty + dy;
+                if (!inBounds(nx, ny)) continue;
+
+                // 원래 태어난 자리(origin)에서 반경 5타일 이내로만 배회하도록 제한
+                if (Math.hypot(nx - meta.originTx, ny - meta.originTy) > 5.5) continue;
+
+                // 플레이어가 현재 서 있는 정중앙 타일이나 다른 블록/물 위로는 이동 불가
+                if (nx === ptx && ny === pty) continue;
+                if (getBlockAt(nx, ny) !== BLOCK.AIR) continue;
+                const nf = getFloorAt(nx, ny);
+                if (!FLOOR_INFO[nf]?.walkable) continue;
+
+                // 넘버블록스 바이옴 경계를 넘나들지 않도록 유지
+                if (typeof isNumberblocksBiomeAt === 'function' &&
+                    isNumberblocksBiomeAt(tx, ty) !== isNumberblocksBiomeAt(nx, ny)) {
+                    continue;
+                }
+
+                // 타일 이동 실행 (메모리상의 블록 위치 및 체력/메타데이터 이전)
+                const newKey = idx(nx, ny);
+                world.blocks[oldKey] = BLOCK.AIR;
+                world.blocks[newKey] = BLOCK.MAGIC_CRYSTAL;
+
+                if (mobHpMap.has(oldKey)) {
+                    mobHpMap.set(newKey, mobHpMap.get(oldKey));
+                    mobHpMap.delete(oldKey);
+                }
+
+                meta.fromWx = tx * TILE_SIZE;
+                meta.fromWy = ty * TILE_SIZE;
+                meta.moveStart = now;
+                meta.moveDur = 420;
+                mobMetaMap.set(newKey, meta);
+                mobMetaMap.delete(oldKey);
+
+                if (mathFlowState.lastProximityMobKey === oldKey) {
+                    mathFlowState.lastProximityMobKey = newKey;
+                }
+                break;
+            }
+        });
     }
 
     // ==================== 3. PROCEDURAL PIXEL-ART SPRITE CACHE ====================
@@ -2172,14 +2286,14 @@
         }
     }
 
-    // ① GOLDILOCKS PROBLEM GENERATOR (+4%~10% Optimal Challenge & 3-Term Support)
+    // ① GOLDILOCKS PROBLEM GENERATOR (일반 덧셈 + 세 수 덧셈 + '3+5=4+?' 등호 균형 문제 지원)
     function generateGoldilocksProblem(lvl) {
         let a = 1, b = 2, c = 0;
         const rInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
         switch (lvl) {
-            case 1: // 합이 5 이하 기초 덧셈 (세 수 기초 포함: 1+2+1)
-                if (Math.random() < 0.3) {
+            case 1: // 합이 5 이하 기초 덧셈
+                if (Math.random() < 0.25) {
                     a = rInt(1, 2);
                     b = rInt(1, 2);
                     c = 1;
@@ -2188,8 +2302,8 @@
                     b = rInt(1, 5 - a);
                 }
                 break;
-            case 2: // 합이 9 이하 덧셈 (세 수 덧셈 포함: 2+3+2, 3+2+4)
-                if (Math.random() < 0.35) {
+            case 2: // 합이 9 이하 덧셈
+                if (Math.random() < 0.3) {
                     a = rInt(1, 4);
                     b = rInt(1, 4);
                     c = rInt(1, Math.max(1, 9 - a - b));
@@ -2198,8 +2312,8 @@
                     b = rInt(Math.max(1, 6 - a), 9 - a);
                 }
                 break;
-            case 3: // 합이 10이 되는 짝꿍수 & 세 수로 10 만들기 (예: 3+5+2, 4+3+3)
-                if (Math.random() < 0.45) {
+            case 3: // 합이 10이 되는 짝꿍수 & 세 수로 10 만들기
+                if (Math.random() < 0.35) {
                     a = rInt(2, 5);
                     b = rInt(2, 8 - a);
                     c = 10 - a - b;
@@ -2208,8 +2322,8 @@
                     b = 10 - a;
                 }
                 break;
-            case 4: // 10 만들어 더하기 (예: 8+5, 또는 세 수 7+3+4, 6+2+5)
-                if (Math.random() < 0.4) {
+            case 4: // 10 만들어 더하기
+                if (Math.random() < 0.3) {
                     a = rInt(4, 8);
                     b = rInt(2, 6);
                     c = rInt(2, 5);
@@ -2218,8 +2332,8 @@
                     b = rInt(11 - a, 9);
                 }
                 break;
-            case 5: // 십몇 + 한 자리 수 (12+5, 또는 10+3+5)
-                if (Math.random() < 0.35) {
+            case 5: // 십몇 + 한 자리 수
+                if (Math.random() < 0.3) {
                     a = 10;
                     b = rInt(2, 5);
                     c = rInt(2, 9 - b);
@@ -2228,8 +2342,8 @@
                     b = rInt(2, 19 - a);
                 }
                 break;
-            case 6: // 받아올림 있는 십몇 + 한 자리 (16+7, 또는 8+4+5)
-                if (Math.random() < 0.35) {
+            case 6: // 받아올림 있는 십몇 + 한 자리
+                if (Math.random() < 0.3) {
                     a = rInt(6, 9);
                     b = rInt(4, 8);
                     c = rInt(3, 7);
@@ -2238,8 +2352,8 @@
                     b = rInt(21 - a, 9);
                 }
                 break;
-            case 7: // 두 자리 수 기초 덧셈 (14+15, 또는 10+5+4)
-                if (Math.random() < 0.35) {
+            case 7: // 두 자리 수 기초 덧셈
+                if (Math.random() < 0.3) {
                     a = rInt(10, 14);
                     b = rInt(3, 6);
                     c = rInt(2, 6);
@@ -2251,7 +2365,7 @@
                 break;
             case 8: // 두 자리 받아올림 & 고난도 세 수의 덧셈
             default:
-                if (Math.random() < 0.55) {
+                if (Math.random() < 0.45) {
                     a = rInt(5, 9);
                     b = rInt(4, 9);
                     c = rInt(3, 9);
@@ -2262,14 +2376,52 @@
                 break;
         }
 
-        const answer = a + b + c;
+        const totalSum = a + b + c;
+
+        // ★ 약 35% 확률로 '3 + 5 = 4 + ?' 형태의 등호 균형(양팔저울) 문제로 변환 (항이 2개이고 합이 3 이상일 때)
+        if (c === 0 && totalSum >= 3 && Math.random() < 0.35) {
+            let candidates = [];
+            const minD = Math.max(1, totalSum - 15);
+            const maxD = totalSum - 1;
+            for (let cand = minD; cand <= maxD; cand++) {
+                // 좌변의 수(a, b)와 똑같은 수는 피해서 진짜 덧셈 사고력을 기르도록 함 (예: 3+5=3+? 방지)
+                if (cand !== a && cand !== b) {
+                    candidates.push(cand);
+                }
+            }
+            if (candidates.length === 0) {
+                candidates.push(rInt(1, totalSum - 1));
+            }
+            const d = candidates[Math.floor(Math.random() * candidates.length)];
+            const answer = totalSum - d;
+
+            return {
+                isBalance: true,
+                a,
+                b,
+                c: 0,
+                d,
+                totalSum,
+                answer,
+                eqText: `${a} + ${b} = ${d} + ?`,
+                fullEqText: `${a} + ${b} = ${d} + ${answer}`,
+                hadRetry: false,
+                startedAt: performance.now()
+            };
+        }
+
+        const answer = totalSum;
         const eqText = c > 0 ? `${a} + ${b} + ${c}` : `${a} + ${b}`;
         return {
+            isBalance: false,
             a,
             b,
             c,
+            d: 0,
+            totalSum,
             answer,
             eqText,
+            fullEqText: `${eqText} = ${answer}`,
             hadRetry: false,
             startedAt: performance.now()
         };
@@ -2351,7 +2503,7 @@
         }
     }
 
-    // 10단위(십 묶음)를 생략하지 않고 모든 10칸 상자와 낱개 블록을 시각적으로 그리는 함수
+    // 10단위(십 묶음) 전체 시각화 + 3항 분리 + '3+5=4+?' 등호 균형 비교 시각화 함수
     function renderTenFrameCanvas() {
         const tfCanvas = document.getElementById('tenFrameCanvas');
         if (!tfCanvas || !mathFlowState.currentProblem) return;
@@ -2363,14 +2515,15 @@
         const storyPrompt = document.getElementById('questionStoryPrompt');
 
         if (storyPrompt) {
-            if (prob.c > 0) {
+            if (prob.isBalance) {
+                storyPrompt.textContent = `⚖️ 등호(=) 양팔저울 미션! 왼쪽(${prob.a}+${prob.b}=${prob.totalSum}개)과 똑같아지려면 오른쪽(${prob.d}개)에 몇 개를 더 채워야 할까요?`;
+            } else if (prob.c > 0) {
                 storyPrompt.textContent = `⚔️ 첫째 수(${prob.a}) + 둘째 수(${prob.b}) + 셋째 수(${prob.c})의 모든 10묶음과 낱개를 합치면 몇 개일까요?`;
             } else {
                 storyPrompt.textContent = `⚔️ 첫 번째 광물(${prob.a}개)과 두 번째 광물(${prob.b}개)의 10묶음과 낱개를 합치면 모두 몇 개일까요?`;
             }
         }
 
-        // 암산 도전 모드이면서 아직 오답이 없을 때만 상자 숨김
         if (mathFlowState.strategy === 'mental' && !prob.hadRetry) {
             wrap.classList.add('hidden');
             make10Banner.classList.add('hidden');
@@ -2379,15 +2532,131 @@
         wrap.classList.remove('hidden');
 
         const animT = mathFlowState.tenFrameAnimProgress; // 0 -> 1
-        const isThreeTerms = prob.c > 0;
 
-        // 각 항이 필요로 하는 10칸 상자 개수 계산 (예: 26이면 10+10+6 -> 상자 3개)
+        // ==================== CASE 0: '3 + 5 = 4 + ?' 등호 균형(양팔저울) 문제 시각화 ====================
+        if (prob.isBalance) {
+            const total = prob.totalSum; // a + b (좌변과 우변이 도달해야 할 같은 합)
+            const boxesNeeded = Math.max(1, Math.ceil(total / 10));
+            const rowH = 78;
+            const topPad = 26;
+            const neededHeight = topPad + boxesNeeded * rowH + 6;
+            if (tfCanvas.height !== neededHeight) {
+                tfCanvas.height = neededHeight;
+            }
+            g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
+
+            if (mathFlowState.strategy === 'make10' || prob.hadRetry) {
+                make10Banner.classList.remove('hidden');
+                make10Banner.innerHTML = `💡 등호(=) 균형 힌트: 왼쪽 상자는 <strong>${prob.a} + ${prob.b} = <span class="text-emerald-300 font-black">${total}개</span></strong>예요! 오른쪽 상자(<strong>${prob.d}개</strong>)가 똑같이 <strong>${total}개</strong>가 되려면 노란 점선 빈칸(<strong>?</strong>)이 몇 개인지 세어 보세요!`;
+            } else {
+                make10Banner.classList.add('hidden');
+            }
+
+            const trayW = 194;
+            const trayH = 68;
+            const baseXs = [16, 230];
+
+            g.font = 'bold 11px "Noto Sans KR", sans-serif';
+            g.fillStyle = '#6ee7b7';
+            g.fillText(`⚖️ 왼쪽: ${prob.a} + ${prob.b} (합: ${total}개)`, baseXs[0] + 2, 16);
+            g.fillStyle = '#fde047';
+            g.fillText(`⚖️ 오른쪽: ${prob.d} + ? (${total}개 맞추기)`, baseXs[1] + 2, 16);
+
+            // 중앙에 큰 '=' 기호 표시
+            g.font = '900 18px monospace';
+            g.fillStyle = '#facc15';
+            g.fillText('=', 214, topPad + 38);
+
+            const drawBalanceGrid = (colIdx, rowIdx, isFullTen, borderCol) => {
+                const sx = baseXs[colIdx];
+                const sy = topPad + rowIdx * rowH;
+                g.fillStyle = '#111827';
+                g.fillRect(sx, sy, trayW, trayH);
+                g.strokeStyle = isFullTen ? '#facc15' : borderCol;
+                g.lineWidth = isFullTen ? 2.5 : 2;
+                g.strokeRect(sx, sy, trayW, trayH);
+
+                for (let s = 0; s < 10; s++) {
+                    const c = s % 5;
+                    const rw = Math.floor(s / 5);
+                    const cellX = sx + 8 + c * 36;
+                    const cellY = sy + 6 + rw * 28;
+                    g.fillStyle = '#1f2937';
+                    g.fillRect(cellX, cellY, 30, 24);
+                    g.strokeStyle = '#374151';
+                    g.lineWidth = 1;
+                    g.strokeRect(cellX, cellY, 30, 24);
+                }
+            };
+
+            for (let r = 0; r < boxesNeeded; r++) {
+                const cnt = Math.min(10, Math.max(0, total - r * 10));
+                drawBalanceGrid(0, r, cnt === 10, '#10b981');
+                drawBalanceGrid(1, r, cnt === 10 && animT > 0.8, '#f59e0b');
+            }
+
+            const getSlotPosBal = (colIdx, blockIndex) => {
+                const boxRow = Math.floor(blockIndex / 10);
+                const slotInBox = blockIndex % 10;
+                const c = slotInBox % 5;
+                const rw = Math.floor(slotInBox / 5);
+                return {
+                    x: baseXs[colIdx] + 8 + c * 36 + 3,
+                    y: topPad + boxRow * rowH + 6 + rw * 28 + 2
+                };
+            };
+
+            // 1) 왼쪽 상자: a(초록) + b(하늘) = total개 모두 그리기
+            for (let i = 0; i < total; i++) {
+                const pos = getSlotPosBal(0, i);
+                const isFirstPart = i < prob.a;
+                g.fillStyle = isFirstPart ? '#10b981' : '#06b6d4';
+                g.fillRect(pos.x, pos.y, 24, 20);
+                g.fillStyle = isFirstPart ? '#6ee7b7' : '#a5f3fc';
+                g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
+            }
+
+            // 2) 오른쪽 상자: 먼저 d개(주황 황금블록)를 그리고, 부족한 answer개('?')는 점선 테두리 & 애니메이션 블록으로 표시
+            for (let i = 0; i < total; i++) {
+                const pos = getSlotPosBal(1, i);
+                if (i < prob.d) {
+                    g.fillStyle = '#f59e0b';
+                    g.fillRect(pos.x, pos.y, 24, 20);
+                    g.fillStyle = '#fef08a';
+                    g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
+                } else {
+                    // 채워야 할 '?' 슬롯 (노란 점선 가이드)
+                    g.save();
+                    g.strokeStyle = '#facc15';
+                    g.lineWidth = 1.5;
+                    g.setLineDash([3, 2]);
+                    g.strokeRect(pos.x + 1, pos.y + 1, 22, 18);
+                    g.restore();
+
+                    if (animT > 0) {
+                        g.save();
+                        g.globalAlpha = Math.min(1, animT);
+                        g.fillStyle = '#ec4899';
+                        g.fillRect(pos.x, pos.y - (1 - animT) * 10, 24, 20);
+                        g.fillStyle = '#fbcfe8';
+                        g.fillRect(pos.x + 3, pos.y + 3 - (1 - animT) * 10, 7, 6);
+                        g.restore();
+                    } else {
+                        g.font = 'bold 11px monospace';
+                        g.fillStyle = '#facc15';
+                        g.fillText('?', pos.x + 9, pos.y + 14);
+                    }
+                }
+            }
+            return;
+        }
+
+        const isThreeTerms = prob.c > 0;
         const boxesA = Math.max(1, Math.ceil(prob.a / 10));
         const boxesB = Math.max(1, Math.ceil(prob.b / 10));
         const boxesC = isThreeTerms ? Math.max(1, Math.ceil(prob.c / 10)) : 0;
         const maxRows = Math.max(boxesA, boxesB, boxesC);
 
-        // 상자 층수에 맞춰 캔버스 높이 동적 조절 (10단위 상자들이 잘리지 않고 모두 보이도록 함)
         const rowH = 78;
         const topPad = 26;
         const neededHeight = topPad + maxRows * rowH + 6;
@@ -2396,7 +2665,6 @@
         }
         g.clearRect(0, 0, tfCanvas.width, tfCanvas.height);
 
-        // 10 만들기 힌트 배너 업데이트
         const aMod = prob.a % 10;
         const needTo10 = aMod > 0 ? 10 - aMod : 0;
         if (isThreeTerms) {
@@ -2428,7 +2696,6 @@
                 { val: prob.c, boxes: boxesC, title: `③ 셋째 (+${prob.c}개)`, border: '#f59e0b', fill: '#f59e0b', shine: '#fef08a' }
             ];
 
-            // 각 구획 상단 제목 및 층별 10칸 빈 상자 그리기
             terms.forEach((tm, colIdx) => {
                 const sx = trayXs[colIdx];
                 g.font = 'bold 11px "Noto Sans KR", sans-serif';
@@ -2446,7 +2713,6 @@
                     g.lineWidth = isFullTen ? 2.5 : 1.8;
                     g.strokeRect(sx, sy, trayW, trayH);
 
-                    // 10개가 꽉 찬 상자는 우측 상단에 '🔟 10묶음' 라벨 표시
                     if (isFullTen) {
                         g.fillStyle = 'rgba(250, 204, 21, 0.2)';
                         g.fillRect(sx + 1, sy + 1, trayW - 2, trayH - 2);
@@ -2477,12 +2743,10 @@
                 };
             };
 
-            // 첫째 구획의 마지막 상자 빈칸 개수 계산 (애니메이션 시 둘째·셋째의 낱개가 이 빈칸을 채움)
             const remA = prob.a % 10;
             const emptyInA = remA > 0 ? (10 - remA) : 0;
             let fillOffset = 0;
 
-            // 1) 첫째 수(a)의 모든 블록(10단위 + 1단위) 그리기
             for (let i = 0; i < prob.a; i++) {
                 const pos = getSlotPos3(0, i);
                 g.fillStyle = terms[0].fill;
@@ -2491,13 +2755,11 @@
                 g.fillRect(pos.x + 2, pos.y + 2, 6, 6);
             }
 
-            // 2) 둘째 수(b)의 모든 블록 그리기 (낱개 일부가 첫째 상자 빈칸으로 이동)
             for (let i = 0; i < prob.b; i++) {
                 const fromPos = getSlotPos3(1, i);
                 let drawX = fromPos.x;
                 let drawY = fromPos.y;
 
-                // 위쪽 낱개부터 emptyInA 만큼 첫째 수의 빈칸으로 이동 연출
                 if (animT > 0 && i >= prob.b - Math.min(prob.b, emptyInA - fillOffset)) {
                     const targetIdxInA = prob.a + fillOffset;
                     fillOffset++;
@@ -2512,7 +2774,6 @@
                 g.fillRect(drawX + 2, drawY + 2, 6, 6);
             }
 
-            // 3) 셋째 수(c)의 모든 블록 그리기
             for (let i = 0; i < prob.c; i++) {
                 const fromPos = getSlotPos3(2, i);
                 let drawX = fromPos.x;
@@ -2604,7 +2865,6 @@
             };
         };
 
-        // 1) 첫째 수(prob.a)의 모든 블록(10단위 상자 + 낱개 상자) 그리기
         for (let i = 0; i < prob.a; i++) {
             const pos = getSlotPos2(0, i);
             g.fillStyle = '#10b981';
@@ -2612,6 +2872,28 @@
             g.fillStyle = '#6ee7b7';
             g.fillRect(pos.x + 3, pos.y + 3, 7, 6);
         }
+
+        const emptyInLastBoxA = onesA > 0 ? (10 - onesA) : 0;
+        const transferCount = Math.min(emptyInLastBoxA, prob.b);
+
+        for (let i = 0; i < prob.b; i++) {
+            const fromPos = getSlotPos2(1, i);
+            let drawX = fromPos.x;
+            let drawY = fromPos.y;
+
+            const transferOrder = prob.b - 1 - i;
+            if (transferOrder < transferCount && animT > 0) {
+                const toPos = getSlotPos2(0, prob.a + transferOrder);
+                drawX = fromPos.x + (toPos.x - fromPos.x) * animT;
+                drawY = fromPos.y + (toPos.y - fromPos.y) * animT - Math.sin(animT * Math.PI) * 18;
+            }
+
+            g.fillStyle = '#06b6d4';
+            g.fillRect(drawX, drawY, 24, 20);
+            g.fillStyle = '#a5f3fc';
+            g.fillRect(drawX + 3, drawY + 3, 7, 6);
+        }
+    }
 
         // 2) 둘째 수(prob.b)의 모든 블록 그리기 (마법 이동 시 마지막 낱개들이 첫째 수의 빈칸을 채움)
         const emptyInLastBoxA = onesA > 0 ? (10 - onesA) : 0;
@@ -2865,27 +3147,30 @@
         document.head.appendChild(style);
     }
 
-    // [교체 2-A] startNewMathProblem 메서드
     function startNewMathProblem(tx = -1, ty = -1) {
         const bState = mathFlowState.activeMobBattle;
         if (bState) {
             tx = bState.tx;
             ty = bState.ty;
-            // 수동/자동으로 변경된 현재 mathFlowState.level을 배틀 상태에도 동기화
-            bState.level = mathFlowState.level;
-            localPlayer.mathLevel = mathFlowState.level;
+            mathFlowState.level = bState.level;
+            localPlayer.mathLevel = bState.level;
         }
 
         const prob = generateGoldilocksProblem(mathFlowState.level);
-        prob.problemLevel = mathFlowState.level; // 문제 출제 시점의 난이도 기록
+        prob.problemLevel = mathFlowState.level;
         prob.contextTx = tx;
         prob.contextTy = ty;
         mathFlowState.currentProblem = prob;
         mathFlowState.tenFrameAnimProgress = 0;
         mathFlowState.tenFrameAnimating = false;
 
-        document.getElementById('mathEquationDisplay').innerHTML =
-            `${prob.eqText} = <span id="answerSlotDisplay" class="inline-block min-w-[64px] px-3 py-0.5 rounded-lg bg-amber-500/20 border-2 border-amber-400 text-amber-300">?</span>`;
+        if (prob.isBalance) {
+            document.getElementById('mathEquationDisplay').innerHTML =
+                `${prob.a} + ${prob.b} = ${prob.d} + <span id="answerSlotDisplay" class="inline-block min-w-[64px] px-3 py-0.5 rounded-lg bg-amber-500/20 border-2 border-amber-400 text-amber-300">?</span>`;
+        } else {
+            document.getElementById('mathEquationDisplay').innerHTML =
+                `${prob.eqText} = <span id="answerSlotDisplay" class="inline-block min-w-[64px] px-3 py-0.5 rounded-lg bg-amber-500/20 border-2 border-amber-400 text-amber-300">?</span>`;
+        }
 
         const banner = document.getElementById('safeFeedbackBanner');
         banner.className = 'mb-3 px-3.5 py-2.5 rounded-lg bg-gray-900/90 border border-gray-700 text-xs sm:text-sm font-bold text-gray-200 flex items-center justify-between gap-2';
@@ -2922,7 +3207,7 @@
         if (selectedVal === prob.answer) {
             prob.solved = true;
             const solveSec = Math.max(0.8, (performance.now() - prob.startedAt) / 1000);
-            const isOver30Sec = solveSec > 30; // ⏱️ 30초 초과 여부 판정
+            const isOver30Sec = solveSec > 30;
 
             sfx.playHit('ore');
             sfx.playMathSuccess();
@@ -2931,13 +3216,12 @@
                 btnEl.classList.add('mc-btn-green', 'ring-2', 'ring-yellow-300');
             }
 
-            // 성장 기록 저장
             const g = mathFlowState.growth;
             g.totalSolved = (g.totalSolved || 0) + 1;
             g.recentSolveTimes.push(Number(solveSec.toFixed(1)));
             if (g.recentSolveTimes.length > 20) g.recentSolveTimes.shift();
 
-            const fullEq = `${prob.eqText} = ${prob.answer}`;
+            const fullEq = prob.fullEqText || `${prob.eqText} = ${prob.answer}`;
             if (!g.firstEquation) {
                 g.firstLevel = mathFlowState.level;
                 g.firstEquation = fullEq;
@@ -2948,7 +3232,7 @@
                 g.bestEquation = fullEq;
             }
 
-            // ★ 핵심 규칙: 풀이 시간이 30초를 넘으면 '어려움'으로 구분하여 직전 난이도를 적정 난이도로 산정!
+            // 30초 초과 시 직전 난이도를 적정 난이도로 산정
             let difficultyAdjustMsg = '';
             const currentProbLevel = prob.problemLevel || mathFlowState.level;
 
@@ -2964,7 +3248,6 @@
                 difficultyAdjustMsg = ` ⏱️ (풀이 시간 ${solveSec.toFixed(0)}초: 30초를 넘어 직전 단계인 [Lv.${properLevel}]을 적정 난이도로 맞춤 조정했어요!)`;
                 showToast(`🛡️ 풀이 시간이 30초를 넘어 적정 난이도를 [Lv.${properLevel}]로 맞춤 조정했습니다.`, 'amber');
             } else {
-                // 30초 이내 해결 시: 연속 정답에 따라 유저 난이도(및 필드 50% 몹 난이도) 상승!
                 mathFlowState.recentResults.push({ firstTry: !prob.hadRetry, timeSec: solveSec });
                 if (!prob.hadRetry) {
                     mathFlowState.consecutiveFirstTry++;
@@ -3026,7 +3309,7 @@
                 if (isMobDefeated) {
                     sfx.playBreak();
 
-                    // ★ 핵심 규칙: 몹 처치 시 50% 확률로 '⭕써클' 아이템 드롭! (50개 모으면 넘버블록스 바이옴 해금)
+                    // 50% 확률로 '⭕써클' 드롭
                     const gotCircle = Math.random() < 0.5;
                     let circleDropText = '';
                     if (gotCircle) {
@@ -3034,7 +3317,7 @@
                         circleDropText = ` + ⭕써클 1개 획득!(${resources.circle}/50)`;
                         if (resources.circle >= 50 && !mathFlowState.numberblocksUnlocked) {
                             mathFlowState.numberblocksUnlocked = true;
-                            showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다! (M키 지도에서 이동 가능)', 'emerald');
+                            showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다!', 'emerald');
                             addChatMessage('시스템', `🎊 ${localPlayer.name}님이 '⭕써클' 50개를 모아 [🔢 넘버블록스 바이옴]의 봉인을 해제했습니다!`, '#f472b6', true);
                         } else {
                             showToast(`⭕ 행운의 '써클' 아이템 드롭! (현재 ${resources.circle}/50개)`, 'amber');
@@ -3042,7 +3325,14 @@
                     }
 
                     if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
+                        const curKey = idx(bState.tx, bState.ty);
+                        const meta = mobMetaMap.get(curKey);
+                        if (meta && inBounds(meta.originTx, meta.originTy)) {
+                            applyWorldModification(meta.originTx, meta.originTy, undefined, BLOCK.AIR, true);
+                        }
+                        mobMetaMap.delete(curKey);
                         applyWorldModification(bState.tx, bState.ty, undefined, BLOCK.AIR, true);
+
                         const wx = bState.tx * TILE_SIZE + 24;
                         const wy = bState.ty * TILE_SIZE + 24;
                         spawnParticles(wx, wy, '#ef4444', 24);
@@ -3074,7 +3364,6 @@
                 }
             }
 
-            // 초단기 미션(3문제) 게이지 진행
             mathFlowState.microGoalProgress++;
             const activeGoal = MICRO_GOAL_TYPES[mathFlowState.microGoalKey] || MICRO_GOAL_TYPES.speed;
             let microGoalCompleteMsg = '';
@@ -3130,7 +3419,6 @@
             triggerMake10Animation();
 
         } else {
-            // ④ 안전한 시행착오
             prob.hadRetry = true;
             sfx.playGentleHint();
 
@@ -4267,7 +4555,6 @@
         const pty = Math.floor(localPlayer.y / TILE_SIZE);
         ensureAreaGenerated(ptx, pty, 3);
 
-        // Ice floor gives a slight speed boost!
         const currentFloor = getFloorAt(ptx, pty);
         const speed = currentFloor === FLOOR.ICE ? 275 : 215;
         const radius = 14;
@@ -4287,9 +4574,11 @@
         document.getElementById('coordsDisplay').textContent = `X:${ntx} Y:${nty}`;
         document.getElementById('biomeBadge').textContent = getBiomeNameAt(ntx, nty);
 
-        // 이동 후 주변에 밀착한 몹이 있는지 감지하여 배틀 전환
+        // 현재 유저 화면(뷰포트) 내의 몹들만 이동 업데이트 후 근접 조우 체크
+        updateViewportMobs(dt);
         checkMobProximityEncounter();
     }
+        
     // 캐릭터가 몹에 가까이 붙었을 때 자동으로 문제풀이 배틀로 진입하는 함수
     function checkMobProximityEncounter() {
         if (!gameStarted || mathFlowState.triggerMode === 'manual_only') return;
@@ -4530,7 +4819,8 @@
             ctx.restore();
         }
 
-        // 2. Render Blocks, Ores & Opaque Addition Mobs
+        // 2. Render Blocks, Ores & Moving Addition Mobs
+        const nowMs = performance.now();
         for (let ty = startTy; ty <= endTy; ty++) {
             for (let tx = startTx; tx <= endTx; tx++) {
                 const b = getBlockAt(tx, ty);
@@ -4539,10 +4829,27 @@
                 const wx = tx * TILE_SIZE;
                 const wy = ty * TILE_SIZE;
 
-                // 👾 덧셈 몬스터: 투명도 없이 100% 선명한 불투명 모습 + 머리 위 체력바 렌더링
+                // 👾 덧셈 몬스터: 부드러운 타일 간 이동 보간(Interpolation) + 불투명 렌더링 + 머리 위 체력바
                 if (b === BLOCK.MAGIC_CRYSTAL) {
                     const mob = getMobDataAt(tx, ty);
-                    const bounceY = Math.sin(timeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3.5;
+                    const meta = mobMetaMap.get(idx(tx, ty));
+
+                    let drawWx = wx;
+                    let drawWy = wy;
+                    let walkHopY = 0;
+
+                    if (meta && meta.moveStart > 0) {
+                        const elapsed = nowMs - meta.moveStart;
+                        if (elapsed < meta.moveDur) {
+                            const t = Math.max(0, Math.min(1, elapsed / meta.moveDur));
+                            const ease = 1 - Math.pow(1 - t, 3);
+                            drawWx = meta.fromWx + (wx - meta.fromWx) * ease;
+                            drawWy = meta.fromWy + (wy - meta.fromWy) * ease;
+                            walkHopY = -Math.sin(t * Math.PI) * 9; // 걸어갈 때 폴짝 뛰는 효과
+                        }
+                    }
+
+                    const bounceY = Math.sin(timeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3 + walkHopY;
 
                     ctx.save();
                     ctx.globalAlpha = 1.0;
@@ -4550,31 +4857,31 @@
                     // 발밑 그림자
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
                     ctx.beginPath();
-                    ctx.ellipse(wx + 24, wy + 41, 16, 6, 0, 0, Math.PI * 2);
+                    ctx.ellipse(drawWx + 24, drawWy + 41, 16, 6, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // 바닥 타일 색상이 비치지 않도록 몹 뒤쪽에 불투명 원형 바디 실드 배치
+                    // 불투명 원형 바디 배경
                     ctx.fillStyle = '#111827';
                     ctx.beginPath();
-                    ctx.arc(wx + 24, wy + 24 + bounceY, 18, 0, Math.PI * 2);
+                    ctx.arc(drawWx + 24, drawWy + 24 + bounceY, 18, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.lineWidth = 2.5;
                     ctx.strokeStyle = mob.bodyColor;
                     ctx.stroke();
 
-                    // ★ 핵심: fillStyle을 불투명한 #ffffff로 재설정해야 이모지가 반투명해지지 않음!
+                    // 100% 불투명 이모지 렌더링
                     ctx.globalAlpha = 1.0;
                     ctx.fillStyle = '#ffffff';
                     ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Noto Sans KR", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(mob.icon, wx + 24, wy + 25 + bounceY);
+                    ctx.fillText(mob.icon, drawWx + 24, drawWy + 25 + bounceY);
 
-                    // 몹 머리 위 3칸 체력바 (HP Bar)
+                    // 몹 머리 위 3칸 체력바
                     const barW = 38;
                     const barH = 6;
-                    const barX = wx + (TILE_SIZE - barW) / 2;
-                    const barY = wy - 7 + bounceY;
+                    const barX = drawWx + (TILE_SIZE - barW) / 2;
+                    const barY = drawWy - 7 + bounceY;
                     ctx.fillStyle = '#090d16';
                     ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
 
@@ -4590,12 +4897,12 @@
                     const tagText = `Lv.${mob.level} ${mob.name}`;
                     const tagW = ctx.measureText(tagText).width + 8;
                     ctx.fillStyle = '#0f172a';
-                    ctx.fillRect(wx + 24 - tagW / 2, barY - 14, tagW, 12);
+                    ctx.fillRect(drawWx + 24 - tagW / 2, barY - 14, tagW, 12);
                     ctx.fillStyle = '#fef08a';
-                    ctx.fillText(tagText, wx + 24, barY - 4);
+                    ctx.fillText(tagText, drawWx + 24, barY - 4);
                     ctx.restore();
 
-                    lightSources.push({ x: wx + 24, y: wy + 24, r: 150 });
+                    lightSources.push({ x: drawWx + 24, y: drawWy + 24, r: 150 });
                     continue;
                 }
 
@@ -4607,12 +4914,13 @@
                 const bSprite = tileSprites['block_' + b];
                 if (bSprite) ctx.drawImage(bSprite, wx, wy);
 
-                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.RAINBOW_BLOCK) {
+                if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.RAINBOW_BLOCK ||
+                    b === BLOCK.NUMBERBLOCK || b === BLOCK.NUMBERBLOB || b === BLOCK.NUMBER_HOUSE) {
                     const flicker = Math.sin(timeSec * 12 + tx * 3 + ty * 5) * 8;
                     lightSources.push({
                         x: wx + 24,
                         y: wy + 24,
-                        r: (BLOCK_INFO[b].light || 180) + flicker
+                        r: (BLOCK_INFO[b].light || 170) + flicker
                     });
                 }
 
@@ -5652,6 +5960,7 @@
     };
 
     let deferredPwaPrompt = null;
+    const PWA_INSTALLED_STORAGE_KEY = 'mc2d_pwa_installed_v1';
 
     function initZeroDelayPWA() {
         try {
@@ -5659,12 +5968,24 @@
                 window.matchMedia('(display-mode: standalone)').matches ||
                 window.navigator.standalone === true;
 
+            if (isStandalone) {
+                try { localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, '1'); } catch (e) {}
+            }
+
+            const ua = window.navigator.userAgent.toLowerCase();
+            const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const wasMarkedInstalled = localStorage.getItem(PWA_INSTALLED_STORAGE_KEY) === '1';
+
+            // ★ 핵심: 기본값을 무조건 'hidden'(숨김)으로 생성!
+            // (이미 설치된 PC에서는 beforeinstallprompt가 발생하지 않으므로 버튼이 영구적으로 숨겨짐)
+            const showForIosOnly = isIos && !isStandalone && !wasMarkedInstalled;
+
             const enterBtn = document.getElementById('btnEnterGlobalWorld');
             if (enterBtn && !document.getElementById('btnInstallPwaLobby')) {
                 const lobbyInstallBtn = document.createElement('button');
                 lobbyInstallBtn.id = 'btnInstallPwaLobby';
                 lobbyInstallBtn.type = 'button';
-                lobbyInstallBtn.className = `mc-btn mc-btn-blue w-full py-2.5 px-4 mt-2 flex items-center justify-between text-left shadow-md ${isStandalone ? 'hidden' : ''}`;
+                lobbyInstallBtn.className = `mc-btn mc-btn-blue w-full py-2.5 px-4 mt-2 flex items-center justify-between text-left shadow-md ${showForIosOnly ? '' : 'hidden'}`;
                 lobbyInstallBtn.innerHTML = `
                     <div class="flex items-center gap-2.5">
                         <img src="icon.png" alt="앱 아이콘" onerror="this.style.display='none'" class="w-7 h-7 rounded border border-cyan-300 bg-gray-900 object-contain">
@@ -5688,36 +6009,65 @@
                 const hudInstallBtn = document.createElement('button');
                 hudInstallBtn.id = 'btnInstallPwaHud';
                 hudInstallBtn.type = 'button';
-                hudInstallBtn.className = `mc-btn mc-btn-blue px-2 py-1 text-xs flex items-center gap-1 ${isStandalone ? 'hidden' : ''}`;
+                hudInstallBtn.className = `mc-btn mc-btn-blue px-2 py-1 text-xs flex items-center gap-1 ${showForIosOnly ? '' : 'hidden'}`;
                 hudInstallBtn.title = '기기에 게임 앱 설치하기';
                 hudInstallBtn.innerHTML = `<span>📲 앱 설치</span>`;
                 hudInstallBtn.addEventListener('click', handleOneClickPwaInstall);
                 soundBtn.parentNode.appendChild(hudInstallBtn);
             }
 
+            const hideInstallButtons = () => {
+                document.getElementById('btnInstallPwaLobby')?.classList.add('hidden');
+                document.getElementById('btnInstallPwaHud')?.classList.add('hidden');
+            };
+
+            // 크롬/엣지 getInstalledRelatedApps 지원 시 이미 설치된 앱인지 한 번 더 확인
+            if ('getInstalledRelatedApps' in navigator) {
+                navigator.getInstalledRelatedApps().then(apps => {
+                    if (Array.isArray(apps) && apps.length > 0) {
+                        try { localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, '1'); } catch (e) {}
+                        hideInstallButtons();
+                    }
+                }).catch(() => {});
+            }
+
+            // 브라우저가 '아직 설치되지 않은 기기'임을 확인하고 설치 프롬프트를 준비했을 때만 버튼 표시!
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPwaPrompt = e;
-                const lobbyBtn = document.getElementById('btnInstallPwaLobby');
-                const hudBtn = document.getElementById('btnInstallPwaHud');
-                const titleEl = document.getElementById('lobbyInstallBtnTitle');
-                if (lobbyBtn && !isStandalone) {
-                    lobbyBtn.classList.remove('hidden');
-                    lobbyBtn.classList.add('ring-2', 'ring-cyan-300');
+                // 만약 이전에 설치했다가 삭제한 경우 다시 beforeinstallprompt가 오므로 플래그 초기화 후 버튼 노출
+                try { localStorage.removeItem(PWA_INSTALLED_STORAGE_KEY); } catch (err) {}
+
+                if (!isStandalone) {
+                    const lobbyBtn = document.getElementById('btnInstallPwaLobby');
+                    const hudBtn = document.getElementById('btnInstallPwaHud');
+                    const titleEl = document.getElementById('lobbyInstallBtnTitle');
+                    if (lobbyBtn) {
+                        lobbyBtn.classList.remove('hidden');
+                        lobbyBtn.classList.add('ring-2', 'ring-cyan-300');
+                    }
+                    if (hudBtn) hudBtn.classList.remove('hidden');
+                    if (titleEl) titleEl.textContent = '📲 앱으로 설치하기 (지금 바로 원클릭 설치 가능!)';
                 }
-                if (hudBtn && !isStandalone) hudBtn.classList.remove('hidden');
-                if (titleEl) titleEl.textContent = '📲 앱으로 설치하기 (지금 바로 원클릭 설치 가능!)';
             });
 
+            // 설치가 완료되면 즉시 플래그 기록 및 설치 버튼 영구 숨김
             window.addEventListener('appinstalled', () => {
                 deferredPwaPrompt = null;
-                const lobbyBtn = document.getElementById('btnInstallPwaLobby');
-                const hudBtn = document.getElementById('btnInstallPwaHud');
-                if (lobbyBtn) lobbyBtn.classList.add('hidden');
-                if (hudBtn) hudBtn.classList.add('hidden');
+                try { localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, '1'); } catch (e) {}
+                hideInstallButtons();
                 showToast('🎉 앱 설치가 완료되었습니다!', 'emerald');
             });
 
+            // display-mode가 standalone으로 전환될 때도 즉시 숨김
+            window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+                if (e.matches) {
+                    try { localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, '1'); } catch (err) {}
+                    hideInstallButtons();
+                }
+            });
+
+            // 서비스 워커 등록 (Network-First 즉시 업데이트)
             if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
                 navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
                     reg.update();
@@ -5747,27 +6097,36 @@
             window.navigator.standalone === true;
 
         if (isStandalone) {
-            showToast('✅ 이미 앱으로 설치되어 실행 중입니다!', 'emerald');
+            document.getElementById('btnInstallPwaLobby')?.classList.add('hidden');
+            document.getElementById('btnInstallPwaHud')?.classList.add('hidden');
             return;
         }
+
         if (deferredPwaPrompt) {
             try {
                 deferredPwaPrompt.prompt();
                 const { outcome } = await deferredPwaPrompt.userChoice;
                 if (outcome === 'accepted') {
                     deferredPwaPrompt = null;
-                    showToast('📲 앱 설치를 시작합니다!', 'emerald');
+                    try { localStorage.setItem(PWA_INSTALLED_STORAGE_KEY, '1'); } catch (e) {}
+                    document.getElementById('btnInstallPwaLobby')?.classList.add('hidden');
+                    document.getElementById('btnInstallPwaHud')?.classList.add('hidden');
+                    showToast('📲 앱 설치가 시작되었습니다!', 'emerald');
                 }
             } catch (err) {}
             return;
         }
+
         const ua = window.navigator.userAgent.toLowerCase();
         const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIos) {
             showToast('🍎 아이폰/아이패드: 브라우저의 [공유 📤] 버튼을 누른 뒤 [홈 화면에 추가 ➕]를 선택하면 앱으로 설치됩니다!', 'amber');
             return;
         }
-        showToast('💡 브라우저 주소창 오른쪽 끝의 [앱 설치 🖥️/➕] 아이콘을 누르거나 메뉴에서 [앱 설치]를 선택해 주세요!', 'blue');
+
+        // 그 외 이미 설치된 상태에서 혹시라도 눌렸을 경우 버튼을 즉시 숨김 처리
+        document.getElementById('btnInstallPwaLobby')?.classList.add('hidden');
+        document.getElementById('btnInstallPwaHud')?.classList.add('hidden');
     }
 
     window.onload = function () {
