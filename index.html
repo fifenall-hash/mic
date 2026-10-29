@@ -2332,7 +2332,7 @@
                     b = rInt(11 - a, 9);
                 }
                 break;
-            case 5: // 십몇 + 한 자리 수
+            case 5: // 십몇 + 한 자리 수 (받아올림 없음)
                 if (Math.random() < 0.3) {
                     a = 10;
                     b = rInt(2, 5);
@@ -2352,15 +2352,19 @@
                     b = rInt(21 - a, 9);
                 }
                 break;
-            case 7: // 두 자리 수 기초 덧셈
+            case 7: // 두 자리 수 기초 덧셈 (받아올림 없음 보장)
                 if (Math.random() < 0.3) {
                     a = rInt(10, 14);
-                    b = rInt(3, 6);
-                    c = rInt(2, 6);
+                    const maxB = Math.max(2, 18 - a);
+                    b = rInt(2, maxB);
+                    c = rInt(1, Math.max(1, 19 - a - b));
                 } else {
-                    a = rInt(11, 25);
-                    b = rInt(10, 24);
-                    if ((a % 10) + (b % 10) >= 10) b -= ((a % 10) + (b % 10) - 8);
+                    const aTens = rInt(1, 2);
+                    const aOnes = rInt(1, 8);
+                    const bTens = rInt(1, 2);
+                    const bOnes = rInt(0, 9 - aOnes);
+                    a = aTens * 10 + aOnes;
+                    b = bTens * 10 + bOnes;
                 }
                 break;
             case 8: // 두 자리 받아올림 & 고난도 세 수의 덧셈
@@ -2370,21 +2374,24 @@
                     b = rInt(4, 9);
                     c = rInt(3, 9);
                 } else {
-                    a = rInt(15, 28);
-                    b = rInt(14, 26);
+                    const aTens = rInt(1, 2);
+                    const aOnes = rInt(4, 9);
+                    const bTens = rInt(1, 2);
+                    const bOnes = rInt(10 - aOnes, 9);
+                    a = aTens * 10 + aOnes;
+                    b = bTens * 10 + bOnes;
                 }
                 break;
         }
 
         const totalSum = a + b + c;
 
-        // ★ 약 35% 확률로 '3 + 5 = 4 + ?' 형태의 등호 균형(양팔저울) 문제로 변환 (항이 2개이고 합이 3 이상일 때)
+        // 약 35% 확률로 '3 + 5 = 4 + ?' 형태의 등호 균형(양팔저울) 문제로 변환 (항이 2개이고 합이 3 이상일 때)
         if (c === 0 && totalSum >= 3 && Math.random() < 0.35) {
-            let candidates = [];
+            const candidates = [];
             const minD = Math.max(1, totalSum - 15);
             const maxD = totalSum - 1;
             for (let cand = minD; cand <= maxD; cand++) {
-                // 좌변의 수(a, b)와 똑같은 수는 피해서 진짜 덧셈 사고력을 기르도록 함 (예: 3+5=3+? 방지)
                 if (cand !== a && cand !== b) {
                     candidates.push(cand);
                 }
@@ -2426,17 +2433,19 @@
             startedAt: performance.now()
         };
     }
-
+        
     function buildSmartChoices(answer) {
         const set = new Set([answer]);
-        const offsets = [-2, -1, 1, 2, 10, -10, 3, -3];
+        const offsets = [-2, -1, 1, 2, 10, -10, 3, -3, 4, 5, 6];
         for (const off of offsets) {
             if (set.size >= 6) break;
             const cand = answer + off;
             if (cand >= 1 && cand !== answer) set.add(cand);
         }
+        let fallbackVal = 1;
         while (set.size < 6) {
-            set.add(Math.max(1, answer + Math.floor(Math.random() * 9) - 4));
+            if (!set.has(fallbackVal)) set.add(fallbackVal);
+            fallbackVal++;
         }
         return Array.from(set).sort((x, y) => x - y);
     }
@@ -3208,7 +3217,6 @@
                 g.bestEquation = fullEq;
             }
 
-            // 30초 초과 시 직전 난이도를 적정 난이도로 산정
             let difficultyAdjustMsg = '';
             const currentProbLevel = prob.problemLevel || mathFlowState.level;
 
@@ -3219,7 +3227,12 @@
                 mathFlowState.consecutiveFirstTry = 0;
 
                 if (mathFlowState.activeMobBattle) {
+                    const nextTier = MOB_TIERS[properLevel] || MOB_TIERS[1];
                     mathFlowState.activeMobBattle.level = properLevel;
+                    if (!mathFlowState.activeMobBattle.isWorldMob) {
+                        mathFlowState.activeMobBattle.name = `훈련용 ${nextTier.name}`;
+                        mathFlowState.activeMobBattle.icon = nextTier.icon;
+                    }
                 }
                 difficultyAdjustMsg = ` ⏱️ (풀이 시간 ${solveSec.toFixed(0)}초: 30초를 넘어 직전 단계인 [Lv.${properLevel}]을 적정 난이도로 맞춤 조정했어요!)`;
                 showToast(`🛡️ 풀이 시간이 30초를 넘어 적정 난이도를 [Lv.${properLevel}]로 맞춤 조정했습니다.`, 'amber');
@@ -3237,7 +3250,12 @@
                     mathFlowState.consecutiveFirstTry = 0;
                     if (mathFlowState.level > (g.bestLevel || 1)) g.bestLevel = mathFlowState.level;
                     if (mathFlowState.activeMobBattle) {
+                        const nextTier = MOB_TIERS[mathFlowState.level] || MOB_TIERS[1];
                         mathFlowState.activeMobBattle.level = mathFlowState.level;
+                        if (!mathFlowState.activeMobBattle.isWorldMob) {
+                            mathFlowState.activeMobBattle.name = `훈련용 ${nextTier.name}`;
+                            mathFlowState.activeMobBattle.icon = nextTier.icon;
+                        }
                     }
                     unlockBadge('goldilocks_up');
                     if (mathFlowState.level >= 5) unlockBadge('master_arch');
@@ -3261,7 +3279,6 @@
                 }
             }
 
-            // 몹 데미지 처리 (1문제 정답 = 체력 1 감소, 3문제 맞히면 처치!)
             const bState = mathFlowState.activeMobBattle;
             let mobBattleMsg = '';
             let isMobDefeated = false;
@@ -3285,7 +3302,6 @@
                 if (isMobDefeated) {
                     sfx.playBreak();
 
-                    // 50% 확률로 '⭕써클' 드롭
                     const gotCircle = Math.random() < 0.5;
                     let circleDropText = '';
                     if (gotCircle) {
@@ -3305,6 +3321,14 @@
                         const meta = mobMetaMap.get(curKey);
                         if (meta && inBounds(meta.originTx, meta.originTy)) {
                             applyWorldModification(meta.originTx, meta.originTy, undefined, BLOCK.AIR, true);
+                            if (meta.originTx !== bState.tx || meta.originTy !== bState.ty) {
+                                sendGlobalPacket({
+                                    type: 'WORLD_MOD',
+                                    tx: meta.originTx,
+                                    ty: meta.originTy,
+                                    blockId: BLOCK.AIR
+                                });
+                            }
                         }
                         mobMetaMap.delete(curKey);
                         applyWorldModification(bState.tx, bState.ty, undefined, BLOCK.AIR, true);
@@ -3383,6 +3407,7 @@
             if (isMobDefeated) {
                 nextBtn.textContent = '🎉 승리! 월드로 돌아가기 ▶';
                 nextBtn.onclick = () => {
+                    mathFlowState.activeMobBattle = null;
                     document.getElementById('mathModal').classList.add('hidden');
                 };
             } else {
@@ -5536,6 +5561,12 @@
 
     function applyProfileToGame(profile) {
         if (!profile) return;
+
+        // 캐릭터 전환 시 기존 ID가 달랐다면 멀티플레이 월드에 이전 캐릭터 퇴장 알림 전송
+        if (gameStarted && localPlayer.id && localPlayer.id !== profile.id) {
+            sendGlobalPacket({ type: 'PLAYER_LEFT', id: localPlayer.id });
+        }
+
         currentProfileId = profile.id;
         localPlayer.id = profile.id;
         localPlayer.name = profile.name || '스티브';
@@ -5569,6 +5600,8 @@
         const mf = profile.mathFlow || {};
         mathFlowState.level = mf.level || profile.mathLevel || 1;
         localPlayer.mathLevel = mathFlowState.level;
+        mathFlowState.activeMobBattle = null;
+        mathFlowState.lastProximityMobKey = null;
         mathFlowState.numberblocksUnlocked = !!mf.numberblocksUnlocked || (resources.circle || 0) >= 50;
         mathFlowState.triggerMode = mf.triggerMode || 'magic_only';
         mathFlowState.strategy = mf.strategy || 'tenframe';
@@ -5872,6 +5905,9 @@
         const initLv = parseInt(document.getElementById('initialMathLevelSelect').value, 10) || 1;
 
         if (!currentProfileId) {
+            if (gameStarted && localPlayer.id) {
+                sendGlobalPacket({ type: 'PLAYER_LEFT', id: localPlayer.id });
+            }
             currentProfileId = 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
             localPlayer.id = currentProfileId;
             localPlayer.name = nameVal;
@@ -5888,6 +5924,8 @@
 
             mathFlowState.level = initLv;
             localPlayer.mathLevel = initLv;
+            mathFlowState.activeMobBattle = null;
+            mathFlowState.lastProximityMobKey = null;
             mathFlowState.numberblocksUnlocked = false;
             mathFlowState.microGoalProgress = 0;
             mathFlowState.buffRemainingSec = 0;
@@ -5906,14 +5944,21 @@
         ensureAreaGenerated(Math.floor(localPlayer.x / TILE_SIZE), Math.floor(localPlayer.y / TILE_SIZE), 4);
         updateResourceUI();
         updateFlowHud();
+        updatePlayerListUI();
+
         if (netRole === 'connecting') {
             connectToGlobalWorld();
+        } else {
+            sendGlobalPacket({
+                type: 'PLAYER_SYNC',
+                player: serializePlayer(localPlayer)
+            });
         }
         const ptx = Math.floor(localPlayer.x / TILE_SIZE);
         const pty = Math.floor(localPlayer.y / TILE_SIZE);
         addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 시작합니다! 몹을 잡아 '⭕써클' 50개를 모으면 [🔢 넘버블록스 바이옴]이 열립니다!`, '#34d399', true);
     }
-
+        
     // updateResourceUI 호출 시 '⭕써클 (X/50)' 및 넘버블록스 해금 배지 동기화 + 프로필 자동 저장
     const _origUpdateResourceUI = updateResourceUI;
     updateResourceUI = function () {
