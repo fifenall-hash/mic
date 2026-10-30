@@ -1989,16 +1989,15 @@
             tileSprites['floor_' + FLOOR.NUMBER_LAND] = c;
         }
 
-        // 🔢 넘버블록스 숫자별(1~10) 공식 색상 스프라이트 생성
-        // 1=빨강, 2=주황, 3=노랑, 4=초록, 5=파랑, 6=보라, 7=무지개(빨주노초파남보 1칸씩), 8=자홍, 9=3단회색(위:진함, 중간:중간, 아래:연함), 10=흰색+바깥 빨간 테두리
+        // 🔢 넘버블록스 숫자별(1~10) 공식 색상 및 배열(4=2x2, 6=2x3, 8=2x4) 스프라이트 생성
         const singleColors = {
             1: '#ef4444', // 빨강
             2: '#f97316', // 주황
             3: '#eab308', // 노랑
-            4: '#22c55e', // 초록
+            4: '#22c55e', // 초록 (2x2)
             5: '#3b82f6', // 파랑
-            6: '#a855f7', // 보라
-            8: '#ec4899'  // 자홍
+            6: '#a855f7', // 보라 (2x3)
+            8: '#ec4899'  // 자홍 (2x4)
         };
         const rainbow7Colors = [
             '#ef4444', // 빨
@@ -2016,22 +2015,43 @@
 
             let faceY = 18;
 
-            if (num === 7) {
+            if (num === 4 || num === 6 || num === 8) {
+                // ★ 4 = 가로2x세로2, 6 = 가로2x세로3, 8 = 가로2x세로4 격자 배열
+                const cols = 2;
+                const rows = num / 2; // 4->2행, 6->3행, 8->4행
+                const cellW = 13;     // 가로 2칸 * 13px = 26px
+                const cellH = rows === 2 ? 11 : rows === 3 ? 9 : 7;
+                const startX = 11;
+                const startY = 41 - rows * cellH;
+                const baseCol = singleColors[num];
+
+                for (let r = 0; r < rows; r++) {
+                    for (let col = 0; col < cols; col++) {
+                        const bx = startX + col * cellW;
+                        const by = startY + r * cellH;
+                        g.fillStyle = baseCol;
+                        g.fillRect(bx, by, cellW, cellH);
+                        g.strokeStyle = '#111827';
+                        g.lineWidth = 1.4;
+                        g.strokeRect(bx, by, cellW, cellH);
+                    }
+                }
+                faceY = startY + 2;
+            } else if (num === 7) {
                 // 7 = 무지개 (빨주노초파남보 한 칸에 하나씩 총 7칸)
-                const segH = 4; // 7칸 * 4px = 28px (y: 13 ~ 41)
+                const segH = 4;
                 for (let i = 0; i < 7; i++) {
-                    // 아래(0)부터 빨주노초파남보 순서로 적층
                     const by = 41 - (i + 1) * segH;
                     g.fillStyle = rainbow7Colors[i];
-                    g.fillRect(13, by, 22, segH);
+                    g.fillRect(14, by, 20, segH);
                     g.strokeStyle = '#111827';
                     g.lineWidth = 1;
-                    g.strokeRect(13, by, 22, segH);
+                    g.strokeRect(14, by, 20, segH);
                 }
                 faceY = 15;
             } else if (num === 9) {
-                // 9 = 3단 회색 (위는 진한 회색, 중간은 중간 회색, 아래는 연한 회색 · 3x3 블록 배열)
-                const rowColors = ['#4b5563', '#9ca3af', '#e5e7eb']; // 위(0): 진함, 중간(1): 중간, 아래(2): 연함
+                // 9 = 3단 회색 (위는 진한 회색, 중간은 중간 회색, 아래는 연한 회색 · 3x3 배열)
+                const rowColors = ['#4b5563', '#9ca3af', '#e5e7eb'];
                 const cellW = 8;
                 const cellH = 9;
                 const startX = 12;
@@ -2049,11 +2069,10 @@
                 }
                 faceY = 16;
             } else if (num === 10) {
-                // 10 = 흰색 블록 + 바깥 테두리가 빨강
+                // 10 = 가로2x세로5 흰색 블록 + 바깥 테두리가 빨강
                 const bx = 10, by = 13, bw = 28, bh = 28;
                 g.fillStyle = '#ffffff';
                 g.fillRect(bx, by, bw, bh);
-                // 내부 10칸(2열 x 5행) 격자선
                 g.strokeStyle = '#fca5a5';
                 g.lineWidth = 1;
                 for (let r = 1; r < 5; r++) {
@@ -2066,25 +2085,24 @@
                 g.moveTo(bx + bw / 2, by);
                 g.lineTo(bx + bw / 2, by + bh);
                 g.stroke();
-                // 바깥 빨간색 굵은 테두리
                 g.strokeStyle = '#ef4444';
                 g.lineWidth = 2.5;
                 g.strokeRect(bx, by, bw, bh);
                 faceY = 16;
             } else {
-                // 1, 2, 3, 4, 5, 6, 8 = 단색 블록 적층
-                const rows = Math.min(6, num);
-                const blockH = Math.max(4, Math.floor(27 / rows));
+                // 1, 2, 3, 5 = 세로 1열 단색 블록 적층
+                const rows = num;
+                const blockH = num === 1 ? 14 : num === 2 ? 11 : num === 3 ? 8 : 5.5;
                 const baseCol = singleColors[num] || '#ef4444';
                 for (let i = 0; i < rows; i++) {
                     const by = 41 - (i + 1) * blockH;
                     g.fillStyle = baseCol;
-                    g.fillRect(12, by, 24, blockH);
+                    g.fillRect(14, by, 20, blockH);
                     g.strokeStyle = '#111827';
                     g.lineWidth = 1.4;
-                    g.strokeRect(12, by, 24, blockH);
+                    g.strokeRect(14, by, 20, blockH);
                 }
-                faceY = Math.max(13, 41 - rows * blockH + 2);
+                faceY = Math.max(14, Math.floor(41 - rows * blockH + 2));
             }
 
             // 귀여운 눈
@@ -2092,7 +2110,6 @@
             g.fillRect(15, faceY, 6, 6);
             g.fillRect(27, faceY, 6, 6);
             if (num === 10) {
-                // 10은 빨간 별 모양 눈 테두리 포인트
                 g.strokeStyle = '#ef4444';
                 g.lineWidth = 1;
                 g.strokeRect(15, faceY, 6, 6);
