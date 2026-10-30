@@ -991,13 +991,13 @@
         [BLOCK.SENSOR_LIGHT]:  { name: '💡 스마트 센서등 (가까이 다가가면 자동으로 환하게 점등!)', hp: 45, solid: false, minTier: 0, light: 90, dropType: 'item', dropKey: 'sensorLight', dropCount: 1, dropLabel: '센서등', sfx: 'ore', minColor: '#fef08a', particleColor: '#fef9c3' }
     };
 
-    // 기본 5단계 곡괭이 (0: 나무 ~ 4: 다이아몬드) + 5단계 이상은 '써클 곡괭이 Lv.1, Lv.2...' 무한 자동 생성 Proxy
+    // 기본 5단계 곡괭이 (0: 1.0배 ~ 4: 3.0배, 단계당 +0.5배) + 5단계 이상 '써클 곡괭이 Lv.1(3.5배), Lv.2(4.0배)...' 무한 생성 Proxy
     const BASE_PICKAXE_TIERS = [
-        { level: 0, name: '나무 곡괭이',     speed: 1.0, color: '#a16207', headColor: '#b45309' },
-        { level: 1, name: '돌 곡괭이',       speed: 1.8, color: '#9ca3af', headColor: '#9ca3af' },
-        { level: 2, name: '철 곡괭이',       speed: 2.8, color: '#e5e7eb', headColor: '#f3f4f6' },
-        { level: 3, name: '황금 곡괭이',     speed: 4.0, color: '#eab308', headColor: '#facc15' },
-        { level: 4, name: '다이아몬드 곡괭이', speed: 5.5, color: '#22d3ee', headColor: '#67e8f9' }
+        { level: 0, name: '나무 곡괭이',       speed: 1.0, color: '#a16207', headColor: '#b45309' },
+        { level: 1, name: '돌 곡괭이',         speed: 1.5, color: '#9ca3af', headColor: '#9ca3af' },
+        { level: 2, name: '철 곡괭이',         speed: 2.0, color: '#e5e7eb', headColor: '#f3f4f6' },
+        { level: 3, name: '황금 곡괭이',       speed: 2.5, color: '#eab308', headColor: '#facc15' },
+        { level: 4, name: '다이아몬드 곡괭이', speed: 3.0, color: '#22d3ee', headColor: '#67e8f9' }
     ];
 
     const PICKAXE_TIERS = new Proxy(BASE_PICKAXE_TIERS, {
@@ -1005,11 +1005,11 @@
             if (typeof prop === 'string' && /^\d+$/.test(prop)) {
                 const tier = parseInt(prop, 10);
                 if (tier < target.length) return target[tier];
-                const cLv = tier - 4; // tier 5 -> Lv.1, tier 6 -> Lv.2 ...
+                const cLv = tier - 4; // tier 5 -> Lv.1 (3.5배), tier 6 -> Lv.2 (4.0배) ...
                 return {
                     level: tier,
                     name: `⭕ 써클 곡괭이 Lv.${cLv}`,
-                    speed: Number((5.5 + cLv * 2.5).toFixed(1)),
+                    speed: Number((1.0 + tier * 0.5).toFixed(1)),
                     color: '#ec4899',
                     headColor: '#f472b6'
                 };
@@ -1025,7 +1025,7 @@
             return {
                 id: 'upgrade_stone_pick',
                 name: '⛏️ [1단계] 돌 곡괭이 업그레이드',
-                desc: '채굴 속도 x1.8배 · 철광석 채굴 가능 (다음 단계: 철 곡괭이)',
+                desc: '채굴 속도 x1.5배 · 철광석 채굴 가능 (다음 단계: 철 곡괭이)',
                 type: 'pickaxe',
                 tier: 1,
                 cost: { wood: 2, cobble: 3, circle: 2 }
@@ -1035,7 +1035,7 @@
             return {
                 id: 'upgrade_iron_pick',
                 name: '⛏️ [2단계] 철 곡괭이 업그레이드',
-                desc: '채굴 속도 x2.8배 · 금/다이아몬드 채굴 가능 (다음 단계: 황금 곡괭이)',
+                desc: '채굴 속도 x2.0배 · 금/다이아몬드 채굴 가능 (다음 단계: 황금 곡괭이)',
                 type: 'pickaxe',
                 tier: 2,
                 cost: { wood: 2, iron: 3, circle: 4 }
@@ -1045,7 +1045,7 @@
             return {
                 id: 'upgrade_gold_pick',
                 name: '⛏️ [3단계] 황금 곡괭이 업그레이드',
-                desc: '채굴 속도 x4.0배 고속 채굴 (다음 단계: 다이아몬드 곡괭이)',
+                desc: '채굴 속도 x2.5배 고속 채굴 (다음 단계: 다이아몬드 곡괭이)',
                 type: 'pickaxe',
                 tier: 3,
                 cost: { wood: 2, gold: 3, circle: 6 }
@@ -1055,21 +1055,21 @@
             return {
                 id: 'upgrade_diamond_pick',
                 name: '⛏️ [4단계] 다이아몬드 곡괭이 업그레이드',
-                desc: '채굴 속도 x5.5배 · 흑요석 채굴 가능 (다음 단계: 써클 곡괭이 Lv.1)',
+                desc: '채굴 속도 x3.0배 · 흑요석 채굴 가능 (다음 단계: 써클 곡괭이 Lv.1)',
                 type: 'pickaxe',
                 tier: 4,
                 cost: { wood: 2, diamond: 3, circle: 8 }
             };
         }
-        // 다이아몬드 곡괭이(tier 4) 달성 이후: 써클 곡괭이 Lv.1, Lv.2, Lv.3...
+        // 다이아몬드 곡괭이(tier 4) 달성 이후: 써클 곡괭이 Lv.1, Lv.2, Lv.3... (속도 +0.5배씩, 재료 각 5N개 + 써클 10N개)
         const cLv = nextTier - 4;
-        const circleReq = cLv * 100;
-        const matReq = cLv * 10;
-        const nextSpeed = Number((5.5 + cLv * 2.5).toFixed(1));
+        const circleReq = cLv * 10;
+        const matReq = cLv * 5;
+        const nextSpeed = Number((1.0 + nextTier * 0.5).toFixed(1));
         return {
             id: 'upgrade_circle_pick_' + cLv,
             name: `⭕ [초월] 써클 곡괭이 Lv.${cLv} 업그레이드`,
-            desc: `채굴 속도 x${nextSpeed}배 초고속 파괴! (써클 ${circleReq}개 + 모든 재료 각 ${matReq}개)`,
+            desc: `채굴 속도 x${nextSpeed}배 초고속 파괴! (써클 ${circleReq}개 + 8종 재료 각 ${matReq}개)`,
             type: 'pickaxe',
             tier: nextTier,
             cost: {
@@ -1086,7 +1086,7 @@
         };
     }
 
-    // Hotbar Slots (기존 9종 + 신규 스마트 설비 5종 확장)
+    // Hotbar Slots (기존 9종 + 신규 스마트 설비 5종 확장 · 통행권은 설치 불가 영구 패시브이므로 핫바 제외)
     const HOTBAR_SLOTS = [
         { slot: 0,  key: 'pickaxe',      type: 'tool',  name: '곡괭이 (채굴 도구)' },
         { slot: 1,  key: 'planks',       type: 'block', blockId: BLOCK.PLANKS_WALL,   name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
@@ -1104,39 +1104,14 @@
         { slot: 13, key: 'elevator',     type: 'block', blockId: BLOCK.ELEVATOR,      name: '🛗 엘리베이터 (층간/원거리 순간 이동기)' }
     ];
 
-    // Crafting Recipes (모든 제작에 등급별 적정 비율의 '⭕써클' 필수 포함 + 신규 설비 5종 추가)
+    // Crafting Recipes (넘버블록스 바이옴 통행권 추가 + 모든 제작에 써클 포함)
     const CRAFT_RECIPES = [
         {
-            id: 'upgrade_stone_pick',
-            name: '돌 곡괭이 업그레이드',
-            desc: '채굴 속도 x1.8배 · 철광석 채굴 가능',
-            type: 'pickaxe',
-            tier: 1,
-            cost: { wood: 2, cobble: 3, circle: 2 }
-        },
-        {
-            id: 'upgrade_iron_pick',
-            name: '철 곡괭이 업그레이드',
-            desc: '채굴 속도 x2.8배 · 금/다이아몬드 채굴 가능',
-            type: 'pickaxe',
-            tier: 2,
-            cost: { wood: 2, iron: 3, circle: 4 }
-        },
-        {
-            id: 'upgrade_gold_pick',
-            name: '황금 곡괭이 업그레이드',
-            desc: '채굴 속도 x4.0배 고속 채굴',
-            type: 'pickaxe',
-            tier: 3,
-            cost: { wood: 2, gold: 3, circle: 6 }
-        },
-        {
-            id: 'upgrade_diamond_pick',
-            name: '다이아몬드 곡괭이 업그레이드',
-            desc: '최고 등급! 채굴 속도 x5.5배 · 흑요석 채굴 가능',
-            type: 'pickaxe',
-            tier: 4,
-            cost: { wood: 2, diamond: 3, circle: 8 }
+            id: 'craft_nb_pass',
+            name: '🎫 넘버블록스 바이옴 통행권',
+            desc: '한 번 제작하면 영구 소지! 북동쪽 넘버블록스 랜드에 언제든 입장할 수 있습니다 (필드 설치 불가)',
+            type: 'pass',
+            cost: { circle: 30 }
         },
         {
             id: 'craft_planks',
@@ -1222,7 +1197,7 @@
         {
             id: 'craft_moving_walk',
             name: '⏩ 무빙워크 x4',
-            desc: '밟고 지나가면 이동 속도가 1.9배 빨라지는 컨베이어 벨트',
+            desc: '밟고 지나가면 선택한 방향으로 빠르게 이동시켜 주는 컨베이어 벨트',
             type: 'item',
             itemKey: 'movingWalk',
             amount: 4,
@@ -1231,7 +1206,7 @@
         {
             id: 'craft_escalator',
             name: '🪜 에스컬레이터 x2',
-            desc: '올라서면 대각선 위쪽 방향으로 자동 수송해 주는 전동 계단',
+            desc: '올라서면 선택한 방향으로 자동 수송해 주는 전동 계단',
             type: 'item',
             itemKey: 'escalator',
             amount: 2,
@@ -2430,7 +2405,7 @@
         const distSpawn = Math.hypot(tx - SPAWN_X, ty - SPAWN_Y);
         if (distSpawn < 16) return '🏛️ 중앙 스폰 광장';
         if (isNumberblocksBiomeAt(tx, ty)) {
-            return isNumberblocksBiomeUnlocked() ? '🔢 넘버블록스 랜드 (해금됨!)' : '🔒 넘버블록스 랜드 (써클 50개 필요)';
+            return isNumberblocksBiomeUnlocked() ? '🔢 넘버블록스 랜드 (🎫통행권 보유)' : '🔒 넘버블록스 랜드 (🎫통행권 필요)';
         }
         if (ty < 270) return '❄️ 북부 설원 툰드라';
         if (tx > 660 && ty > 620) return '🌵 남동 황금 사막';
@@ -2594,9 +2569,9 @@
         return tx > 660 && ty < 300;
     }
 
-    // '⭕써클' 50개를 모아 넘버블록스 바이옴이 잠금 해제되었는지 확인
+    // '🎫 넘버블록스 바이옴 통행권'을 제작하여 영구 소지하고 있는지 확인
     function isNumberblocksBiomeUnlocked() {
-        return !!mathFlowState.numberblocksUnlocked || (resources.circle || 0) >= 50;
+        return !!mathFlowState.numberblocksUnlocked;
     }
 
     function ensureAreaGenerated(centerTx, centerTy, radiusChunks = 4) {
@@ -3750,6 +3725,13 @@
             bannerEl.className = 'fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] pointer-events-none transition-all duration-300';
             document.body.appendChild(bannerEl);
         }
+        const hasPass = isNumberblocksBiomeUnlocked();
+        const passGuideText = hasPass
+            ? '(🎫 넘버블록스 통행권 영구 보유 중!)'
+            : totalCircles >= 30
+            ? '(✨ 제작대[E]에서 🎫통행권을 제작할 수 있어요!)'
+            : `(🎫통행권 제작까지 써클 ${Math.max(0, 30 - totalCircles)}개 남음)`;
+
         bannerEl.style.opacity = '1';
         bannerEl.style.transform = 'translate(-50%, -50%) scale(1)';
         bannerEl.innerHTML = `
@@ -3761,7 +3743,7 @@
                     ⭕ 써클 +${circleGain}개 획득!!
                 </div>
                 <div class="text-xs sm:text-base font-bold text-emerald-300 mt-1.5">
-                    현재 보유 써클: <span class="text-white font-black">${totalCircles}개</span> ${totalCircles >= 50 ? '(🔢 넘버블록스 바이옴 해금 완료!)' : `(바이옴 해금까지 ${Math.max(0, 50 - totalCircles)}개 남음)`}
+                    현재 보유 써클: <span class="text-white font-black">${totalCircles}개</span> ${passGuideText}
                 </div>
             </div>
         `;
@@ -3771,7 +3753,7 @@
             bannerEl.style.transform = 'translate(-50%, -60%) scale(0.9)';
         }, 3200);
     }
-
+        
     function submitMathAnswer(selectedVal, btnEl) {
         const prob = mathFlowState.currentProblem;
         if (!prob || prob.solved) return;
@@ -3895,15 +3877,12 @@
                     // ★ 1/3 확률로 각각 1개, 2개, 3개 써클 드롭!
                     const circleGain = Math.floor(Math.random() * 3) + 1;
                     resources.circle = (resources.circle || 0) + circleGain;
-                    const circleDropText = ` + ⭕써클 ${circleGain}개 획득!(총 ${resources.circle}개)`;
 
                     // 대형 안내 배너 호출
                     showCircleDropBanner(circleGain, resources.circle, bState.name);
 
-                    if (resources.circle >= 50 && !mathFlowState.numberblocksUnlocked) {
-                        mathFlowState.numberblocksUnlocked = true;
-                        showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다!', 'emerald');
-                        addChatMessage('시스템', `🎊 ${localPlayer.name}님이 '⭕써클' 50개를 모아 [🔢 넘버블록스 바이옴]의 봉인을 해제했습니다!`, '#f472b6', true);
+                    if (!isNumberblocksBiomeUnlocked() && resources.circle >= 30) {
+                        showToast('🎫 써클 30개가 모였어요! [E] 제작대에서 [넘버블록스 바이옴 통행권]을 제작해 보세요!', 'emerald');
                     }
 
                     if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
@@ -4463,11 +4442,11 @@
         const clampedX = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(tx)));
         const clampedY = Math.max(5, Math.min(WORLD_SIZE - 5, Math.floor(ty)));
 
-        // 🔒 넘버블록스 바이옴 잠금 체크 (⭕써클 50개 필요)
+        // 🔒 넘버블록스 바이옴 잠금 체크 (🎫 통행권 필요)
         if (isNumberblocksBiomeAt(clampedX, clampedY) && !isNumberblocksBiomeUnlocked()) {
             const curCircles = resources.circle || 0;
             sfx.playGentleHint();
-            showToast(`🔒 [넘버블록스 바이옴 잠김] 몬스터를 처치해 '⭕써클' 50개를 모아야 입장할 수 있어요! (현재: ${curCircles}/50개)`, 'amber');
+            showToast(`🔒 [통행권 필요] 제작대(E키)에서 '⭕써클 30개'로 [🎫 넘버블록스 바이옴 통행권]을 제작해야 입장할 수 있어요! (현재 써클: ${curCircles}개)`, 'amber');
             return;
         }
 
@@ -4760,7 +4739,7 @@
         const list = document.getElementById('craftRecipeList');
         list.innerHTML = '';
 
-        // ★ 곡괭이는 건너뛰기 없이 '현재 티어의 바로 다음 단계' 1개만 맨 위에 표시 + 나머지 일반 제작 아이템 표시
+        // ★ 곡괭이는 건너뛰기 없이 '현재 티어의 바로 다음 단계' 1개만 맨 위에 표시 + 통행권 및 일반 아이템 표시
         const nextPickRecipe = getNextPickaxeUpgradeRecipe();
         const itemRecipes = CRAFT_RECIPES.filter(r => r.type !== 'pickaxe');
         const displayList = [nextPickRecipe, ...itemRecipes];
@@ -4768,11 +4747,17 @@
         displayList.forEach(recipe => {
             const affordable = canAffordCost(recipe.cost);
             const isPickUpgrade = recipe.type === 'pickaxe';
+            const isPass = recipe.type === 'pass';
+            const alreadyOwnedPass = isPass && isNumberblocksBiomeUnlocked();
 
             const card = document.createElement('div');
             card.className = `p-3 rounded-lg border flex flex-col justify-between gap-2 ${
                 isPickUpgrade
                     ? 'sm:col-span-2 bg-gradient-to-r from-amber-950/80 via-gray-900 to-pink-950/80 border-2 border-amber-400 shadow-lg'
+                    : alreadyOwnedPass
+                    ? 'sm:col-span-2 bg-emerald-950/40 border-2 border-emerald-500/60 opacity-85'
+                    : isPass
+                    ? 'sm:col-span-2 bg-gradient-to-r from-pink-950/85 via-purple-950/85 to-indigo-950/85 border-2 border-pink-400 shadow-lg'
                     : affordable
                     ? 'bg-gray-900/95 border-emerald-500/60'
                     : 'bg-gray-900/80 border-gray-700'
@@ -4791,6 +4776,7 @@
                     <div class="font-black text-sm text-white flex items-center justify-between gap-2">
                         <span>${recipe.name}</span>
                         ${isPickUpgrade ? `<span class="text-[11px] text-amber-300 font-bold">현재: ${curPickName}</span>` : ''}
+                        ${alreadyOwnedPass ? `<span class="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400 text-[11px] text-emerald-300 font-black">🎫 영구 소지 중</span>` : ''}
                     </div>
                     <div class="text-[11px] text-gray-300 mt-0.5">${recipe.desc}</div>
                     <div class="flex flex-wrap gap-1 mt-2">${costBadges}</div>
@@ -4798,11 +4784,20 @@
             `;
 
             const btn = document.createElement('button');
-            btn.className = `mc-btn w-full py-1.5 text-xs ${affordable ? (isPickUpgrade ? 'mc-btn-amber' : 'mc-btn-green') : 'opacity-50 cursor-not-allowed'}`;
-            btn.textContent = affordable
-                ? (isPickUpgrade ? `⬆️ 다음 단계 곡괭이로 업그레이드!` : '⚒️ 제작하기')
+            const canClick = affordable && !alreadyOwnedPass;
+            btn.className = `mc-btn w-full py-1.5 text-xs ${
+                alreadyOwnedPass
+                    ? 'mc-btn-green opacity-60 cursor-default'
+                    : canClick
+                    ? (isPickUpgrade ? 'mc-btn-amber' : isPass ? 'mc-btn-purple' : 'mc-btn-green')
+                    : 'opacity-50 cursor-not-allowed'
+            }`;
+            btn.textContent = alreadyOwnedPass
+                ? '✅ 통행권 영구 소지 완료 (넘버블록스 바이옴 입장 가능)'
+                : canClick
+                ? (isPickUpgrade ? '⬆️ 다음 단계 곡괭이로 업그레이드!' : isPass ? '🎫 통행권 제작하기 (영구 소지)' : '⚒️ 제작하기')
                 : '재료 부족';
-            btn.disabled = !affordable;
+            btn.disabled = !canClick;
             btn.onclick = () => executeCraft(recipe);
 
             card.appendChild(btn);
@@ -4812,8 +4807,8 @@
 
     function executeCraft(recipe) {
         if (!canAffordCost(recipe.cost)) return;
-        // 곡괭이는 반드시 순차적(현재 티어 + 1)으로만 업그레이드 가능
         if (recipe.type === 'pickaxe' && recipe.tier !== localPlayer.pickaxeTier + 1) return;
+        if (recipe.type === 'pass' && isNumberblocksBiomeUnlocked()) return;
 
         Object.entries(recipe.cost).forEach(([k, req]) => {
             resources[k] -= req;
@@ -4824,6 +4819,11 @@
             const newPick = PICKAXE_TIERS[recipe.tier];
             showToast(`🎉 [${newPick.name}] 업그레이드 완료! (속도 x${newPick.speed})`, 'amber');
             spawnFloatingText(localPlayer.x, localPlayer.y - 20, `${newPick.name}!`, '#facc15');
+        } else if (recipe.type === 'pass') {
+            mathFlowState.numberblocksUnlocked = true;
+            showToast('🎫 [넘버블록스 바이옴 통행권] 제작 완료! 이제 북동쪽 넘버블록스 랜드에 영구히 입장할 수 있습니다!', 'emerald');
+            spawnFloatingText(localPlayer.x, localPlayer.y - 20, '🎫 통행권 획득!', '#f472b6');
+            addChatMessage('시스템', `🎫 ${localPlayer.name}님이 [넘버블록스 바이옴 통행권]을 제작하여 넘버블록스 랜드의 결계를 열었습니다!`, '#f472b6', true);
         } else if (recipe.type === 'item') {
             blockInventory[recipe.itemKey] = (blockInventory[recipe.itemKey] || 0) + recipe.amount;
             showToast(`⚒️ ${recipe.name} 제작 완료!`, 'emerald');
@@ -5234,12 +5234,12 @@
 
     function isTileSolidForPlayer(tx, ty) {
         if (!inBounds(tx, ty)) return true;
-        // 🔒 써클 50개 미만일 때 넘버블록스 바이옴 결계 작동
+        // 🔒 통행권 미소지 시 넘버블록스 바이옴 결계 작동
         if (isNumberblocksBiomeAt(tx, ty) && !isNumberblocksBiomeUnlocked()) {
             const now = performance.now();
             if (now - lockedBiomeToastCooldown > 2500) {
                 lockedBiomeToastCooldown = now;
-                showToast(`🔒 결계로 막혀 있습니다! 몹을 잡아 '⭕써클' 50개를 모으면 넘버블록스 바이옴이 열립니다. (${resources.circle || 0}/50)`, 'amber');
+                showToast(`🔒 결계로 막혀 있습니다! 제작대(E키)에서 '⭕써클 30개'로 [🎫 넘버블록스 바이옴 통행권]을 제작하면 영구히 열립니다. (보유 써클: ${resources.circle || 0}개)`, 'amber');
             }
             return true;
         }
@@ -5257,7 +5257,7 @@
         if (BLOCK_INFO[b]?.solid) return true;
         return false;
     }
-
+        
     function movePlayerWithCollision(dt) {
         // 전투 상황(문제 푸는 중)일 때는 유저가 해당 장소에 없는 것으로 간주하고 모든 움직임 정지
         if (isUserInCombat()) return;
@@ -6274,16 +6274,6 @@
             toggleCraftingModal();
             return;
         }
-        if (e.code === 'KeyQ') {
-            e.preventDefault();
-            const mathModal = document.getElementById('mathModal');
-            if (mathModal.classList.contains('hidden')) {
-                openMathStudioModal('✨ 자율 덧셈 마법 충전소');
-            } else {
-                mathModal.classList.add('hidden');
-            }
-            return;
-        }
         if (e.code === 'KeyG') {
             e.preventDefault();
             toggleGrowthModal();
@@ -6430,7 +6420,7 @@
             blockInventory: { ...blockInventory },
             mathFlow: {
                 level: mathFlowState.level,
-                numberblocksUnlocked: !!mathFlowState.numberblocksUnlocked || (resources.circle || 0) >= 50,
+                numberblocksUnlocked: !!mathFlowState.numberblocksUnlocked,
                 triggerMode: mathFlowState.triggerMode,
                 strategy: mathFlowState.strategy,
                 microGoalKey: mathFlowState.microGoalKey,
@@ -6495,7 +6485,7 @@
         localPlayer.mathLevel = mathFlowState.level;
         mathFlowState.activeMobBattle = null;
         mathFlowState.lastProximityMobKey = null;
-        mathFlowState.numberblocksUnlocked = !!mf.numberblocksUnlocked || (resources.circle || 0) >= 50;
+        mathFlowState.numberblocksUnlocked = !!mf.numberblocksUnlocked;
         mathFlowState.triggerMode = mf.triggerMode || 'magic_only';
         mathFlowState.strategy = mf.strategy || 'tenframe';
         mathFlowState.microGoalKey = mf.microGoalKey || 'speed';
@@ -6524,25 +6514,26 @@
         drawRadarMinimap();
     }
 
-    // ★ 화면 잘림 방지 반응형 레이아웃 + 모바일 작은 화면 감지 시 상단 좌/우 보조창 자동 접기/열기 토글
     function setupResponsiveAndCleanUI() {
-        // 1) 깃허브 배포 안내 버튼 및 모달 완전 제거
+        // 1) 깃허브 배포 안내 및 '✨ 덧셈 마법 충전 (Q)' 버튼 제거
         const ghBtn = document.getElementById('btnOpenGithubGuide');
         if (ghBtn) ghBtn.remove();
         const ghModal = document.getElementById('githubGuideModal');
         if (ghModal) ghModal.remove();
+        const mathStudioBtn = document.getElementById('btnOpenMathStudio');
+        if (mathStudioBtn) mathStudioBtn.remove();
 
-        // 2) 자원 가방에 '⭕써클 (0/50)' 표시 슬롯 동적 추가
+        // 2) 자원 가방에 '⭕써클' 표시 슬롯 동적 추가
         const sandEl = document.getElementById('res_sand');
         if (sandEl && !document.getElementById('res_circle')) {
             const gridWrap = sandEl.parentNode.parentNode;
             gridWrap.className = 'grid grid-cols-5 sm:grid-cols-9 gap-1 text-center text-xs';
             const circleCard = document.createElement('div');
             circleCard.className = 'bg-pink-950/90 rounded p-1 border border-pink-400 col-span-2 sm:col-span-1';
-            circleCard.title = '몬스터 처치 시 1~3개 드롭! 제작 재료 및 50개 수집 시 넘버블록스 바이옴이 열립니다.';
+            circleCard.title = '몬스터 처치 시 1~3개 드롭! 모든 도구 제작 및 통행권(30개) 제작에 사용됩니다.';
             circleCard.innerHTML = `
                 <div class="text-[10px] text-pink-300 font-bold">⭕써클</div>
-                <div id="res_circle" class="font-black text-amber-300">0/50</div>
+                <div id="res_circle" class="font-black text-amber-300">0</div>
             `;
             gridWrap.appendChild(circleCard);
         }
@@ -6555,7 +6546,7 @@
             nbBtn.id = 'btnTpNumberblocks';
             nbBtn.type = 'button';
             nbBtn.className = 'landmark-tp-btn mc-btn py-1.5 px-2.5 text-left flex justify-between border-pink-400 bg-pink-950/80 text-pink-200';
-            nbBtn.innerHTML = `<span>🔢 북동 넘버블록스 랜드</span><span id="nbBiomeLockBadge" class="font-mono text-[10px] text-amber-300">⭕50개 해금</span>`;
+            nbBtn.innerHTML = `<span>🔢 북동 넘버블록스 랜드</span><span id="nbBiomeLockBadge" class="font-mono text-[10px] text-amber-300">🔒통행권 필요</span>`;
             nbBtn.onclick = () => {
                 teleportToTile(820, 160, '🔢 넘버블록스 랜드');
                 if (isNumberblocksBiomeUnlocked()) {
@@ -6921,23 +6912,23 @@
         addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 시작합니다! 몹을 잡아 '⭕써클' 50개를 모으면 [🔢 넘버블록스 바이옴]이 열립니다!`, '#34d399', true);
     }
         
-    // updateResourceUI 호출 시 '⭕써클 (X/50)' 및 넘버블록스 해금 배지 동기화 + 프로필 자동 저장
+    // updateResourceUI 호출 시 '⭕써클' 수량 및 통행권 보유 배지 동기화 + 프로필 자동 저장
     const _origUpdateResourceUI = updateResourceUI;
     updateResourceUI = function () {
         _origUpdateResourceUI();
         const circleEl = document.getElementById('res_circle');
         const cCnt = resources.circle || 0;
-        if (cCnt >= 50) mathFlowState.numberblocksUnlocked = true;
+        const hasPass = isNumberblocksBiomeUnlocked();
         if (circleEl) {
-            circleEl.textContent = mathFlowState.numberblocksUnlocked ? `${cCnt} (해금!)` : `${cCnt}/50`;
+            circleEl.textContent = hasPass ? `${cCnt} (🎫)` : `${cCnt}`;
         }
         const nbBadge = document.getElementById('nbBiomeLockBadge');
         if (nbBadge) {
-            nbBadge.textContent = isNumberblocksBiomeUnlocked() ? '820, 160 (해금됨!)' : `🔒 써클 ${cCnt}/50`;
+            nbBadge.textContent = hasPass ? '820, 160 (🎫통행권 보유)' : '🔒통행권 필요(⭕30)';
         }
         saveCurrentProfileState();
     };
-
+        
     saveMathGrowthState = function () {
         saveCurrentProfileState();
     };
