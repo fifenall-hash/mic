@@ -6531,6 +6531,7 @@
         drawRadarMinimap();
     }
 
+    // ★ 화면 잘림 방지 반응형 레이아웃 + 태블릿/모바일 화살표 방향키 표시 + 작은 화면 상단 보조창 자동 접기
     function setupResponsiveAndCleanUI() {
         // 1) 깃허브 배포 안내 및 '✨ 덧셈 마법 충전 (Q)' 버튼 제거
         const ghBtn = document.getElementById('btnOpenGithubGuide');
@@ -6573,7 +6574,7 @@
             parentGrid.appendChild(nbBtn);
         }
 
-        // 4) 반응형 스타일 및 핫바 가로 스크롤 허용 (14슬롯 대응)
+        // 4) 반응형 스타일 및 태블릿용 화살표 패드 크기 최적화
         if (!document.getElementById('responsiveViewportStyles')) {
             const st = document.createElement('style');
             st.id = 'responsiveViewportStyles';
@@ -6600,6 +6601,12 @@
                     max-width: 96vw;
                     overflow-x: auto;
                 }
+                @media (min-width: 641px) and (max-width: 1366px) {
+                    #mobileControls > div {
+                        width: 9.5rem !important;
+                        height: 9.5rem !important;
+                    }
+                }
                 @media (max-height: 700px) {
                     .hotbar-slot { width: 38px !important; height: 38px !important; flex-shrink: 0; }
                     #minimapCanvas { width: 104px !important; height: 104px !important; }
@@ -6619,7 +6626,6 @@
         let rightCollapsed = false;
         let lastAutoSmallState = null;
 
-        // 좌측 보조창 열기/접기 UI 구성
         if (topLeftHud && !document.getElementById('btnExpandLeftHud')) {
             const openLeftBtn = document.createElement('button');
             openLeftBtn.id = 'btnExpandLeftHud';
@@ -6650,7 +6656,6 @@
             topLeftHud._applyCollapse = applyLeftState;
         }
 
-        // 우측 보조창(미니맵/접속자) 열기/접기 UI 구성
         if (topRightHud && !document.getElementById('btnExpandRightHud')) {
             const openRightBtn = document.createElement('button');
             openRightBtn.id = 'btnExpandRightHud';
@@ -6681,6 +6686,29 @@
             topRightHud._applyCollapse = applyRightState;
         }
 
+        // 태블릿/모바일 터치 D-Pad에서도 마우스 클릭/포인터 이벤트가 동일하게 작동하도록 보강
+        const dpadBox = document.getElementById('mobileControls');
+        if (dpadBox && !dpadBox._pointerBound) {
+            dpadBox._pointerBound = true;
+            dpadBox.querySelectorAll('.touch-dpad').forEach(btn => {
+                const dir = btn.getAttribute('data-dir');
+                btn.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    touchDirs[dir] = true;
+                });
+                btn.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    touchDirs[dir] = false;
+                });
+                btn.addEventListener('pointerleave', () => {
+                    touchDirs[dir] = false;
+                });
+                btn.addEventListener('pointercancel', () => {
+                    touchDirs[dir] = false;
+                });
+            });
+        }
+
         const fitHudToViewport = () => {
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -6688,6 +6716,22 @@
             canvas.height = vh;
             lightCanvas.width = vw;
             lightCanvas.height = vh;
+
+            // ★ 태블릿 및 모바일 환경 감지: 터치 지원 기기(iPad, 갤럭시탭 등)이거나 가로 1180px 이하이면 화살표 방향키 표시!
+            const isTouchDevice =
+                ('ontouchstart' in window) ||
+                (navigator.maxTouchPoints > 0) ||
+                window.matchMedia('(pointer: coarse)').matches;
+
+            if (dpadBox) {
+                if (isTouchDevice || vw <= 1180) {
+                    dpadBox.classList.remove('sm:hidden', 'hidden');
+                    dpadBox.classList.add('flex');
+                } else {
+                    dpadBox.classList.remove('flex');
+                    dpadBox.classList.add('hidden');
+                }
+            }
 
             // 작은 화면(가로 768px 이하 또는 세로 660px 이하) 감지 시 자동으로 보조창을 버튼 상태로 접음
             const isSmallScreen = (vw <= 768 || vh <= 660);
