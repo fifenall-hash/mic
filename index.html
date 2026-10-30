@@ -950,7 +950,12 @@
         RAINBOW_BLOCK: 20,
         NUMBERBLOCK: 21,  // 🔢 넘버블록스 친구
         NUMBERBLOB: 22,   // 🟣 넘버블롭스
-        NUMBER_HOUSE: 23  // 🏠 넘버블록스 집
+        NUMBER_HOUSE: 23, // 🏠 넘버블록스 집
+        ELEVATOR: 24,     // 🛗 엘리베이터
+        ESCALATOR: 25,    // 🪜 에스컬레이터
+        MOVING_WALK: 26,  // ⏩ 무빙워크
+        AUTO_DOOR: 27,    // 🚪 자동문
+        SENSOR_LIGHT: 28  // 💡 센서등
     };
 
     // Detailed Block Metadata (Hardness, required pickaxe tier, drops)
@@ -972,13 +977,18 @@
         [BLOCK.GLASS]:         { name: '유리 블록', hp: 35, solid: true, minTier: 0, dropType: 'item', dropKey: 'glass', dropCount: 1, dropLabel: '유리 블록', sfx: 'ore', minColor: '#bae6fd', particleColor: '#e0f2fe' },
         [BLOCK.TORCH]:         { name: '횃불 (광원)', hp: 15, solid: false, minTier: 0, light: 215, dropType: 'item', dropKey: 'torch', dropCount: 1, dropLabel: '횃불', sfx: 'wood', minColor: '#fbbf24', particleColor: '#f59e0b' },
         [BLOCK.CRAFT_TABLE]:   { name: '제작대 (우클릭 또는 E키)', hp: 70, solid: true, minTier: 0, dropType: 'item', dropKey: 'craftTable', dropCount: 1, dropLabel: '제작대', sfx: 'wood', minColor: '#b45309', particleColor: '#92400e' },
-        [BLOCK.DOOR_CLOSED]:   { name: '나무 문 (우클릭 개폐)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
-        [BLOCK.DOOR_OPEN]:     { name: '열린 나무 문', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.DOOR_CLOSED]:   { name: '닫힌 나무 문 (가까이 가서 밀거나 우클릭 시 열림)', hp: 65, solid: true, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
+        [BLOCK.DOOR_OPEN]:     { name: '열린 나무 문 (통과 가능 · 우클릭 시 닫힘)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
         [BLOCK.GOLD_BLOCK]:    { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde08a' },
         [BLOCK.RAINBOW_BLOCK]: { name: '🌈 무지개 덧셈 마스터 블록', hp: 90, solid: true, minTier: 0, light: 190, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 1, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ec4899', particleColor: '#f472b6' },
-        [BLOCK.NUMBERBLOCK]:   { name: '🔢 넘버블록스 캐릭터 블록 (채굴 시 무지개블록 획득)', hp: 80, solid: true, minTier: 0, light: 160, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 2, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ef4444', particleColor: '#facc15' },
+        [BLOCK.NUMBERBLOCK]:   { name: '🔢 넘버블록스 캐릭터 (만나면 합체! 채굴 시 무지개블록)', hp: 80, solid: true, minTier: 0, light: 160, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 2, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ef4444', particleColor: '#facc15' },
         [BLOCK.NUMBERBLOB]:    { name: '🟣 넘버블롭스 (채굴 시 다이아몬드 획득)', hp: 65, solid: true, minTier: 0, light: 140, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#c084fc', particleColor: '#e879f9' },
-        [BLOCK.NUMBER_HOUSE]:  { name: '🏠 넘버블록스 하우스 (채굴 시 황금보물블록 획득)', hp: 130, solid: true, minTier: 0, light: 180, dropType: 'item', dropKey: 'goldBlock', dropCount: 2, dropLabel: '황금 블록', sfx: 'wood', minColor: '#38bdf8', particleColor: '#fef08a' }
+        [BLOCK.NUMBER_HOUSE]:  { name: '🏠 넘버블록스 하우스 (채굴 시 황금보물블록 획득)', hp: 130, solid: true, minTier: 0, light: 180, dropType: 'item', dropKey: 'goldBlock', dropCount: 2, dropLabel: '황금 블록', sfx: 'wood', minColor: '#38bdf8', particleColor: '#fef08a' },
+        [BLOCK.ELEVATOR]:      { name: '🛗 엘리베이터 (올라서면 근처 엘리베이터/상하층으로 순간 이동!)', hp: 95, solid: false, minTier: 0, light: 150, dropType: 'item', dropKey: 'elevator', dropCount: 1, dropLabel: '엘리베이터', sfx: 'ore', minColor: '#38bdf8', particleColor: '#bae6fd' },
+        [BLOCK.ESCALATOR]:     { name: '🪜 에스컬레이터 (올라서면 대각선 위쪽으로 자동 이동!)', hp: 85, solid: false, minTier: 0, dropType: 'item', dropKey: 'escalator', dropCount: 1, dropLabel: '에스컬레이터', sfx: 'stone', minColor: '#fb923c', particleColor: '#fed7aa' },
+        [BLOCK.MOVING_WALK]:   { name: '⏩ 무빙워크 (올라서면 바라보는 방향으로 초고속 주행!)', hp: 80, solid: false, minTier: 0, dropType: 'item', dropKey: 'movingWalk', dropCount: 1, dropLabel: '무빙워크', sfx: 'stone', minColor: '#2dd4bf', particleColor: '#99f6e4' },
+        [BLOCK.AUTO_DOOR]:     { name: '🚪 스마트 자동문 (가까이 다가가면 자동으로 스르륵 열림!)', hp: 85, solid: true, minTier: 0, dropType: 'item', dropKey: 'autoDoor', dropCount: 1, dropLabel: '자동문', sfx: 'ore', minColor: '#60a5fa', particleColor: '#bfdbfe' },
+        [BLOCK.SENSOR_LIGHT]:  { name: '💡 스마트 센서등 (가까이 다가가면 자동으로 환하게 점등!)', hp: 45, solid: false, minTier: 0, light: 90, dropType: 'item', dropKey: 'sensorLight', dropCount: 1, dropLabel: '센서등', sfx: 'ore', minColor: '#fef08a', particleColor: '#fef9c3' }
     };
 
     // 6 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond -> Math Master Rainbow Pickaxe)
@@ -991,20 +1001,25 @@
         { level: 5, name: '✨ 덧셈 마스터 곡괭이', speed: 8.0,  color: '#f472b6', headColor: '#f472b6' }
     ];
 
-    // 9 Hotbar Slots
+    // Hotbar Slots (기존 9종 + 신규 스마트 설비 5종 확장)
     const HOTBAR_SLOTS = [
-        { slot: 0, key: 'pickaxe',      type: 'tool',  name: '곡괭이 (채굴 도구)' },
-        { slot: 1, key: 'planks',       type: 'block', blockId: BLOCK.PLANKS_WALL,   name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
-        { slot: 2, key: 'cobbleWall',   type: 'block', blockId: BLOCK.COBBLE_WALL,   name: '조약돌 성벽 (물/용암 위: 돌다리 / 땅: 성벽)' },
-        { slot: 3, key: 'bricks',       type: 'block', blockId: BLOCK.STONE_BRICKS,  name: '석재 벽돌 블록' },
-        { slot: 4, key: 'glass',        type: 'block', blockId: BLOCK.GLASS,         name: '유리 블록' },
-        { slot: 5, key: 'torch',        type: 'block', blockId: BLOCK.TORCH,         name: '횃불 (밤 조명)' },
-        { slot: 6, key: 'door',         type: 'block', blockId: BLOCK.DOOR_CLOSED,   name: '나무 문 (출입문)' },
-        { slot: 7, key: 'goldBlock',    type: 'block', blockId: BLOCK.GOLD_BLOCK,    name: '황금 보물 블록' },
-        { slot: 8, key: 'rainbowBlock', type: 'block', blockId: BLOCK.RAINBOW_BLOCK, name: '🌈 무지개 덧셈 마스터 블록' }
+        { slot: 0,  key: 'pickaxe',      type: 'tool',  name: '곡괭이 (채굴 도구)' },
+        { slot: 1,  key: 'planks',       type: 'block', blockId: BLOCK.PLANKS_WALL,   name: '나무 판자 (물 위: 나무다리 / 땅: 판자벽)' },
+        { slot: 2,  key: 'cobbleWall',   type: 'block', blockId: BLOCK.COBBLE_WALL,   name: '조약돌 성벽 (물/용암 위: 돌다리 / 땅: 성벽)' },
+        { slot: 3,  key: 'bricks',       type: 'block', blockId: BLOCK.STONE_BRICKS,  name: '석재 벽돌 블록' },
+        { slot: 4,  key: 'glass',        type: 'block', blockId: BLOCK.GLASS,         name: '유리 블록' },
+        { slot: 5,  key: 'torch',        type: 'block', blockId: BLOCK.TORCH,         name: '횃불 (밤 조명)' },
+        { slot: 6,  key: 'door',         type: 'block', blockId: BLOCK.DOOR_CLOSED,   name: '나무 문 (가까이 가서 밀어서 열기)' },
+        { slot: 7,  key: 'goldBlock',    type: 'block', blockId: BLOCK.GOLD_BLOCK,    name: '황금 보물 블록' },
+        { slot: 8,  key: 'rainbowBlock', type: 'block', blockId: BLOCK.RAINBOW_BLOCK, name: '🌈 무지개 덧셈 마스터 블록' },
+        { slot: 9,  key: 'sensorLight',  type: 'block', blockId: BLOCK.SENSOR_LIGHT,  name: '💡 센서등 (접근 시 자동 점등)' },
+        { slot: 10, key: 'autoDoor',     type: 'block', blockId: BLOCK.AUTO_DOOR,     name: '🚪 자동문 (접근 시 자동 개폐)' },
+        { slot: 11, key: 'movingWalk',   type: 'block', blockId: BLOCK.MOVING_WALK,   name: '⏩ 무빙워크 (초고속 자동 주행 발판)' },
+        { slot: 12, key: 'escalator',    type: 'block', blockId: BLOCK.ESCALATOR,     name: '🪜 에스컬레이터 (대각선 자동 상승 계단)' },
+        { slot: 13, key: 'elevator',     type: 'block', blockId: BLOCK.ELEVATOR,      name: '🛗 엘리베이터 (층간/원거리 순간 이동기)' }
     ];
 
-    // Crafting Recipes
+    // Crafting Recipes (모든 제작에 등급별 적정 비율의 '⭕써클' 필수 포함 + 신규 설비 5종 추가)
     const CRAFT_RECIPES = [
         {
             id: 'upgrade_stone_pick',
@@ -1012,7 +1027,7 @@
             desc: '채굴 속도 x1.8배 · 철광석 채굴 가능',
             type: 'pickaxe',
             tier: 1,
-            cost: { wood: 2, cobble: 3 }
+            cost: { wood: 2, cobble: 3, circle: 2 }
         },
         {
             id: 'upgrade_iron_pick',
@@ -1020,7 +1035,7 @@
             desc: '채굴 속도 x2.8배 · 금/다이아몬드 채굴 가능',
             type: 'pickaxe',
             tier: 2,
-            cost: { wood: 2, iron: 3 }
+            cost: { wood: 2, iron: 3, circle: 4 }
         },
         {
             id: 'upgrade_gold_pick',
@@ -1028,7 +1043,7 @@
             desc: '채굴 속도 x4.0배 고속 채굴',
             type: 'pickaxe',
             tier: 3,
-            cost: { wood: 2, gold: 3 }
+            cost: { wood: 2, gold: 3, circle: 6 }
         },
         {
             id: 'upgrade_diamond_pick',
@@ -1036,7 +1051,7 @@
             desc: '최고 등급! 채굴 속도 x5.5배 · 흑요석 채굴 가능',
             type: 'pickaxe',
             tier: 4,
-            cost: { wood: 2, diamond: 3 }
+            cost: { wood: 2, diamond: 3, circle: 8 }
         },
         {
             id: 'craft_planks',
@@ -1045,7 +1060,7 @@
             type: 'item',
             itemKey: 'planks',
             amount: 4,
-            cost: { wood: 1 }
+            cost: { wood: 1, circle: 1 }
         },
         {
             id: 'craft_cobble_wall',
@@ -1054,7 +1069,7 @@
             type: 'item',
             itemKey: 'cobbleWall',
             amount: 4,
-            cost: { cobble: 2 }
+            cost: { cobble: 2, circle: 1 }
         },
         {
             id: 'craft_bricks',
@@ -1063,7 +1078,7 @@
             type: 'item',
             itemKey: 'bricks',
             amount: 4,
-            cost: { cobble: 3 }
+            cost: { cobble: 3, circle: 2 }
         },
         {
             id: 'craft_torch',
@@ -1072,7 +1087,7 @@
             type: 'item',
             itemKey: 'torch',
             amount: 4,
-            cost: { wood: 1, coal: 1 }
+            cost: { wood: 1, coal: 1, circle: 1 }
         },
         {
             id: 'craft_glass',
@@ -1081,16 +1096,16 @@
             type: 'item',
             itemKey: 'glass',
             amount: 2,
-            cost: { sand: 2 }
+            cost: { sand: 2, circle: 1 }
         },
         {
             id: 'craft_door',
             name: '나무 문 x2',
-            desc: '집 입구에 설치하는 개폐형 출입문',
+            desc: '가까이 가서 밀면 진짜 문처럼 열리는 입체 출입문',
             type: 'item',
             itemKey: 'door',
             amount: 2,
-            cost: { wood: 2 }
+            cost: { wood: 2, circle: 2 }
         },
         {
             id: 'craft_gold_block',
@@ -1099,7 +1114,52 @@
             type: 'item',
             itemKey: 'goldBlock',
             amount: 1,
-            cost: { gold: 2 }
+            cost: { gold: 2, circle: 4 }
+        },
+        {
+            id: 'craft_sensor_light',
+            name: '💡 센서등 x2',
+            desc: '플레이어가 가까이 다가가면 자동으로 밝게 켜지는 스마트 조명',
+            type: 'item',
+            itemKey: 'sensorLight',
+            amount: 2,
+            cost: { coal: 1, glass: 1, circle: 2 }
+        },
+        {
+            id: 'craft_auto_door',
+            name: '🚪 자동문 x2',
+            desc: '가까이 다가가면 자동으로 스르륵 열리고 지나가면 닫히는 문',
+            type: 'item',
+            itemKey: 'autoDoor',
+            amount: 2,
+            cost: { iron: 1, glass: 1, circle: 3 }
+        },
+        {
+            id: 'craft_moving_walk',
+            name: '⏩ 무빙워크 x4',
+            desc: '밟고 지나가면 이동 속도가 1.9배 빨라지는 컨베이어 벨트',
+            type: 'item',
+            itemKey: 'movingWalk',
+            amount: 4,
+            cost: { cobble: 2, iron: 1, circle: 3 }
+        },
+        {
+            id: 'craft_escalator',
+            name: '🪜 에스컬레이터 x2',
+            desc: '올라서면 대각선 위쪽 방향으로 자동 수송해 주는 전동 계단',
+            type: 'item',
+            itemKey: 'escalator',
+            amount: 2,
+            cost: { iron: 2, gold: 1, circle: 4 }
+        },
+        {
+            id: 'craft_elevator',
+            name: '🛗 엘리베이터 x2',
+            desc: '올라서면 주변의 다른 엘리베이터나 위/아래 층으로 즉시 이동!',
+            type: 'item',
+            itemKey: 'elevator',
+            amount: 2,
+            cost: { iron: 2, diamond: 1, circle: 6 }
         }
     ];
 
@@ -1212,17 +1272,22 @@
         };
     }
 
+    // 유저가 전투 상황(문제 풀이 모달이 열려 있는 상태)인지 판별하는 함수
+    function isUserInCombat() {
+        const mathModal = document.getElementById('mathModal');
+        return !!(mathModal && !mathModal.classList.contains('hidden'));
+    }
+
     // ★ 연산량 최적화를 위해 '현재 유저 화면(뷰포트) 안에 있는 몹'만 이동시키는 함수
     let mobRoamTickAccum = 0;
     function updateViewportMobs(dt) {
         if (!gameStarted) return;
-        mobRoamTickAccum += dt;
-        if (mobRoamTickAccum < 0.15) return; // 0.15초 주기로 가볍게 체크
-        mobRoamTickAccum = 0;
+        // 전투 상황(문제 푸는 중)일 때는 유저가 해당 장소에 없는 것으로 간주하여 움직임 완전 정지
+        if (isUserInCombat()) return;
 
-        // 문제풀이 모달 등이 열려 있을 때는 전투 중인 몹이 이동하지 않도록 일시 정지
-        const mathModal = document.getElementById('mathModal');
-        if (mathModal && !mathModal.classList.contains('hidden')) return;
+        mobRoamTickAccum += dt;
+        if (mobRoamTickAccum < 0.15) return;
+        mobRoamTickAccum = 0;
 
         const now = performance.now();
         const startTx = Math.max(2, Math.floor((camera.x - canvas.width / 2) / TILE_SIZE));
@@ -1233,7 +1298,6 @@
         const ptx = Math.floor(localPlayer.x / TILE_SIZE);
         const pty = Math.floor(localPlayer.y / TILE_SIZE);
 
-        // 현재 화면 안에 있는 몹 좌표만 수집
         const viewportMobs = [];
         for (let ty = startTy; ty <= endTy; ty++) {
             for (let tx = startTx; tx <= endTx; tx++) {
@@ -1251,32 +1315,24 @@
             const meta = ensureMobMeta(tx, ty);
             if (now < meta.nextMoveAt) return;
 
-            // 다음 이동 타이머 설정 (1.6초 ~ 3.8초 사이 랜덤)
             meta.nextMoveAt = now + 1600 + Math.random() * 2200;
 
-            // 4방향을 무작위로 섞어서 이동 가능한 인접 타일 탐색
             const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
             for (const [dx, dy] of shuffled) {
                 const nx = tx + dx;
                 const ny = ty + dy;
                 if (!inBounds(nx, ny)) continue;
-
-                // 원래 태어난 자리(origin)에서 반경 5타일 이내로만 배회하도록 제한
                 if (Math.hypot(nx - meta.originTx, ny - meta.originTy) > 5.5) continue;
-
-                // 플레이어가 현재 서 있는 정중앙 타일이나 다른 블록/물 위로는 이동 불가
                 if (nx === ptx && ny === pty) continue;
                 if (getBlockAt(nx, ny) !== BLOCK.AIR) continue;
                 const nf = getFloorAt(nx, ny);
                 if (!FLOOR_INFO[nf]?.walkable) continue;
 
-                // 넘버블록스 바이옴 경계를 넘나들지 않도록 유지
                 if (typeof isNumberblocksBiomeAt === 'function' &&
                     isNumberblocksBiomeAt(tx, ty) !== isNumberblocksBiomeAt(nx, ny)) {
                     continue;
                 }
 
-                // 타일 이동 실행 (메모리상의 블록 위치 및 체력/메타데이터 이전)
                 const newKey = idx(nx, ny);
                 world.blocks[oldKey] = BLOCK.AIR;
                 world.blocks[newKey] = BLOCK.MAGIC_CRYSTAL;
@@ -1296,6 +1352,165 @@
                 if (mathFlowState.lastProximityMobKey === oldKey) {
                     mathFlowState.lastProximityMobKey = newKey;
                 }
+                break;
+            }
+        });
+    }
+
+    // ==================== 2-C. NUMBERBLOCKS BIOME MOVEMENT, SPEECH BUBBLES & MERGE (3+2=5) ====================
+    const nbMetaMap = new Map(); // key: tile index -> { val, originTx, originTy, fromWx, fromWy, moveStart, moveDur, nextMoveAt, bubbleText, bubbleUntil, mergeCooldownUntil }
+
+    const NB_SPEECH_LINES = [
+        (v) => `안녕! 나는 숫자 ${v}이야! ♪`,
+        (v) => `${v}블록 점프! 폴짝~ ✨`,
+        (v) => `친구랑 만나면 더하기 합체!`,
+        (v) => `하나씩 세어 봐! 1.. 2.. ${v}!`,
+        (v) => `넘버블록스 랜드에 온 걸 환영해!`
+    ];
+    const BLOB_SPEECH_LINES = [
+        '블롭블롭~ 반가워! 🟣',
+        '노래 부르며 더하기 해요 ♪',
+        '동글동글 넘버블롭스~ ✨',
+        '오늘도 신나는 숫자 탐험!'
+    ];
+
+    function ensureNbMeta(tx, ty, blockId) {
+        const key = idx(tx, ty);
+        let meta = nbMetaMap.get(key);
+        if (!meta) {
+            const h = fastHash(tx, ty, GLOBAL_WORLD_SEED + 505);
+            const initVal = blockId === BLOCK.NUMBERBLOCK ? ((Math.floor(h * 5) % 5) + 1) : 1;
+            meta = {
+                val: initVal,
+                originTx: tx,
+                originTy: ty,
+                fromWx: tx * TILE_SIZE,
+                fromWy: ty * TILE_SIZE,
+                moveStart: 0,
+                moveDur: 400,
+                nextMoveAt: performance.now() + 900 + Math.random() * 2000,
+                bubbleText: '',
+                bubbleUntil: 0,
+                mergeCooldownUntil: 0
+            };
+            nbMetaMap.set(key, meta);
+        }
+        return meta;
+    }
+
+    let nbRoamTickAccum = 0;
+    function updateViewportNumberblocks(dt) {
+        if (!gameStarted) return;
+        // 전투 상황(문제 푸는 중)일 때는 유저가 해당 장소에 없는 것으로 간주하여 움직임 완전 정지
+        if (isUserInCombat()) return;
+
+        nbRoamTickAccum += dt;
+        if (nbRoamTickAccum < 0.18) return;
+        nbRoamTickAccum = 0;
+
+        const now = performance.now();
+        const startTx = Math.max(2, Math.floor((camera.x - canvas.width / 2) / TILE_SIZE));
+        const endTx = Math.min(WORLD_SIZE - 3, Math.ceil((camera.x + canvas.width / 2) / TILE_SIZE));
+        const startTy = Math.max(2, Math.floor((camera.y - canvas.height / 2) / TILE_SIZE));
+        const endTy = Math.min(WORLD_SIZE - 3, Math.ceil((camera.y + canvas.height / 2) / TILE_SIZE));
+
+        const ptx = Math.floor(localPlayer.x / TILE_SIZE);
+        const pty = Math.floor(localPlayer.y / TILE_SIZE);
+
+        // 유저 화면(뷰포트) 안에 들어온 넘버블록스/넘버블롭스만 수집
+        const viewportNbs = [];
+        for (let ty = startTy; ty <= endTy; ty++) {
+            for (let tx = startTx; tx <= endTx; tx++) {
+                const b = getBlockAt(tx, ty);
+                if (b === BLOCK.NUMBERBLOCK || b === BLOCK.NUMBERBLOB) {
+                    viewportNbs.push([tx, ty, b]);
+                }
+            }
+        }
+
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        viewportNbs.forEach(([tx, ty, b]) => {
+            const oldKey = idx(tx, ty);
+            if (world.blocks[oldKey] !== b) return;
+
+            const meta = ensureNbMeta(tx, ty, b);
+
+            // 확률적으로 귀여운 말풍선 띄우기
+            if (now > meta.bubbleUntil && Math.random() < 0.09) {
+                if (b === BLOCK.NUMBERBLOCK) {
+                    const fn = NB_SPEECH_LINES[Math.floor(Math.random() * NB_SPEECH_LINES.length)];
+                    meta.bubbleText = fn(meta.val);
+                } else {
+                    meta.bubbleText = BLOB_SPEECH_LINES[Math.floor(Math.random() * BLOB_SPEECH_LINES.length)];
+                }
+                meta.bubbleUntil = now + 2800 + Math.random() * 1400;
+            }
+
+            if (now < meta.nextMoveAt) return;
+            meta.nextMoveAt = now + 1500 + Math.random() * 2300;
+
+            const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
+
+            // 1) 두 넘버블록스가 인접해 만나면 합체(예: 3 + 2 = 5)하는 특수 상호작용 검사!
+            if (b === BLOCK.NUMBERBLOCK && meta.val < 10 && now > meta.mergeCooldownUntil) {
+                for (const [dx, dy] of shuffled) {
+                    const nx = tx + dx;
+                    const ny = ty + dy;
+                    if (!inBounds(nx, ny)) continue;
+                    if (getBlockAt(nx, ny) === BLOCK.NUMBERBLOCK) {
+                        const partnerMeta = ensureNbMeta(nx, ny, BLOCK.NUMBERBLOCK);
+                        if (now > partnerMeta.mergeCooldownUntil && (meta.val + partnerMeta.val <= 10)) {
+                            const oldValA = meta.val;
+                            const oldValB = partnerMeta.val;
+                            const sumVal = oldValA + oldValB;
+
+                            // 현재 타일 넘버블록스가 파트너 타일로 점프해 들어가며 합체!
+                            world.blocks[oldKey] = BLOCK.AIR;
+                            nbMetaMap.delete(oldKey);
+
+                            partnerMeta.val = sumVal;
+                            partnerMeta.fromWx = tx * TILE_SIZE;
+                            partnerMeta.fromWy = ty * TILE_SIZE;
+                            partnerMeta.moveStart = now;
+                            partnerMeta.moveDur = 450;
+                            partnerMeta.mergeCooldownUntil = now + 7000;
+                            partnerMeta.bubbleText = `✨ ${oldValA} + ${oldValB} = ${sumVal} 합체!!`;
+                            partnerMeta.bubbleUntil = now + 4200;
+
+                            const wx = nx * TILE_SIZE + 24;
+                            const wy = ny * TILE_SIZE + 24;
+                            sfx.playMathSuccess();
+                            spawnParticles(wx, wy, '#f472b6', 18);
+                            spawnParticles(wx, wy, '#facc15', 16);
+                            spawnFloatingText(wx, wy - 20, `🔢 ${oldValA} + ${oldValB} = ${sumVal} 합체!`, '#fde047');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // 2) 빈 타일로 귀엽게 폴짝 이동
+            for (const [dx, dy] of shuffled) {
+                const nx = tx + dx;
+                const ny = ty + dy;
+                if (!inBounds(nx, ny)) continue;
+                if (Math.hypot(nx - meta.originTx, ny - meta.originTy) > 5.0) continue;
+                if (nx === ptx && ny === pty) continue;
+                if (getBlockAt(nx, ny) !== BLOCK.AIR) continue;
+                const nf = getFloorAt(nx, ny);
+                if (!FLOOR_INFO[nf]?.walkable) continue;
+                if (!isNumberblocksBiomeAt(nx, ny)) continue;
+
+                const newKey = idx(nx, ny);
+                world.blocks[oldKey] = BLOCK.AIR;
+                world.blocks[newKey] = b;
+
+                meta.fromWx = tx * TILE_SIZE;
+                meta.fromWy = ty * TILE_SIZE;
+                meta.moveStart = now;
+                meta.moveDur = 380;
+                nbMetaMap.set(newKey, meta);
+                nbMetaMap.delete(oldKey);
                 break;
             }
         });
@@ -1579,24 +1794,50 @@
             tileSprites['block_' + BLOCK.CRAFT_TABLE] = c;
         }
 
-        // Doors
+        // Doors (입체 나무 문: 닫힌 문은 문틀+패널+손잡이가 있는 벽, 열린 문은 옆으로 젖혀진 통로)
         {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
-            g.fillStyle = '#78350f';
-            g.fillRect(2, 14, TILE_SIZE - 4, 20);
+            // 바닥 문지방 그림자
+            g.fillStyle = 'rgba(0,0,0,0.35)';
+            g.fillRect(2, 38, TILE_SIZE - 4, 8);
+            // 외곽 튼튼한 문틀
+            g.fillStyle = '#451a03';
+            g.fillRect(3, 4, TILE_SIZE - 6, TILE_SIZE - 6);
+            // 입체 원목 문짝 본체
+            g.fillStyle = '#92400e';
+            g.fillRect(6, 7, TILE_SIZE - 12, TILE_SIZE - 11);
+            // 위/아래 장식 창살 패널
             g.fillStyle = '#b45309';
-            g.fillRect(4, 16, TILE_SIZE - 8, 16);
+            g.fillRect(9, 10, 12, 12);
+            g.fillRect(25, 10, 12, 12);
+            g.fillRect(9, 25, 12, 12);
+            g.fillRect(25, 25, 12, 12);
+            // 상단 나무 하이라이트
+            g.fillStyle = '#d97706';
+            g.fillRect(6, 7, TILE_SIZE - 12, 3);
+            // 황금 문고리
             g.fillStyle = '#facc15';
-            g.fillRect(34, 22, 5, 5);
+            g.beginPath();
+            g.arc(36, 24, 3.5, 0, Math.PI * 2);
+            g.fill();
+            g.strokeStyle = '#78350f';
+            g.lineWidth = 1;
+            g.stroke();
             tileSprites['block_' + BLOCK.DOOR_CLOSED] = c;
 
             const cOpen = createOffscreenCanvas();
             const gO = cOpen.getContext('2d');
-            gO.fillStyle = '#78350f';
-            gO.fillRect(2, 2, 14, TILE_SIZE - 4);
+            // 열린 통로 바닥 가이드라인
+            gO.fillStyle = 'rgba(180, 83, 9, 0.22)';
+            gO.fillRect(6, 6, TILE_SIZE - 12, TILE_SIZE - 12);
+            // 왼쪽으로 활짝 젖혀진 문짝
+            gO.fillStyle = '#451a03';
+            gO.fillRect(2, 3, 13, TILE_SIZE - 6);
             gO.fillStyle = '#b45309';
-            gO.fillRect(4, 4, 10, TILE_SIZE - 8);
+            gO.fillRect(4, 5, 9, TILE_SIZE - 10);
+            gO.fillStyle = '#facc15';
+            gO.fillRect(10, 22, 3, 5);
             tileSprites['block_' + BLOCK.DOOR_OPEN] = cOpen;
         }
 
@@ -1618,30 +1859,25 @@
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
 
-            // Ground shadow
             g.fillStyle = 'rgba(0,0,0,0.4)';
             g.beginPath();
             g.ellipse(24, 41, 16, 5, 0, 0, Math.PI * 2);
             g.fill();
 
-            // Monster Horns / Ears for high tier mobs
             if (mob.level >= 5) {
                 g.fillStyle = mob.accentColor;
                 g.fillRect(8, 4, 6, 8);
                 g.fillRect(34, 4, 6, 8);
             }
 
-            // Monster Body / Head
             g.fillStyle = '#111827';
             g.fillRect(7, 9, 34, 30);
             g.fillStyle = mob.bodyColor;
             g.fillRect(9, 11, 30, 26);
 
-            // Top forehead highlight
             g.fillStyle = mob.accentColor;
             g.fillRect(11, 12, 26, 5);
 
-            // Eyes
             g.fillStyle = '#ffffff';
             g.fillRect(13, 19, 8, 7);
             g.fillRect(27, 19, 8, 7);
@@ -1649,7 +1885,6 @@
             g.fillRect(16, 21, 4, 5);
             g.fillRect(28, 21, 4, 5);
 
-            // Angry / Cute Mouth & Fangs
             g.fillStyle = '#111827';
             g.fillRect(16, 30, 16, 4);
             if (mob.level >= 3) {
@@ -1660,7 +1895,6 @@
 
             tileSprites['mob_' + mob.level] = c;
         });
-        // Fallback default sprite
         tileSprites['block_' + BLOCK.MAGIC_CRYSTAL] = tileSprites['mob_1'];
 
         // 🌈 Rainbow Math Trophy Block Sprite
@@ -1696,33 +1930,41 @@
             tileSprites['floor_' + FLOOR.NUMBER_LAND] = c;
         }
 
-        // 🔢 넘버블록스 캐릭터 블록 (Numberblocks Stacked Character)
-        {
+        // 🔢 넘버블록스 숫자별(1~10) 캐릭터 스프라이트 생성 (합체 시 해당 숫자 외형으로 변화!)
+        const nbPalette = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#38bdf8', '#a855f7', '#ec4899', '#d946ef', '#64748b', '#ffffff'];
+        for (let num = 1; num <= 10; num++) {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
-            const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
-            for (let i = 0; i < 4; i++) {
-                const by = 34 - i * 8;
-                g.fillStyle = colors[i];
-                g.fillRect(13, by, 22, 8);
+            const rows = Math.min(5, num);
+            const blockH = Math.max(5, Math.floor(28 / rows));
+            for (let i = 0; i < rows; i++) {
+                const by = 38 - (i + 1) * blockH;
+                g.fillStyle = nbPalette[(num - 1 + i) % nbPalette.length];
+                g.fillRect(11, by, 26, blockH);
                 g.strokeStyle = '#111827';
                 g.lineWidth = 1.5;
-                g.strokeRect(13, by, 22, 8);
+                g.strokeRect(11, by, 26, blockH);
             }
-            // 귀여운 눈과 미소
+            const faceY = 38 - rows * blockH + 2;
             g.fillStyle = '#ffffff';
-            g.fillRect(16, 13, 6, 6);
-            g.fillRect(26, 13, 6, 6);
+            g.fillRect(15, faceY, 6, 6);
+            g.fillRect(27, faceY, 6, 6);
             g.fillStyle = '#111827';
-            g.fillRect(18, 15, 3, 3);
-            g.fillRect(28, 15, 3, 3);
-            // 머리 위 넘버링(Numberling) 표시
+            g.fillRect(17, faceY + 2, 3, 3);
+            g.fillRect(29, faceY + 2, 3, 3);
+            // 머리 위 넘버링(Numberling) 숫자 배지
             g.fillStyle = '#111827';
-            g.font = '900 10px sans-serif';
+            g.fillRect(16, 1, 16, 11);
+            g.strokeStyle = '#facc15';
+            g.lineWidth = 1;
+            g.strokeRect(16, 1, 16, 11);
+            g.fillStyle = '#fef08a';
+            g.font = '900 9px sans-serif';
             g.textAlign = 'center';
-            g.fillText('4', 24, 9);
-            tileSprites['block_' + BLOCK.NUMBERBLOCK] = c;
+            g.fillText(String(num), 24, 10);
+            tileSprites['nb_val_' + num] = c;
         }
+        tileSprites['block_' + BLOCK.NUMBERBLOCK] = tileSprites['nb_val_4'];
 
         // 🟣 넘버블롭스 (Numberblobs 귀여운 동글이 캐릭터)
         {
@@ -1739,7 +1981,6 @@
             g.lineWidth = 2;
             g.strokeStyle = '#581c87';
             g.stroke();
-            // 눈과 볼터치
             g.fillStyle = '#ffffff';
             g.beginPath();
             g.arc(19, 23, 4, 0, Math.PI * 2);
@@ -1760,7 +2001,6 @@
         {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
-            // 지붕
             g.fillStyle = '#ef4444';
             g.beginPath();
             g.moveTo(4, 20);
@@ -1771,11 +2011,9 @@
             g.strokeStyle = '#111827';
             g.lineWidth = 2;
             g.stroke();
-            // 집 본체 (블록 칸막이 디자인)
             g.fillStyle = '#fef08a';
             g.fillRect(8, 20, 32, 24);
             g.strokeRect(8, 20, 32, 24);
-            // 숫자 문과 창문
             g.fillStyle = '#3b82f6';
             g.fillRect(19, 29, 10, 15);
             g.strokeRect(19, 29, 10, 15);
@@ -1787,6 +2025,118 @@
             g.textAlign = 'center';
             g.fillText('10', 24, 16);
             tileSprites['block_' + BLOCK.NUMBER_HOUSE] = c;
+        }
+
+        // 🛗 엘리베이터 (Elevator)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#0f172a';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            g.fillStyle = '#38bdf8';
+            g.fillRect(6, 6, 17, TILE_SIZE - 12);
+            g.fillRect(25, 6, 17, TILE_SIZE - 12);
+            g.strokeStyle = '#e0f2fe';
+            g.lineWidth = 2;
+            g.strokeRect(3, 3, TILE_SIZE - 6, TILE_SIZE - 6);
+            g.fillStyle = '#facc15';
+            g.font = '900 10px sans-serif';
+            g.textAlign = 'center';
+            g.fillText('▲▼', 24, 27);
+            tileSprites['block_' + BLOCK.ELEVATOR] = c;
+        }
+
+        // 🪜 에스컬레이터 (Escalator)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#1e293b';
+            g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+            for (let i = 0; i < 5; i++) {
+                g.fillStyle = i % 2 === 0 ? '#fb923c' : '#f97316';
+                g.fillRect(6 + i * 4, 34 - i * 7, 22, 6);
+            }
+            g.strokeStyle = '#fdba74';
+            g.lineWidth = 2;
+            g.strokeRect(3, 3, TILE_SIZE - 6, TILE_SIZE - 6);
+            tileSprites['block_' + BLOCK.ESCALATOR] = c;
+        }
+
+        // ⏩ 무빙워크 (Moving Walk)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#0f172a';
+            g.fillRect(2, 4, TILE_SIZE - 4, TILE_SIZE - 8);
+            g.fillStyle = '#14b8a6';
+            g.fillRect(4, 8, TILE_SIZE - 8, TILE_SIZE - 16);
+            g.fillStyle = '#ccfbf1';
+            g.font = '900 13px monospace';
+            g.textAlign = 'center';
+            g.fillText('>>>', 24, 28);
+            g.strokeStyle = '#5eead4';
+            g.lineWidth = 2;
+            g.strokeRect(2, 4, TILE_SIZE - 4, TILE_SIZE - 8);
+            tileSprites['block_' + BLOCK.MOVING_WALK] = c;
+        }
+
+        // 🚪 자동문 (Auto Door: 닫힘 & 열림)
+        {
+            const c = createOffscreenCanvas();
+            const g = c.getContext('2d');
+            g.fillStyle = '#1e3a8a';
+            g.fillRect(2, 6, TILE_SIZE - 4, TILE_SIZE - 12);
+            g.fillStyle = 'rgba(96, 165, 250, 0.78)';
+            g.fillRect(5, 9, 18, TILE_SIZE - 18);
+            g.fillRect(25, 9, 18, TILE_SIZE - 18);
+            g.strokeStyle = '#93c5fd';
+            g.lineWidth = 2;
+            g.strokeRect(3, 7, TILE_SIZE - 6, TILE_SIZE - 14);
+            g.fillStyle = '#34d399';
+            g.fillRect(20, 4, 8, 3);
+            tileSprites['block_' + BLOCK.AUTO_DOOR] = c;
+
+            const cOpen = createOffscreenCanvas();
+            const gO = cOpen.getContext('2d');
+            gO.fillStyle = 'rgba(59, 130, 246, 0.18)';
+            gO.fillRect(4, 10, TILE_SIZE - 8, TILE_SIZE - 20);
+            gO.fillStyle = '#60a5fa';
+            gO.fillRect(2, 8, 8, TILE_SIZE - 16);
+            gO.fillRect(TILE_SIZE - 10, 8, 8, TILE_SIZE - 16);
+            gO.fillStyle = '#4ade80';
+            gO.fillRect(18, 4, 12, 3);
+            tileSprites['auto_door_open'] = cOpen;
+        }
+
+        // 💡 센서등 (Sensor Light: 대기 & 점등)
+        {
+            const cOff = createOffscreenCanvas();
+            const g = cOff.getContext('2d');
+            g.fillStyle = '#334155';
+            g.beginPath();
+            g.arc(24, 24, 12, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = '#94a3b8';
+            g.beginPath();
+            g.arc(24, 24, 7, 0, Math.PI * 2);
+            g.fill();
+            tileSprites['block_' + BLOCK.SENSOR_LIGHT] = cOff;
+
+            const cOn = createOffscreenCanvas();
+            const gOn = cOn.getContext('2d');
+            gOn.fillStyle = 'rgba(250, 204, 21, 0.38)';
+            gOn.beginPath();
+            gOn.arc(24, 24, 20, 0, Math.PI * 2);
+            gOn.fill();
+            gOn.fillStyle = '#facc15';
+            gOn.beginPath();
+            gOn.arc(24, 24, 12, 0, Math.PI * 2);
+            gOn.fill();
+            gOn.fillStyle = '#ffffff';
+            gOn.beginPath();
+            gOn.arc(24, 24, 6, 0, Math.PI * 2);
+            gOn.fill();
+            tileSprites['sensor_light_on'] = cOn;
         }
 
         // 10 Stages of Block Mining Cracks
@@ -2146,7 +2496,12 @@
         door: 2,
         craftTable: 1,
         goldBlock: 1,
-        rainbowBlock: 6
+        rainbowBlock: 6,
+        sensorLight: 1,
+        autoDoor: 1,
+        movingWalk: 2,
+        escalator: 1,
+        elevator: 1
     };
 
     const miningState = {
@@ -3182,6 +3537,37 @@
         renderTenFrameCanvas();
     }
 
+    // 몹 처치 시 획득한 써클 개수를 화면 중앙 상단에 크게 보여주는 대형 배너 함수
+    function showCircleDropBanner(circleGain, totalCircles, mobName) {
+        let bannerEl = document.getElementById('bigCircleDropBanner');
+        if (!bannerEl) {
+            bannerEl = document.createElement('div');
+            bannerEl.id = 'bigCircleDropBanner';
+            bannerEl.className = 'fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] pointer-events-none transition-all duration-300';
+            document.body.appendChild(bannerEl);
+        }
+        bannerEl.style.opacity = '1';
+        bannerEl.style.transform = 'translate(-50%, -50%) scale(1)';
+        bannerEl.innerHTML = `
+            <div class="mc-panel px-6 py-4 border-4 border-amber-300 bg-gradient-to-b from-pink-950 via-purple-950 to-gray-950 text-center shadow-[0_0_40px_rgba(244,114,182,0.85)] animate-bounce">
+                <div class="text-xs sm:text-sm font-black text-pink-300 mb-1">
+                    🎉 [${escapeHtml(mobName)}] 처치 보상!
+                </div>
+                <div class="text-2xl sm:text-4xl font-black text-yellow-300 drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)] tracking-wide">
+                    ⭕ 써클 +${circleGain}개 획득!!
+                </div>
+                <div class="text-xs sm:text-base font-bold text-emerald-300 mt-1.5">
+                    현재 보유 써클: <span class="text-white font-black">${totalCircles}개</span> ${totalCircles >= 50 ? '(🔢 넘버블록스 바이옴 해금 완료!)' : `(바이옴 해금까지 ${Math.max(0, 50 - totalCircles)}개 남음)`}
+                </div>
+            </div>
+        `;
+        if (bannerEl._hideTimer) clearTimeout(bannerEl._hideTimer);
+        bannerEl._hideTimer = setTimeout(() => {
+            bannerEl.style.opacity = '0';
+            bannerEl.style.transform = 'translate(-50%, -60%) scale(0.9)';
+        }, 3200);
+    }
+
     function submitMathAnswer(selectedVal, btnEl) {
         const prob = mathFlowState.currentProblem;
         if (!prob || prob.solved) return;
@@ -3302,18 +3688,18 @@
                 if (isMobDefeated) {
                     sfx.playBreak();
 
-                    const gotCircle = Math.random() < 0.5;
-                    let circleDropText = '';
-                    if (gotCircle) {
-                        resources.circle = (resources.circle || 0) + 1;
-                        circleDropText = ` + ⭕써클 1개 획득!(${resources.circle}/50)`;
-                        if (resources.circle >= 50 && !mathFlowState.numberblocksUnlocked) {
-                            mathFlowState.numberblocksUnlocked = true;
-                            showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다!', 'emerald');
-                            addChatMessage('시스템', `🎊 ${localPlayer.name}님이 '⭕써클' 50개를 모아 [🔢 넘버블록스 바이옴]의 봉인을 해제했습니다!`, '#f472b6', true);
-                        } else {
-                            showToast(`⭕ 행운의 '써클' 아이템 드롭! (현재 ${resources.circle}/50개)`, 'amber');
-                        }
+                    // ★ 1/3 확률로 각각 1개, 2개, 3개 써클 드롭!
+                    const circleGain = Math.floor(Math.random() * 3) + 1;
+                    resources.circle = (resources.circle || 0) + circleGain;
+                    const circleDropText = ` + ⭕써클 ${circleGain}개 획득!(총 ${resources.circle}개)`;
+
+                    // 대형 안내 배너 호출
+                    showCircleDropBanner(circleGain, resources.circle, bState.name);
+
+                    if (resources.circle >= 50 && !mathFlowState.numberblocksUnlocked) {
+                        mathFlowState.numberblocksUnlocked = true;
+                        showToast('🎊 축하합니다! [⭕써클 50개]를 모두 모아 [🔢 넘버블록스 바이옴]이 잠금 해제되었습니다!', 'emerald');
+                        addChatMessage('시스템', `🎊 ${localPlayer.name}님이 '⭕써클' 50개를 모아 [🔢 넘버블록스 바이옴]의 봉인을 해제했습니다!`, '#f472b6', true);
                     }
 
                     if (bState.isWorldMob && inBounds(bState.tx, bState.ty)) {
@@ -3337,7 +3723,7 @@
                         const wy = bState.ty * TILE_SIZE + 24;
                         spawnParticles(wx, wy, '#ef4444', 24);
                         spawnParticles(wx, wy, '#facc15', 20);
-                        spawnFloatingText(wx, wy - 18, `💥 ${bState.name} 처치! (+💎${bState.dropDia}${gotCircle ? ' +⭕써클!' : ''})`, '#fde047');
+                        spawnFloatingText(wx, wy - 18, `💥 ${bState.name} 처치! (+⭕써클 ${circleGain}개! +💎${bState.dropDia})`, '#fde047');
 
                         sendGlobalPacket({
                             type: 'WORLD_MOD',
@@ -3357,7 +3743,7 @@
                     mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 35);
                     mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
 
-                    mobBattleMsg = ` 🎉 [몬스터 처치!] ${bState.icon} ${bState.name}을(를) 물리치고 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개${circleDropText}를 획득했어요!`;
+                    mobBattleMsg = ` 🎉 [몬스터 처치!] ${bState.icon} ${bState.name}을(를) 물리치고 ⭕써클 ${circleGain}개, 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개를 획득했어요!`;
                 } else {
                     resources.gold = (resources.gold || 0) + 1;
                     mobBattleMsg = ` ⚔️ 타격 성공! ${bState.icon} ${bState.name}의 체력이 깎였어요! (남은 체력: ${bState.hp}/${bState.maxHp})`;
@@ -4519,6 +4905,8 @@
     let isRightMouseDown = false;
     let rightPlaceCooldown = 0;
     let lockedBiomeToastCooldown = 0;
+    let doorPushAccum = 0;
+    let lastElevatorUseAt = 0;
 
     function isTileSolidForPlayer(tx, ty) {
         if (!inBounds(tx, ty)) return true;
@@ -4534,11 +4922,22 @@
         const f = getFloorAt(tx, ty);
         if (!FLOOR_INFO[f]?.walkable) return true;
         const b = getBlockAt(tx, ty);
-        if (b !== BLOCK.AIR && BLOCK_INFO[b]?.solid) return true;
+        if (b === BLOCK.AIR) return false;
+
+        // 🚪 스마트 자동문: 플레이어가 1.85타일 이내로 접근하면 자동으로 열려 통과 가능!
+        if (b === BLOCK.AUTO_DOOR) {
+            const dist = Math.hypot(localPlayer.x - (tx * TILE_SIZE + 24), localPlayer.y - (ty * TILE_SIZE + 24)) / TILE_SIZE;
+            return dist > 1.85;
+        }
+
+        if (BLOCK_INFO[b]?.solid) return true;
         return false;
     }
 
     function movePlayerWithCollision(dt) {
+        // 전투 상황(문제 푸는 중)일 때는 유저가 해당 장소에 없는 것으로 간주하고 모든 움직임 정지
+        if (isUserInCombat()) return;
+
         let dx = 0;
         let dy = 0;
         if (keys['KeyW'] || keys['ArrowUp'] || touchDirs.up) dy -= 1;
@@ -4557,17 +4956,89 @@
         ensureAreaGenerated(ptx, pty, 3);
 
         const currentFloor = getFloorAt(ptx, pty);
-        const speed = currentFloor === FLOOR.ICE ? 275 : 215;
-        const radius = 14;
+        const currentBlock = getBlockAt(ptx, pty);
 
+        // ⏩ 무빙워크 & 🪜 에스컬레이터 효과 적용
+        let speed = currentFloor === FLOOR.ICE ? 275 : 215;
+        if (currentBlock === BLOCK.MOVING_WALK) {
+            speed *= 1.9;
+            if (dx === 0 && dy === 0) {
+                dx = Math.cos(localPlayer.angle || 0) * 0.85;
+                dy = Math.sin(localPlayer.angle || 0) * 0.85;
+            }
+        } else if (currentBlock === BLOCK.ESCALATOR) {
+            dx += 0.75;
+            dy -= 0.75;
+        }
+
+        // 🛗 엘리베이터 탑승 시 근처 다른 엘리베이터(또는 8타일 상/하층)로 순간 이동
+        if (currentBlock === BLOCK.ELEVATOR && performance.now() - lastElevatorUseAt > 2200 && (dx !== 0 || dy !== 0)) {
+            lastElevatorUseAt = performance.now();
+            let dest = null;
+            for (let r = 2; r <= 25 && !dest; r++) {
+                for (let oy = -r; oy <= r; oy++) {
+                    for (let ox = -r; ox <= r; ox++) {
+                        if (Math.abs(ox) < 2 && Math.abs(oy) < 2) continue;
+                        const ex = ptx + ox;
+                        const ey = pty + oy;
+                        if (inBounds(ex, ey) && getBlockAt(ex, ey) === BLOCK.ELEVATOR) {
+                            dest = { tx: ex, ty: ey };
+                            break;
+                        }
+                    }
+                    if (dest) break;
+                }
+            }
+            if (!dest) {
+                const dirY = dy < 0 ? -8 : 8;
+                const candY = Math.max(5, Math.min(WORLD_SIZE - 5, pty + dirY));
+                if (!isTileSolidForPlayer(ptx, candY)) {
+                    dest = { tx: ptx, ty: candY };
+                }
+            }
+            if (dest) {
+                localPlayer.x = dest.tx * TILE_SIZE + 24;
+                localPlayer.y = dest.ty * TILE_SIZE + 24;
+                sfx.playCraft();
+                spawnParticles(localPlayer.x, localPlayer.y, '#38bdf8', 18);
+                spawnFloatingText(localPlayer.x, localPlayer.y - 20, '🛗 딩동! 엘리베이터 이동!', '#38bdf8');
+            }
+        }
+
+        const radius = 14;
         const nextX = localPlayer.x + dx * speed * dt;
-        if (!checkCircleTileCollision(nextX, localPlayer.y, radius)) {
+        const blockedX = checkCircleTileCollision(nextX, localPlayer.y, radius);
+        if (!blockedX) {
             localPlayer.x = nextX;
         }
 
         const nextY = localPlayer.y + dy * speed * dt;
-        if (!checkCircleTileCollision(localPlayer.x, nextY, radius)) {
+        const blockedY = checkCircleTileCollision(localPlayer.x, nextY, radius);
+        if (!blockedY) {
             localPlayer.y = nextY;
+        }
+
+        // 🚪 닫힌 나무 문(DOOR_CLOSED)을 향해 몸으로 밀면 진짜 문처럼 열리는 기능
+        if ((blockedX || blockedY) && (dx !== 0 || dy !== 0)) {
+            const probeX = Math.floor((localPlayer.x + dx * (radius + 10)) / TILE_SIZE);
+            const probeY = Math.floor((localPlayer.y + dy * (radius + 10)) / TILE_SIZE);
+            if (inBounds(probeX, probeY) && getBlockAt(probeX, probeY) === BLOCK.DOOR_CLOSED) {
+                doorPushAccum += dt;
+                if (doorPushAccum >= 0.18) {
+                    doorPushAccum = 0;
+                    applyWorldModification(probeX, probeY, undefined, BLOCK.DOOR_OPEN, true);
+                    sfx.playPlace();
+                    const dwx = probeX * TILE_SIZE + 24;
+                    const dwy = probeY * TILE_SIZE + 24;
+                    spawnParticles(dwx, dwy, '#facc15', 8);
+                    spawnFloatingText(dwx, dwy - 14, '🚪 끼이익~ 문 열림!', '#fde047');
+                    sendGlobalPacket({ type: 'WORLD_MOD', tx: probeX, ty: probeY, blockId: BLOCK.DOOR_OPEN });
+                }
+            } else {
+                doorPushAccum = 0;
+            }
+        } else {
+            doorPushAccum = 0;
         }
 
         const ntx = Math.floor(localPlayer.x / TILE_SIZE);
@@ -4575,8 +5046,9 @@
         document.getElementById('coordsDisplay').textContent = `X:${ntx} Y:${nty}`;
         document.getElementById('biomeBadge').textContent = getBiomeNameAt(ntx, nty);
 
-        // 현재 유저 화면(뷰포트) 내의 몹들만 이동 업데이트 후 근접 조우 체크
+        // 현재 유저 화면(뷰포트) 내의 몹 & 넘버블록스 이동 업데이트 후 근접 조우 체크
         updateViewportMobs(dt);
+        updateViewportNumberblocks(dt);
         checkMobProximityEncounter();
     }
         
@@ -4771,6 +5243,9 @@
         ctx.fillStyle = '#090d16';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        const inCombat = isUserInCombat();
+        const animTimeSec = inCombat ? 0 : timeSec;
+
         ctx.save();
         const camOffsetX = Math.floor(canvas.width / 2 - camera.x);
         const camOffsetY = Math.floor(canvas.height / 2 - camera.y);
@@ -4793,7 +5268,7 @@
                 if (sprite) ctx.drawImage(sprite, wx, wy);
 
                 if (f === FLOOR.WATER || f === FLOOR.DEEP_WATER) {
-                    const wave = Math.sin(timeSec * 3 + tx * 0.7 + ty * 0.5);
+                    const wave = Math.sin(animTimeSec * 3 + tx * 0.7 + ty * 0.5);
                     if (wave > 0.65) {
                         ctx.fillStyle = 'rgba(191, 219, 254, 0.22)';
                         ctx.fillRect(wx + 10, wy + 18, 16, 4);
@@ -4820,8 +5295,10 @@
             ctx.restore();
         }
 
-        // 2. Render Blocks, Ores & Moving Addition Mobs
+        // 2. Render Blocks, Ores, Mobs, Numberblocks & Smart Devices
         const nowMs = performance.now();
+        const bubbleDrawQueue = [];
+
         for (let ty = startTy; ty <= endTy; ty++) {
             for (let tx = startTx; tx <= endTx; tx++) {
                 const b = getBlockAt(tx, ty);
@@ -4830,7 +5307,7 @@
                 const wx = tx * TILE_SIZE;
                 const wy = ty * TILE_SIZE;
 
-                // 👾 덧셈 몬스터: 부드러운 타일 간 이동 보간(Interpolation) + 불투명 렌더링 + 머리 위 체력바
+                // 👾 덧셈 몬스터 렌더링 (전투 중일 때는 정지)
                 if (b === BLOCK.MAGIC_CRYSTAL) {
                     const mob = getMobDataAt(tx, ty);
                     const meta = mobMetaMap.get(idx(tx, ty));
@@ -4839,29 +5316,27 @@
                     let drawWy = wy;
                     let walkHopY = 0;
 
-                    if (meta && meta.moveStart > 0) {
+                    if (!inCombat && meta && meta.moveStart > 0) {
                         const elapsed = nowMs - meta.moveStart;
                         if (elapsed < meta.moveDur) {
                             const t = Math.max(0, Math.min(1, elapsed / meta.moveDur));
                             const ease = 1 - Math.pow(1 - t, 3);
                             drawWx = meta.fromWx + (wx - meta.fromWx) * ease;
                             drawWy = meta.fromWy + (wy - meta.fromWy) * ease;
-                            walkHopY = -Math.sin(t * Math.PI) * 9; // 걸어갈 때 폴짝 뛰는 효과
+                            walkHopY = -Math.sin(t * Math.PI) * 9;
                         }
                     }
 
-                    const bounceY = Math.sin(timeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3 + walkHopY;
+                    const bounceY = inCombat ? 0 : (Math.sin(animTimeSec * 5.2 + tx * 1.7 + ty * 2.3) * 3 + walkHopY);
 
                     ctx.save();
                     ctx.globalAlpha = 1.0;
 
-                    // 발밑 그림자
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
                     ctx.beginPath();
                     ctx.ellipse(drawWx + 24, drawWy + 41, 16, 6, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // 불투명 원형 바디 배경
                     ctx.fillStyle = '#111827';
                     ctx.beginPath();
                     ctx.arc(drawWx + 24, drawWy + 24 + bounceY, 18, 0, Math.PI * 2);
@@ -4870,15 +5345,12 @@
                     ctx.strokeStyle = mob.bodyColor;
                     ctx.stroke();
 
-                    // 100% 불투명 이모지 렌더링
-                    ctx.globalAlpha = 1.0;
                     ctx.fillStyle = '#ffffff';
                     ctx.font = '32px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Noto Sans KR", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(mob.icon, drawWx + 24, drawWy + 25 + bounceY);
 
-                    // 몹 머리 위 3칸 체력바
                     const barW = 38;
                     const barH = 6;
                     const barX = drawWx + (TILE_SIZE - barW) / 2;
@@ -4892,7 +5364,6 @@
                         ctx.fillRect(barX + 1 + h * (segW + 1), barY, segW, barH);
                     }
 
-                    // 몹 레벨 및 이름표
                     ctx.font = '900 10px "Noto Sans KR", sans-serif';
                     ctx.textBaseline = 'alphabetic';
                     const tagText = `Lv.${mob.level} ${mob.name}`;
@@ -4907,6 +5378,68 @@
                     continue;
                 }
 
+                // 🔢 넘버블록스 & 🟣 넘버블롭스 (귀여운 이동, 숫자별 외형, 말풍선 렌더링)
+                if (b === BLOCK.NUMBERBLOCK || b === BLOCK.NUMBERBLOB) {
+                    const meta = ensureNbMeta(tx, ty, b);
+                    let drawWx = wx;
+                    let drawWy = wy;
+                    let hopY = 0;
+
+                    if (!inCombat && meta.moveStart > 0) {
+                        const elapsed = nowMs - meta.moveStart;
+                        if (elapsed < meta.moveDur) {
+                            const t = Math.max(0, Math.min(1, elapsed / meta.moveDur));
+                            const ease = 1 - Math.pow(1 - t, 3);
+                            drawWx = meta.fromWx + (wx - meta.fromWx) * ease;
+                            drawWy = meta.fromWy + (wy - meta.fromWy) * ease;
+                            hopY = -Math.sin(t * Math.PI) * 10;
+                        }
+                    }
+
+                    const idleBounce = inCombat ? 0 : (Math.sin(animTimeSec * 4.5 + tx + ty) * 2.5 + hopY);
+                    const nbSprite = b === BLOCK.NUMBERBLOCK
+                        ? (tileSprites['nb_val_' + (meta.val || 4)] || tileSprites['block_' + b])
+                        : tileSprites['block_' + b];
+
+                    if (nbSprite) {
+                        ctx.drawImage(nbSprite, drawWx, drawWy + idleBounce);
+                    }
+
+                    if (!inCombat && meta.bubbleText && nowMs < meta.bubbleUntil) {
+                        bubbleDrawQueue.push({
+                            x: drawWx + 24,
+                            y: drawWy - 6 + idleBounce,
+                            text: meta.bubbleText
+                        });
+                    }
+
+                    lightSources.push({ x: drawWx + 24, y: drawWy + 24, r: 155 });
+                    if (miningState.tx === tx && miningState.ty === ty && miningState.progress > 0) {
+                        const stage = Math.min(9, Math.floor((miningState.progress / miningState.maxHp) * 10));
+                        ctx.drawImage(crackSprites[stage], wx, wy);
+                    }
+                    continue;
+                }
+
+                // 🚪 스마트 자동문 (가까이 다가가면 열린 스프라이트 표시)
+                if (b === BLOCK.AUTO_DOOR) {
+                    const dist = Math.hypot(localPlayer.x - (wx + 24), localPlayer.y - (wy + 24)) / TILE_SIZE;
+                    const isOpen = dist <= 1.85;
+                    const sp = isOpen ? tileSprites['auto_door_open'] : tileSprites['block_' + BLOCK.AUTO_DOOR];
+                    if (sp) ctx.drawImage(sp, wx, wy);
+                    continue;
+                }
+
+                // 💡 스마트 센서등 (3.5타일 이내로 다가가면 환하게 점등!)
+                if (b === BLOCK.SENSOR_LIGHT) {
+                    const dist = Math.hypot(localPlayer.x - (wx + 24), localPlayer.y - (wy + 24)) / TILE_SIZE;
+                    const isLit = dist <= 3.5;
+                    const sp = isLit ? tileSprites['sensor_light_on'] : tileSprites['block_' + BLOCK.SENSOR_LIGHT];
+                    if (sp) ctx.drawImage(sp, wx, wy);
+                    lightSources.push({ x: wx + 24, y: wy + 24, r: isLit ? 320 : 75 });
+                    continue;
+                }
+
                 if (BLOCK_INFO[b]?.solid) {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
                     ctx.fillRect(wx + 4, wy + 6, TILE_SIZE, TILE_SIZE);
@@ -4916,8 +5449,8 @@
                 if (bSprite) ctx.drawImage(bSprite, wx, wy);
 
                 if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.RAINBOW_BLOCK ||
-                    b === BLOCK.NUMBERBLOCK || b === BLOCK.NUMBERBLOB || b === BLOCK.NUMBER_HOUSE) {
-                    const flicker = Math.sin(timeSec * 12 + tx * 3 + ty * 5) * 8;
+                    b === BLOCK.NUMBER_HOUSE || b === BLOCK.ELEVATOR) {
+                    const flicker = Math.sin(animTimeSec * 12 + tx * 3 + ty * 5) * 8;
                     lightSources.push({
                         x: wx + 24,
                         y: wy + 24,
@@ -4932,12 +5465,32 @@
             }
         }
 
+        // 넘버블록스 귀여운 말풍선 오버레이 렌더링
+        bubbleDrawQueue.forEach(bb => {
+            ctx.save();
+            ctx.font = 'bold 11px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            const padX = 8;
+            const tw = ctx.measureText(bb.text).width + padX * 2;
+            const bh = 20;
+            const bx = bb.x - tw / 2;
+            const by = bb.y - bh;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.fillRect(bx, by, tw, bh);
+            ctx.strokeStyle = '#ec4899';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx, by, tw, bh);
+            ctx.fillStyle = '#111827';
+            ctx.fillText(bb.text, bb.x, by + 14);
+            ctx.restore();
+        });
+
         // Remote player mining cracks
         remotePlayers.forEach(rp => {
             if (rp.isMining && inBounds(rp.targetTx, rp.targetTy)) {
                 const wx = rp.targetTx * TILE_SIZE;
                 const wy = rp.targetTy * TILE_SIZE;
-                const animStage = Math.floor((timeSec * 6) % 10);
+                const animStage = Math.floor((animTimeSec * 6) % 10);
                 ctx.drawImage(crackSprites[animStage], wx, wy);
             }
         });
@@ -4964,10 +5517,10 @@
 
         // 4. Render Players
         remotePlayers.forEach(rp => {
-            drawPlayerCharacter(rp, false, timeSec);
+            drawPlayerCharacter(rp, false, animTimeSec);
             lightSources.push({ x: rp.x, y: rp.y, r: 125 });
         });
-        drawPlayerCharacter(localPlayer, true, timeSec);
+        drawPlayerCharacter(localPlayer, true, animTimeSec);
         lightSources.push({ x: localPlayer.x, y: localPlayer.y, r: 155 });
 
         // 5. Render Debris Particles
@@ -5592,7 +6145,7 @@
             resources[k] = (profile.resources && typeof profile.resources[k] === 'number') ? profile.resources[k] : defaultRes[k];
         });
 
-        const defaultInv = { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 };
+        const defaultInv = { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6, sensorLight: 1, autoDoor: 1, movingWalk: 2, escalator: 1, elevator: 1 };
         Object.keys(defaultInv).forEach(k => {
             blockInventory[k] = (profile.blockInventory && typeof profile.blockInventory[k] === 'number') ? profile.blockInventory[k] : defaultInv[k];
         });
@@ -5631,7 +6184,7 @@
         drawRadarMinimap();
     }
 
-    // ★ 화면 잘림 방지 반응형 레이아웃 + 깃허브 배포 안내 제거 + '⭕써클' 및 '넘버블록스 바이옴' UI 초기화
+    // ★ 화면 잘림 방지 반응형 레이아웃 + 모바일 작은 화면 감지 시 상단 좌/우 보조창 자동 접기/열기 토글
     function setupResponsiveAndCleanUI() {
         // 1) 깃허브 배포 안내 버튼 및 모달 완전 제거
         const ghBtn = document.getElementById('btnOpenGithubGuide');
@@ -5646,7 +6199,7 @@
             gridWrap.className = 'grid grid-cols-5 sm:grid-cols-9 gap-1 text-center text-xs';
             const circleCard = document.createElement('div');
             circleCard.className = 'bg-pink-950/90 rounded p-1 border border-pink-400 col-span-2 sm:col-span-1';
-            circleCard.title = '몬스터 처치 시 50% 확률 드롭! 50개를 모으면 넘버블록스 바이옴이 열립니다.';
+            circleCard.title = '몬스터 처치 시 1~3개 드롭! 제작 재료 및 50개 수집 시 넘버블록스 바이옴이 열립니다.';
             circleCard.innerHTML = `
                 <div class="text-[10px] text-pink-300 font-bold">⭕써클</div>
                 <div id="res_circle" class="font-black text-amber-300">0/50</div>
@@ -5672,7 +6225,7 @@
             parentGrid.appendChild(nbBtn);
         }
 
-        // 4) 기기 화면 크기(모바일/태블릿/작은 창)에 맞춰 UI가 절대 잘리지 않도록 반응형 CSS 및 자동 배율 적용
+        // 4) 반응형 스타일 및 핫바 가로 스크롤 허용 (14슬롯 대응)
         if (!document.getElementById('responsiveViewportStyles')) {
             const st = document.createElement('style');
             st.id = 'responsiveViewportStyles';
@@ -5695,18 +6248,91 @@
                     max-width: 96vw;
                     overflow-y: auto;
                 }
+                #hotbarContainer {
+                    max-width: 96vw;
+                    overflow-x: auto;
+                }
                 @media (max-height: 700px) {
-                    .hotbar-slot { width: 38px !important; height: 38px !important; }
+                    .hotbar-slot { width: 38px !important; height: 38px !important; flex-shrink: 0; }
                     #minimapCanvas { width: 104px !important; height: 104px !important; }
                 }
                 @media (max-width: 480px) {
-                    .hotbar-slot { width: 34px !important; height: 34px !important; }
+                    .hotbar-slot { width: 34px !important; height: 34px !important; flex-shrink: 0; }
                 }
             `;
             document.head.appendChild(st);
         }
 
-        // 5) 화면 크기 변화 시 좌/우 상단 HUD와 하단 핫바가 화면 밖으로 잘리지 않도록 동적 스케일 조정
+        // 5) 모바일 / 작은 화면 감지 시 좌측·우측 상단 보조창 자동 접기 버튼 생성
+        const topLeftHud = document.getElementById('netStatusDot')?.closest('.fixed.top-3.left-3');
+        const topRightHud = document.getElementById('minimapCanvas')?.closest('.fixed.top-3.right-3');
+
+        let leftCollapsed = false;
+        let rightCollapsed = false;
+        let lastAutoSmallState = null;
+
+        // 좌측 보조창 열기/접기 UI 구성
+        if (topLeftHud && !document.getElementById('btnExpandLeftHud')) {
+            const openLeftBtn = document.createElement('button');
+            openLeftBtn.id = 'btnExpandLeftHud';
+            openLeftBtn.type = 'button';
+            openLeftBtn.className = 'hidden mc-btn mc-btn-green px-3 py-1.5 text-xs font-black pointer-events-auto shadow-lg flex items-center gap-1.5 w-fit';
+            openLeftBtn.innerHTML = '<span>🎒 메뉴·자원·미션 열기 ▼</span>';
+            topLeftHud.insertBefore(openLeftBtn, topLeftHud.firstChild);
+
+            const closeLeftBtn = document.createElement('button');
+            closeLeftBtn.id = 'btnCollapseLeftHud';
+            closeLeftBtn.type = 'button';
+            closeLeftBtn.className = 'mc-btn px-2.5 py-1 text-[11px] font-black text-amber-300 pointer-events-auto self-start mb-0.5';
+            closeLeftBtn.innerHTML = '▲ 좌측 보조창 접기';
+            topLeftHud.insertBefore(closeLeftBtn, openLeftBtn.nextSibling);
+
+            const applyLeftState = (collapsed) => {
+                leftCollapsed = collapsed;
+                Array.from(topLeftHud.children).forEach(ch => {
+                    if (ch.id === 'btnExpandLeftHud') {
+                        ch.classList.toggle('hidden', !collapsed);
+                    } else {
+                        ch.classList.toggle('hidden', collapsed);
+                    }
+                });
+            };
+            openLeftBtn.onclick = () => applyLeftState(false);
+            closeLeftBtn.onclick = () => applyLeftState(true);
+            topLeftHud._applyCollapse = applyLeftState;
+        }
+
+        // 우측 보조창(미니맵/접속자) 열기/접기 UI 구성
+        if (topRightHud && !document.getElementById('btnExpandRightHud')) {
+            const openRightBtn = document.createElement('button');
+            openRightBtn.id = 'btnExpandRightHud';
+            openRightBtn.type = 'button';
+            openRightBtn.className = 'hidden mc-btn mc-btn-blue px-3 py-1.5 text-xs font-black pointer-events-auto shadow-lg flex items-center gap-1.5 w-fit';
+            openRightBtn.innerHTML = '<span>📡 미니맵·접속자 열기 ▼</span>';
+            topRightHud.insertBefore(openRightBtn, topRightHud.firstChild);
+
+            const closeRightBtn = document.createElement('button');
+            closeRightBtn.id = 'btnCollapseRightHud';
+            closeRightBtn.type = 'button';
+            closeRightBtn.className = 'mc-btn px-2.5 py-1 text-[11px] font-black text-amber-300 pointer-events-auto self-end mb-0.5';
+            closeRightBtn.innerHTML = '▲ 미니맵 접기';
+            topRightHud.insertBefore(closeRightBtn, openRightBtn.nextSibling);
+
+            const applyRightState = (collapsed) => {
+                rightCollapsed = collapsed;
+                Array.from(topRightHud.children).forEach(ch => {
+                    if (ch.id === 'btnExpandRightHud') {
+                        ch.classList.toggle('hidden', !collapsed);
+                    } else {
+                        ch.classList.toggle('hidden', collapsed);
+                    }
+                });
+            };
+            openRightBtn.onclick = () => applyRightState(false);
+            closeRightBtn.onclick = () => applyRightState(true);
+            topRightHud._applyCollapse = applyRightState;
+        }
+
         const fitHudToViewport = () => {
             const vw = window.innerWidth;
             const vh = window.innerHeight;
@@ -5715,23 +6341,19 @@
             lightCanvas.width = vw;
             lightCanvas.height = vh;
 
-            const scale = Math.min(1, Math.min(vw / 420, vh / 680));
-            const topLeftHud = document.getElementById('netStatusDot')?.closest('.fixed.top-3.left-3');
-            const topRightHud = document.getElementById('minimapCanvas')?.closest('.fixed.top-3.right-3');
-            if (topLeftHud) {
-                topLeftHud.style.transformOrigin = 'top left';
-                topLeftHud.style.transform = scale < 0.92 ? `scale(${Math.max(0.72, scale)})` : '';
-            }
-            if (topRightHud) {
-                topRightHud.style.transformOrigin = 'top right';
-                topRightHud.style.transform = scale < 0.92 ? `scale(${Math.max(0.72, scale)})` : '';
+            // 작은 화면(가로 768px 이하 또는 세로 660px 이하) 감지 시 자동으로 보조창을 버튼 상태로 접음
+            const isSmallScreen = (vw <= 768 || vh <= 660);
+            if (isSmallScreen !== lastAutoSmallState) {
+                lastAutoSmallState = isSmallScreen;
+                if (topLeftHud && topLeftHud._applyCollapse) topLeftHud._applyCollapse(isSmallScreen);
+                if (topRightHud && topRightHud._applyCollapse) topRightHud._applyCollapse(isSmallScreen);
             }
         };
         window.addEventListener('resize', fitHudToViewport);
         window.addEventListener('orientationchange', fitHudToViewport);
         fitHudToViewport();
     }
-
+        
     function setupAccountManagerUI() {
         const lobbyPanel = document.querySelector('#lobbyModal .mc-panel');
         if (!lobbyPanel) return;
@@ -5920,7 +6542,7 @@
             clickActionMode = 'mine';
 
             Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0 });
-            Object.assign(blockInventory, { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6 });
+            Object.assign(blockInventory, { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6, sensorLight: 1, autoDoor: 1, movingWalk: 2, escalator: 1, elevator: 1 });
 
             mathFlowState.level = initLv;
             localPlayer.mathLevel = initLv;
