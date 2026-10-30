@@ -991,15 +991,100 @@
         [BLOCK.SENSOR_LIGHT]:  { name: '💡 스마트 센서등 (가까이 다가가면 자동으로 환하게 점등!)', hp: 45, solid: false, minTier: 0, light: 90, dropType: 'item', dropKey: 'sensorLight', dropCount: 1, dropLabel: '센서등', sfx: 'ore', minColor: '#fef08a', particleColor: '#fef9c3' }
     };
 
-    // 6 Pickaxe Tiers (Wood -> Stone -> Iron -> Gold -> Diamond -> Math Master Rainbow Pickaxe)
-    const PICKAXE_TIERS = [
-        { level: 0, name: '나무 곡괭이',         speed: 1.0,  color: '#a16207', headColor: '#b45309' },
-        { level: 1, name: '돌 곡괭이',           speed: 1.8,  color: '#9ca3af', headColor: '#9ca3af' },
-        { level: 2, name: '철 곡괭이',           speed: 2.8,  color: '#e5e7eb', headColor: '#f3f4f6' },
-        { level: 3, name: '황금 곡괭이',         speed: 4.0,  color: '#eab308', headColor: '#facc15' },
-        { level: 4, name: '다이아 곡괭이',       speed: 5.5,  color: '#22d3ee', headColor: '#67e8f9' },
-        { level: 5, name: '✨ 덧셈 마스터 곡괭이', speed: 8.0,  color: '#f472b6', headColor: '#f472b6' }
+    // 기본 5단계 곡괭이 (0: 나무 ~ 4: 다이아몬드) + 5단계 이상은 '써클 곡괭이 Lv.1, Lv.2...' 무한 자동 생성 Proxy
+    const BASE_PICKAXE_TIERS = [
+        { level: 0, name: '나무 곡괭이',     speed: 1.0, color: '#a16207', headColor: '#b45309' },
+        { level: 1, name: '돌 곡괭이',       speed: 1.8, color: '#9ca3af', headColor: '#9ca3af' },
+        { level: 2, name: '철 곡괭이',       speed: 2.8, color: '#e5e7eb', headColor: '#f3f4f6' },
+        { level: 3, name: '황금 곡괭이',     speed: 4.0, color: '#eab308', headColor: '#facc15' },
+        { level: 4, name: '다이아몬드 곡괭이', speed: 5.5, color: '#22d3ee', headColor: '#67e8f9' }
     ];
+
+    const PICKAXE_TIERS = new Proxy(BASE_PICKAXE_TIERS, {
+        get(target, prop) {
+            if (typeof prop === 'string' && /^\d+$/.test(prop)) {
+                const tier = parseInt(prop, 10);
+                if (tier < target.length) return target[tier];
+                const cLv = tier - 4; // tier 5 -> Lv.1, tier 6 -> Lv.2 ...
+                return {
+                    level: tier,
+                    name: `⭕ 써클 곡괭이 Lv.${cLv}`,
+                    speed: Number((5.5 + cLv * 2.5).toFixed(1)),
+                    color: '#ec4899',
+                    headColor: '#f472b6'
+                };
+            }
+            return target[prop];
+        }
+    });
+
+    // 현재 곡괭이 등급에서 '바로 다음 단계' 업그레이드 레시피 1개만 생성하는 함수
+    function getNextPickaxeUpgradeRecipe() {
+        const nextTier = (localPlayer.pickaxeTier || 0) + 1;
+        if (nextTier === 1) {
+            return {
+                id: 'upgrade_stone_pick',
+                name: '⛏️ [1단계] 돌 곡괭이 업그레이드',
+                desc: '채굴 속도 x1.8배 · 철광석 채굴 가능 (다음 단계: 철 곡괭이)',
+                type: 'pickaxe',
+                tier: 1,
+                cost: { wood: 2, cobble: 3, circle: 2 }
+            };
+        }
+        if (nextTier === 2) {
+            return {
+                id: 'upgrade_iron_pick',
+                name: '⛏️ [2단계] 철 곡괭이 업그레이드',
+                desc: '채굴 속도 x2.8배 · 금/다이아몬드 채굴 가능 (다음 단계: 황금 곡괭이)',
+                type: 'pickaxe',
+                tier: 2,
+                cost: { wood: 2, iron: 3, circle: 4 }
+            };
+        }
+        if (nextTier === 3) {
+            return {
+                id: 'upgrade_gold_pick',
+                name: '⛏️ [3단계] 황금 곡괭이 업그레이드',
+                desc: '채굴 속도 x4.0배 고속 채굴 (다음 단계: 다이아몬드 곡괭이)',
+                type: 'pickaxe',
+                tier: 3,
+                cost: { wood: 2, gold: 3, circle: 6 }
+            };
+        }
+        if (nextTier === 4) {
+            return {
+                id: 'upgrade_diamond_pick',
+                name: '⛏️ [4단계] 다이아몬드 곡괭이 업그레이드',
+                desc: '채굴 속도 x5.5배 · 흑요석 채굴 가능 (다음 단계: 써클 곡괭이 Lv.1)',
+                type: 'pickaxe',
+                tier: 4,
+                cost: { wood: 2, diamond: 3, circle: 8 }
+            };
+        }
+        // 다이아몬드 곡괭이(tier 4) 달성 이후: 써클 곡괭이 Lv.1, Lv.2, Lv.3...
+        const cLv = nextTier - 4;
+        const circleReq = cLv * 100;
+        const matReq = cLv * 10;
+        const nextSpeed = Number((5.5 + cLv * 2.5).toFixed(1));
+        return {
+            id: 'upgrade_circle_pick_' + cLv,
+            name: `⭕ [초월] 써클 곡괭이 Lv.${cLv} 업그레이드`,
+            desc: `채굴 속도 x${nextSpeed}배 초고속 파괴! (써클 ${circleReq}개 + 모든 재료 각 ${matReq}개)`,
+            type: 'pickaxe',
+            tier: nextTier,
+            cost: {
+                circle: circleReq,
+                wood: matReq,
+                cobble: matReq,
+                coal: matReq,
+                iron: matReq,
+                gold: matReq,
+                diamond: matReq,
+                obsidian: matReq,
+                sand: matReq
+            }
+        };
+    }
 
     // Hotbar Slots (기존 9종 + 신규 스마트 설비 5종 확장)
     const HOTBAR_SLOTS = [
@@ -1435,8 +1520,8 @@
 
             const meta = ensureNbMeta(tx, ty, b);
 
-            // 확률적으로 귀여운 말풍선 띄우기
-            if (now > meta.bubbleUntil && Math.random() < 0.09) {
+            // ★ 말풍선 발생 확률을 기존(0.09)의 1/20 수준인 0.0045로 축소
+            if (now > meta.bubbleUntil && Math.random() < 0.0045) {
                 if (b === BLOCK.NUMBERBLOCK) {
                     const fn = NB_SPEECH_LINES[Math.floor(Math.random() * NB_SPEECH_LINES.length)];
                     meta.bubbleText = fn(meta.val);
@@ -1464,7 +1549,6 @@
                             const oldValB = partnerMeta.val;
                             const sumVal = oldValA + oldValB;
 
-                            // 현재 타일 넘버블록스가 파트너 타일로 점프해 들어가며 합체!
                             world.blocks[oldKey] = BLOCK.AIR;
                             nbMetaMap.delete(oldKey);
 
@@ -1930,38 +2014,130 @@
             tileSprites['floor_' + FLOOR.NUMBER_LAND] = c;
         }
 
-        // 🔢 넘버블록스 숫자별(1~10) 캐릭터 스프라이트 생성 (합체 시 해당 숫자 외형으로 변화!)
-        const nbPalette = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#38bdf8', '#a855f7', '#ec4899', '#d946ef', '#64748b', '#ffffff'];
+        // 🔢 넘버블록스 숫자별(1~10) 공식 색상 스프라이트 생성
+        // 1=빨강, 2=주황, 3=노랑, 4=초록, 5=파랑, 6=보라, 7=무지개(빨주노초파남보 1칸씩), 8=자홍, 9=3단회색(위:진함, 중간:중간, 아래:연함), 10=흰색+바깥 빨간 테두리
+        const singleColors = {
+            1: '#ef4444', // 빨강
+            2: '#f97316', // 주황
+            3: '#eab308', // 노랑
+            4: '#22c55e', // 초록
+            5: '#3b82f6', // 파랑
+            6: '#a855f7', // 보라
+            8: '#ec4899'  // 자홍
+        };
+        const rainbow7Colors = [
+            '#ef4444', // 빨
+            '#f97316', // 주
+            '#eab308', // 노
+            '#22c55e', // 초
+            '#3b82f6', // 파
+            '#4f46e5', // 남
+            '#a855f7'  // 보
+        ];
+
         for (let num = 1; num <= 10; num++) {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
-            const rows = Math.min(5, num);
-            const blockH = Math.max(5, Math.floor(28 / rows));
-            for (let i = 0; i < rows; i++) {
-                const by = 38 - (i + 1) * blockH;
-                g.fillStyle = nbPalette[(num - 1 + i) % nbPalette.length];
-                g.fillRect(11, by, 26, blockH);
-                g.strokeStyle = '#111827';
-                g.lineWidth = 1.5;
-                g.strokeRect(11, by, 26, blockH);
+
+            let faceY = 18;
+
+            if (num === 7) {
+                // 7 = 무지개 (빨주노초파남보 한 칸에 하나씩 총 7칸)
+                const segH = 4; // 7칸 * 4px = 28px (y: 13 ~ 41)
+                for (let i = 0; i < 7; i++) {
+                    // 아래(0)부터 빨주노초파남보 순서로 적층
+                    const by = 41 - (i + 1) * segH;
+                    g.fillStyle = rainbow7Colors[i];
+                    g.fillRect(13, by, 22, segH);
+                    g.strokeStyle = '#111827';
+                    g.lineWidth = 1;
+                    g.strokeRect(13, by, 22, segH);
+                }
+                faceY = 15;
+            } else if (num === 9) {
+                // 9 = 3단 회색 (위는 진한 회색, 중간은 중간 회색, 아래는 연한 회색 · 3x3 블록 배열)
+                const rowColors = ['#4b5563', '#9ca3af', '#e5e7eb']; // 위(0): 진함, 중간(1): 중간, 아래(2): 연함
+                const cellW = 8;
+                const cellH = 9;
+                const startX = 12;
+                const startY = 14;
+                for (let r = 0; r < 3; r++) {
+                    for (let col = 0; col < 3; col++) {
+                        const bx = startX + col * cellW;
+                        const by = startY + r * cellH;
+                        g.fillStyle = rowColors[r];
+                        g.fillRect(bx, by, cellW, cellH);
+                        g.strokeStyle = '#1f2937';
+                        g.lineWidth = 1.2;
+                        g.strokeRect(bx, by, cellW, cellH);
+                    }
+                }
+                faceY = 16;
+            } else if (num === 10) {
+                // 10 = 흰색 블록 + 바깥 테두리가 빨강
+                const bx = 10, by = 13, bw = 28, bh = 28;
+                g.fillStyle = '#ffffff';
+                g.fillRect(bx, by, bw, bh);
+                // 내부 10칸(2열 x 5행) 격자선
+                g.strokeStyle = '#fca5a5';
+                g.lineWidth = 1;
+                for (let r = 1; r < 5; r++) {
+                    g.beginPath();
+                    g.moveTo(bx, by + r * (bh / 5));
+                    g.lineTo(bx + bw, by + r * (bh / 5));
+                    g.stroke();
+                }
+                g.beginPath();
+                g.moveTo(bx + bw / 2, by);
+                g.lineTo(bx + bw / 2, by + bh);
+                g.stroke();
+                // 바깥 빨간색 굵은 테두리
+                g.strokeStyle = '#ef4444';
+                g.lineWidth = 2.5;
+                g.strokeRect(bx, by, bw, bh);
+                faceY = 16;
+            } else {
+                // 1, 2, 3, 4, 5, 6, 8 = 단색 블록 적층
+                const rows = Math.min(6, num);
+                const blockH = Math.max(4, Math.floor(27 / rows));
+                const baseCol = singleColors[num] || '#ef4444';
+                for (let i = 0; i < rows; i++) {
+                    const by = 41 - (i + 1) * blockH;
+                    g.fillStyle = baseCol;
+                    g.fillRect(12, by, 24, blockH);
+                    g.strokeStyle = '#111827';
+                    g.lineWidth = 1.4;
+                    g.strokeRect(12, by, 24, blockH);
+                }
+                faceY = Math.max(13, 41 - rows * blockH + 2);
             }
-            const faceY = 38 - rows * blockH + 2;
+
+            // 귀여운 눈
             g.fillStyle = '#ffffff';
             g.fillRect(15, faceY, 6, 6);
             g.fillRect(27, faceY, 6, 6);
+            if (num === 10) {
+                // 10은 빨간 별 모양 눈 테두리 포인트
+                g.strokeStyle = '#ef4444';
+                g.lineWidth = 1;
+                g.strokeRect(15, faceY, 6, 6);
+                g.strokeRect(27, faceY, 6, 6);
+            }
             g.fillStyle = '#111827';
             g.fillRect(17, faceY + 2, 3, 3);
             g.fillRect(29, faceY + 2, 3, 3);
+
             // 머리 위 넘버링(Numberling) 숫자 배지
             g.fillStyle = '#111827';
-            g.fillRect(16, 1, 16, 11);
-            g.strokeStyle = '#facc15';
-            g.lineWidth = 1;
-            g.strokeRect(16, 1, 16, 11);
-            g.fillStyle = '#fef08a';
+            g.fillRect(15, 1, 18, 11);
+            g.strokeStyle = num === 10 ? '#ef4444' : '#facc15';
+            g.lineWidth = 1.2;
+            g.strokeRect(15, 1, 18, 11);
+            g.fillStyle = '#ffffff';
             g.font = '900 9px sans-serif';
             g.textAlign = 'center';
             g.fillText(String(num), 24, 10);
+
             tileSprites['nb_val_' + num] = c;
         }
         tileSprites['block_' + BLOCK.NUMBERBLOCK] = tileSprites['nb_val_4'];
@@ -2046,7 +2222,7 @@
             tileSprites['block_' + BLOCK.ELEVATOR] = c;
         }
 
-        // 🪜 에스컬레이터 (Escalator)
+        // 🪜 에스컬레이터 (Escalator - 기본 오른쪽 방향, 렌더링 시 선택 방향으로 회전)
         {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
@@ -2054,15 +2230,19 @@
             g.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
             for (let i = 0; i < 5; i++) {
                 g.fillStyle = i % 2 === 0 ? '#fb923c' : '#f97316';
-                g.fillRect(6 + i * 4, 34 - i * 7, 22, 6);
+                g.fillRect(6 + i * 7, 10, 5, TILE_SIZE - 20);
             }
+            g.fillStyle = '#fde047';
+            g.font = '900 12px sans-serif';
+            g.textAlign = 'center';
+            g.fillText('▶', 24, 28);
             g.strokeStyle = '#fdba74';
             g.lineWidth = 2;
             g.strokeRect(3, 3, TILE_SIZE - 6, TILE_SIZE - 6);
             tileSprites['block_' + BLOCK.ESCALATOR] = c;
         }
 
-        // ⏩ 무빙워크 (Moving Walk)
+        // ⏩ 무빙워크 (Moving Walk - 기본 오른쪽 방향, 렌더링 시 선택 방향으로 회전)
         {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
@@ -2160,8 +2340,8 @@
             crackSprites.push(c);
         }
 
-        // Pickaxe Icons
-        PICKAXE_TIERS.forEach(tier => {
+        // Pickaxe Icons (0~4 기본 곡괭이 + 5 이상 써클 곡괭이 공통 아이콘)
+        BASE_PICKAXE_TIERS.forEach(tier => {
             const c = createOffscreenCanvas(40, 40);
             const g = c.getContext('2d');
             g.strokeStyle = '#92400e';
@@ -2178,8 +2358,32 @@
             g.stroke();
             iconSprites['pickaxe_' + tier.level] = c;
         });
-    }
 
+        // ⭕ 써클 곡괭이 전용 아이콘 (5티어 이상)
+        {
+            const c = createOffscreenCanvas(40, 40);
+            const g = c.getContext('2d');
+            g.strokeStyle = '#facc15';
+            g.lineWidth = 5;
+            g.lineCap = 'round';
+            g.beginPath();
+            g.moveTo(8, 32);
+            g.lineTo(28, 12);
+            g.stroke();
+            g.strokeStyle = '#ec4899';
+            g.lineWidth = 6.5;
+            g.beginPath();
+            g.arc(22, 18, 12, -Math.PI * 0.65, Math.PI * 0.15);
+            g.stroke();
+            g.strokeStyle = '#fef08a';
+            g.lineWidth = 2;
+            g.beginPath();
+            g.arc(24, 16, 5, 0, Math.PI * 2);
+            g.stroke();
+            iconSprites['pickaxe_circle'] = c;
+        }
+    }
+        
     // ==================== 4. 1,000 x 1,000 DETERMINISTIC MULTI-BIOME WORLD ENGINE ====================
     // Rather than sending 1,000,000 tiles over WebRTC, every client computes any (tx, ty) deterministically
     // from GLOBAL_WORLD_SEED and caches it in a 1MB Uint8Array, while only modified tiles live in `worldDeltas`.
@@ -3757,14 +3961,9 @@
                 mathFlowState.microGoalProgress = 0;
                 unlockBadge('micro_champ');
                 if (activeGoal.id === 'speed') {
-                    resources.diamond += 4;
+                    resources.diamond += 6;
                     mathFlowState.buffRemainingSec = 60;
-                    if (localPlayer.pickaxeTier < 5 && g.totalSolved >= 6) {
-                        localPlayer.pickaxeTier = 5;
-                        microGoalCompleteMsg = ' 🌟 [초단기 미션 달성!] ✨덧셈 마스터 곡괭이 획득!';
-                    } else {
-                        microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 4개 + 60초 광속 버프!';
-                    }
+                    microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 6개 + 60초 광속 버프!';
                 } else if (activeGoal.id === 'rainbow') {
                     blockInventory.rainbowBlock += 15;
                     resources.wood += 6;
@@ -4520,7 +4719,7 @@
             ic.imageSmoothingEnabled = false;
 
             if (slotDef.type === 'tool') {
-                const pickSprite = iconSprites['pickaxe_' + localPlayer.pickaxeTier];
+                const pickSprite = iconSprites['pickaxe_' + localPlayer.pickaxeTier] || iconSprites['pickaxe_circle'];
                 if (pickSprite) ic.drawImage(pickSprite, 0, 0, 36, 36);
             } else {
                 const bSprite = tileSprites['block_' + slotDef.blockId];
@@ -4561,14 +4760,19 @@
         const list = document.getElementById('craftRecipeList');
         list.innerHTML = '';
 
-        CRAFT_RECIPES.forEach(recipe => {
+        // ★ 곡괭이는 건너뛰기 없이 '현재 티어의 바로 다음 단계' 1개만 맨 위에 표시 + 나머지 일반 제작 아이템 표시
+        const nextPickRecipe = getNextPickaxeUpgradeRecipe();
+        const itemRecipes = CRAFT_RECIPES.filter(r => r.type !== 'pickaxe');
+        const displayList = [nextPickRecipe, ...itemRecipes];
+
+        displayList.forEach(recipe => {
             const affordable = canAffordCost(recipe.cost);
-            const alreadyOwnedPick = recipe.type === 'pickaxe' && localPlayer.pickaxeTier >= recipe.tier;
+            const isPickUpgrade = recipe.type === 'pickaxe';
 
             const card = document.createElement('div');
             card.className = `p-3 rounded-lg border flex flex-col justify-between gap-2 ${
-                alreadyOwnedPick
-                    ? 'bg-gray-900/50 border-gray-800 opacity-60'
+                isPickUpgrade
+                    ? 'sm:col-span-2 bg-gradient-to-r from-amber-950/80 via-gray-900 to-pink-950/80 border-2 border-amber-400 shadow-lg'
                     : affordable
                     ? 'bg-gray-900/95 border-emerald-500/60'
                     : 'bg-gray-900/80 border-gray-700'
@@ -4580,21 +4784,25 @@
                 return `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold ${ok ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-red-950 text-red-300 border border-red-800'}">${RESOURCE_LABELS[k]} ${have}/${req}</span>`;
             }).join(' ');
 
+            const curPickName = PICKAXE_TIERS[localPlayer.pickaxeTier].name;
+
             card.innerHTML = `
                 <div>
-                    <div class="font-black text-sm text-white flex items-center justify-between">
+                    <div class="font-black text-sm text-white flex items-center justify-between gap-2">
                         <span>${recipe.name}</span>
-                        ${alreadyOwnedPick ? '<span class="text-[10px] text-emerald-400">보유 완료</span>' : ''}
+                        ${isPickUpgrade ? `<span class="text-[11px] text-amber-300 font-bold">현재: ${curPickName}</span>` : ''}
                     </div>
-                    <div class="text-[11px] text-gray-400 mt-0.5">${recipe.desc}</div>
+                    <div class="text-[11px] text-gray-300 mt-0.5">${recipe.desc}</div>
                     <div class="flex flex-wrap gap-1 mt-2">${costBadges}</div>
                 </div>
             `;
 
             const btn = document.createElement('button');
-            btn.className = `mc-btn w-full py-1.5 text-xs ${affordable && !alreadyOwnedPick ? 'mc-btn-green' : 'opacity-50 cursor-not-allowed'}`;
-            btn.textContent = alreadyOwnedPick ? '업그레이드 완료' : affordable ? '⚒️ 제작하기' : '재료 부족';
-            btn.disabled = !affordable || alreadyOwnedPick;
+            btn.className = `mc-btn w-full py-1.5 text-xs ${affordable ? (isPickUpgrade ? 'mc-btn-amber' : 'mc-btn-green') : 'opacity-50 cursor-not-allowed'}`;
+            btn.textContent = affordable
+                ? (isPickUpgrade ? `⬆️ 다음 단계 곡괭이로 업그레이드!` : '⚒️ 제작하기')
+                : '재료 부족';
+            btn.disabled = !affordable;
             btn.onclick = () => executeCraft(recipe);
 
             card.appendChild(btn);
@@ -4604,7 +4812,8 @@
 
     function executeCraft(recipe) {
         if (!canAffordCost(recipe.cost)) return;
-        if (recipe.type === 'pickaxe' && localPlayer.pickaxeTier >= recipe.tier) return;
+        // 곡괭이는 반드시 순차적(현재 티어 + 1)으로만 업그레이드 가능
+        if (recipe.type === 'pickaxe' && recipe.tier !== localPlayer.pickaxeTier + 1) return;
 
         Object.entries(recipe.cost).forEach(([k, req]) => {
             resources[k] -= req;
@@ -4612,8 +4821,9 @@
 
         if (recipe.type === 'pickaxe') {
             localPlayer.pickaxeTier = recipe.tier;
-            showToast(`🎉 [${PICKAXE_TIERS[recipe.tier].name}] 업그레이드 완료!`, 'amber');
-            spawnFloatingText(localPlayer.x, localPlayer.y - 20, `${PICKAXE_TIERS[recipe.tier].name}!`, '#facc15');
+            const newPick = PICKAXE_TIERS[recipe.tier];
+            showToast(`🎉 [${newPick.name}] 업그레이드 완료! (속도 x${newPick.speed})`, 'amber');
+            spawnFloatingText(localPlayer.x, localPlayer.y - 20, `${newPick.name}!`, '#facc15');
         } else if (recipe.type === 'item') {
             blockInventory[recipe.itemKey] = (blockInventory[recipe.itemKey] || 0) + recipe.amount;
             showToast(`⚒️ ${recipe.name} 제작 완료!`, 'emerald');
@@ -4810,6 +5020,114 @@
         }
     }
 
+    // 타일별(tx, ty) 무빙워크·에스컬레이터 설치 방향 저장 맵 ('up' | 'down' | 'left' | 'right')
+    const blockDirMap = new Map();
+    let pendingDirPlacement = null; // { tx, ty, slotDef }
+
+    function openDirectionSelectModal(tx, ty, slotDef) {
+        pendingDirPlacement = { tx, ty, slotDef };
+        isLeftMouseDown = false;
+        isRightMouseDown = false;
+
+        let modal = document.getElementById('directionSelectModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'directionSelectModal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4';
+            modal.innerHTML = `
+                <div class="mc-panel max-w-sm w-full p-5 text-center border-2 border-cyan-400">
+                    <h3 id="dirModalTitle" class="text-base sm:text-lg font-black text-cyan-300 mb-1">
+                        🧭 설치 방향 선택
+                    </h3>
+                    <p id="dirModalDesc" class="text-xs text-gray-300 mb-4">
+                        어느 방향으로 작동하도록 건설할까요?
+                    </p>
+                    <div class="grid grid-cols-3 gap-2 max-w-[220px] mx-auto mb-4">
+                        <div></div>
+                        <button type="button" data-bdir="up" class="dir-choice-btn mc-btn mc-btn-blue py-3 text-sm font-black flex flex-col items-center">
+                            <span class="text-xl">⬆️</span><span class="text-[11px] mt-0.5">위쪽</span>
+                        </button>
+                        <div></div>
+                        <button type="button" data-bdir="left" class="dir-choice-btn mc-btn mc-btn-blue py-3 text-sm font-black flex flex-col items-center">
+                            <span class="text-xl">⬅️</span><span class="text-[11px] mt-0.5">왼쪽</span>
+                        </button>
+                        <div class="flex items-center justify-center text-xs text-gray-400 font-bold border border-gray-700 rounded bg-gray-900/80">
+                            방향
+                        </div>
+                        <button type="button" data-bdir="right" class="dir-choice-btn mc-btn mc-btn-blue py-3 text-sm font-black flex flex-col items-center">
+                            <span class="text-xl">➡️</span><span class="text-[11px] mt-0.5">오른쪽</span>
+                        </button>
+                        <div></div>
+                        <button type="button" data-bdir="down" class="dir-choice-btn mc-btn mc-btn-blue py-3 text-sm font-black flex flex-col items-center">
+                            <span class="text-xl">⬇️</span><span class="text-[11px] mt-0.5">아래쪽</span>
+                        </button>
+                        <div></div>
+                    </div>
+                    <button type="button" id="btnCancelDirSelect" class="mc-btn px-4 py-1.5 text-xs text-gray-300">
+                        취소 (ESC)
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelectorAll('.dir-choice-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const chosenDir = btn.getAttribute('data-bdir');
+                    confirmDirectionPlacement(chosenDir);
+                });
+            });
+            modal.querySelector('#btnCancelDirSelect').addEventListener('click', () => {
+                pendingDirPlacement = null;
+                modal.classList.add('hidden');
+            });
+        }
+
+        const isEscalator = slotDef.blockId === BLOCK.ESCALATOR;
+        document.getElementById('dirModalTitle').textContent = isEscalator
+            ? '🪜 에스컬레이터 건설 방향 선택'
+            : '⏩ 무빙워크 건설 방향 선택';
+        document.getElementById('dirModalDesc').textContent =
+            `위치 (X:${tx}, Y:${ty})에 어느 방향으로 이동하는 설비를 지을까요?`;
+
+        modal.classList.remove('hidden');
+    }
+
+    function confirmDirectionPlacement(dir) {
+        const modal = document.getElementById('directionSelectModal');
+        if (modal) modal.classList.add('hidden');
+        if (!pendingDirPlacement) return;
+
+        const { tx, ty, slotDef } = pendingDirPlacement;
+        pendingDirPlacement = null;
+
+        const itemKey = slotDef.key;
+        if ((blockInventory[itemKey] || 0) <= 0) return;
+        if (getBlockAt(tx, ty) !== BLOCK.AIR) return;
+
+        const targetBlockInfo = BLOCK_INFO[slotDef.blockId];
+        const wx = tx * TILE_SIZE + 24;
+        const wy = ty * TILE_SIZE + 24;
+
+        blockDirMap.set(idx(tx, ty), dir);
+        applyWorldModification(tx, ty, undefined, slotDef.blockId, true);
+        blockInventory[itemKey]--;
+        sfx.playPlace();
+        spawnParticles(wx, wy, targetBlockInfo?.particleColor || '#2dd4bf', 10);
+
+        const dirLabel = { up: '⬆️위쪽', down: '⬇️아래쪽', left: '⬅️왼쪽', right: '➡️오른쪽' }[dir] || '➡️오른쪽';
+        showToast(`⚒️ [${slotDef.name.split(' ')[0]}] (${dirLabel} 방향) 설치 완료!`, 'emerald');
+
+        updateResourceUI();
+        sendGlobalPacket({
+            type: 'WORLD_MOD',
+            tx,
+            ty,
+            blockId: slotDef.blockId,
+            dir: dir,
+            effectColor: targetBlockInfo?.particleColor
+        });
+    }
+
     function tryInteractOrPlaceBlock(tx, ty) {
         if (!isTargetInRange(tx, ty)) {
             showToast('사거리가 멉니다! 가까이 이동해서 설치하세요.', 'amber');
@@ -4880,6 +5198,12 @@
                 showToast('내 캐릭터가 서 있는 위치에는 벽 블록을 놓을 수 없습니다!', 'amber');
                 return;
             }
+        }
+
+        // ★ 무빙워크 또는 에스컬레이터 건설 시 방향 선택 팝업 띄우기!
+        if (slotDef.blockId === BLOCK.MOVING_WALK || slotDef.blockId === BLOCK.ESCALATOR) {
+            openDirectionSelectModal(tx, ty, slotDef);
+            return;
         }
 
         applyWorldModification(tx, ty, undefined, slotDef.blockId, true);
@@ -4958,17 +5282,21 @@
         const currentFloor = getFloorAt(ptx, pty);
         const currentBlock = getBlockAt(ptx, pty);
 
-        // ⏩ 무빙워크 & 🪜 에스컬레이터 효과 적용
+        // ⏩ 무빙워크 & 🪜 에스컬레이터: 건설 시 선택한 방향으로 자동 수송 적용
         let speed = currentFloor === FLOOR.ICE ? 275 : 215;
-        if (currentBlock === BLOCK.MOVING_WALK) {
-            speed *= 1.9;
-            if (dx === 0 && dy === 0) {
-                dx = Math.cos(localPlayer.angle || 0) * 0.85;
-                dy = Math.sin(localPlayer.angle || 0) * 0.85;
-            }
-        } else if (currentBlock === BLOCK.ESCALATOR) {
-            dx += 0.75;
-            dy -= 0.75;
+        if (currentBlock === BLOCK.MOVING_WALK || currentBlock === BLOCK.ESCALATOR) {
+            const bDir = blockDirMap.get(idx(ptx, pty)) || 'right';
+            const dirVec = {
+                up:    [0, -1],
+                down:  [0, 1],
+                left:  [-1, 0],
+                right: [1, 0]
+            }[bDir] || [1, 0];
+
+            const pushPower = currentBlock === BLOCK.MOVING_WALK ? 1.15 : 0.95;
+            dx += dirVec[0] * pushPower;
+            dy += dirVec[1] * pushPower;
+            speed *= currentBlock === BLOCK.MOVING_WALK ? 1.45 : 1.25;
         }
 
         // 🛗 엘리베이터 탑승 시 근처 다른 엘리베이터(또는 8타일 상/하층)로 순간 이동
@@ -5446,7 +5774,19 @@
                 }
 
                 const bSprite = tileSprites['block_' + b];
-                if (bSprite) ctx.drawImage(bSprite, wx, wy);
+                if (bSprite) {
+                    if (b === BLOCK.MOVING_WALK || b === BLOCK.ESCALATOR) {
+                        const bDir = blockDirMap.get(idx(tx, ty)) || 'right';
+                        const rotAngle = bDir === 'up' ? -Math.PI / 2 : bDir === 'down' ? Math.PI / 2 : bDir === 'left' ? Math.PI : 0;
+                        ctx.save();
+                        ctx.translate(wx + 24, wy + 24);
+                        ctx.rotate(rotAngle);
+                        ctx.drawImage(bSprite, -24, -24);
+                        ctx.restore();
+                    } else {
+                        ctx.drawImage(bSprite, wx, wy);
+                    }
+                }
 
                 if (b === BLOCK.TORCH || b === BLOCK.GOLD_BLOCK || b === BLOCK.RAINBOW_BLOCK ||
                     b === BLOCK.NUMBER_HOUSE || b === BLOCK.ELEVATOR) {
