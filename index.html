@@ -981,9 +981,9 @@
         [BLOCK.DOOR_OPEN]:     { name: '열린 나무 문 (통과 가능 · 우클릭 시 닫힘)', hp: 65, solid: false, minTier: 0, dropType: 'item', dropKey: 'door', dropCount: 1, dropLabel: '나무 문', sfx: 'wood', minColor: '#92400e', particleColor: '#b45309' },
         [BLOCK.GOLD_BLOCK]:    { name: '황금 보물 블록', hp: 150, solid: true, minTier: 0, light: 120, dropType: 'item', dropKey: 'goldBlock', dropCount: 1, dropLabel: '황금 블록', sfx: 'ore', minColor: '#facc15', particleColor: '#fde08a' },
         [BLOCK.RAINBOW_BLOCK]: { name: '🌈 무지개 덧셈 마스터 블록', hp: 90, solid: true, minTier: 0, light: 190, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 1, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ec4899', particleColor: '#f472b6' },
-        [BLOCK.NUMBERBLOCK]:   { name: '🔢 넘버블록스 캐릭터 (만나면 합체! 채굴 시 무지개블록)', hp: 80, solid: true, minTier: 0, light: 160, dropType: 'item', dropKey: 'rainbowBlock', dropCount: 2, dropLabel: '무지개 블록', sfx: 'ore', minColor: '#ef4444', particleColor: '#facc15' },
-        [BLOCK.NUMBERBLOB]:    { name: '🟣 넘버블롭스 (채굴 시 다이아몬드 획득)', hp: 65, solid: true, minTier: 0, light: 140, dropType: 'res', dropKey: 'diamond', dropCount: 2, dropLabel: '다이아몬드', sfx: 'ore', minColor: '#c084fc', particleColor: '#e879f9' },
-        [BLOCK.NUMBER_HOUSE]:  { name: '🏠 넘버블록스 하우스 (채굴 시 황금보물블록 획득)', hp: 130, solid: true, minTier: 0, light: 180, dropType: 'item', dropKey: 'goldBlock', dropCount: 2, dropLabel: '황금 블록', sfx: 'wood', minColor: '#38bdf8', particleColor: '#fef08a' },
+        [BLOCK.NUMBERBLOCK]:   { name: '🔢 넘버블록스 캐릭터 (가까이 가거나 클릭하면 숫자만큼 즉시 습득!)', hp: 1, solid: false, minTier: 0, light: 160, sfx: 'ore', minColor: '#ef4444', particleColor: '#facc15' },
+        [BLOCK.NUMBERBLOB]:    { name: '🔴 넘버블롭스 (가까이 가거나 클릭하면 즉시 습득!)', hp: 1, solid: false, minTier: 0, light: 140, sfx: 'ore', minColor: '#ef4444', particleColor: '#fca5a5' },
+        [BLOCK.NUMBER_HOUSE]:  { name: '빈 공간', hp: 0, solid: false, minTier: 0 },
         [BLOCK.ELEVATOR]:      { name: '🛗 엘리베이터 (올라서면 근처 엘리베이터/상하층으로 순간 이동!)', hp: 95, solid: false, minTier: 0, light: 150, dropType: 'item', dropKey: 'elevator', dropCount: 1, dropLabel: '엘리베이터', sfx: 'ore', minColor: '#38bdf8', particleColor: '#bae6fd' },
         [BLOCK.ESCALATOR]:     { name: '🪜 에스컬레이터 (올라서면 대각선 위쪽으로 자동 이동!)', hp: 85, solid: false, minTier: 0, dropType: 'item', dropKey: 'escalator', dropCount: 1, dropLabel: '에스컬레이터', sfx: 'stone', minColor: '#fb923c', particleColor: '#fed7aa' },
         [BLOCK.MOVING_WALK]:   { name: '⏩ 무빙워크 (올라서면 바라보는 방향으로 초고속 주행!)', hp: 80, solid: false, minTier: 0, dropType: 'item', dropKey: 'movingWalk', dropCount: 1, dropLabel: '무빙워크', sfx: 'stone', minColor: '#2dd4bf', particleColor: '#99f6e4' },
@@ -1232,7 +1232,9 @@
         diamond: '💎다이아',
         obsidian: '🟪흑요석',
         sand: '🏖️모래',
-        circle: '⭕써클'
+        circle: '⭕써클',
+        numberblock: '🔢넘버블록',
+        numberblob: '🔴넘버블롭'
     };
 
     // ==================== 2-B. ADDITION MOB (MONSTER) DEFINITIONS & HP STATE ====================
@@ -1428,9 +1430,9 @@
         (v) => `넘버블록스 랜드에 온 걸 환영해!`
     ];
     const BLOB_SPEECH_LINES = [
-        '블롭블롭~ 반가워! 🟣',
+        '블롭블롭~ 반가워! 🔴',
         '노래 부르며 더하기 해요 ♪',
-        '동글동글 넘버블롭스~ ✨',
+        '동글동글 빨간 넘버블롭스~ ✨',
         '오늘도 신나는 숫자 탐험!'
     ];
 
@@ -1456,6 +1458,52 @@
             nbMetaMap.set(key, meta);
         }
         return meta;
+    }
+
+    // ★ 넘버블록스(해당 숫자만큼 누적) 및 넘버블롭스 즉시 습득 함수
+    function pickupNumberEntityAt(tx, ty) {
+        if (!inBounds(tx, ty)) return false;
+        const b = getBlockAt(tx, ty);
+        if (b !== BLOCK.NUMBERBLOCK && b !== BLOCK.NUMBERBLOB) return false;
+
+        const key = idx(tx, ty);
+        const wx = tx * TILE_SIZE + 24;
+        const wy = ty * TILE_SIZE + 24;
+
+        if (b === BLOCK.NUMBERBLOCK) {
+            const meta = ensureNbMeta(tx, ty, BLOCK.NUMBERBLOCK);
+            const gainVal = meta.val || 1;
+            resources.numberblock = (resources.numberblock || 0) + gainVal;
+
+            nbMetaMap.delete(key);
+            applyWorldModification(tx, ty, undefined, BLOCK.AIR, true);
+
+            sfx.playMathSuccess();
+            spawnParticles(wx, wy, '#facc15', 16);
+            spawnParticles(wx, wy, '#f472b6', 12);
+            spawnFloatingText(wx, wy - 14, `🔢 넘버블록 +${gainVal} 습득! (누적: ${resources.numberblock})`, '#fde047');
+            showToast(`🔢 숫자 [${gainVal}] 넘버블록 습득! (현재 총 ${resources.numberblock} 습득)`, 'emerald');
+        } else {
+            resources.numberblob = (resources.numberblob || 0) + 1;
+
+            nbMetaMap.delete(key);
+            applyWorldModification(tx, ty, undefined, BLOCK.AIR, true);
+
+            sfx.playCraft();
+            spawnParticles(wx, wy, '#ef4444', 16);
+            spawnFloatingText(wx, wy - 14, `🔴 넘버블롭 +1 습득! (누적: ${resources.numberblob})`, '#fca5a5');
+            showToast(`🔴 빨간 넘버블롭 습득! (현재 총 ${resources.numberblob}개)`, 'amber');
+        }
+
+        updateResourceUI();
+        sendGlobalPacket({
+            type: 'WORLD_MOD',
+            tx,
+            ty,
+            blockId: BLOCK.AIR,
+            effectColor: b === BLOCK.NUMBERBLOCK ? '#facc15' : '#ef4444'
+        });
+        return true;
     }
 
     let nbRoamTickAccum = 0;
@@ -2134,7 +2182,7 @@
         }
         tileSprites['block_' + BLOCK.NUMBERBLOCK] = tileSprites['nb_val_4'];
 
-        // 🟣 넘버블롭스 (Numberblobs 귀여운 동글이 캐릭터)
+        // 🔴 넘버블롭스 (빨간색 동글이 캐릭터)
         {
             const c = createOffscreenCanvas();
             const g = c.getContext('2d');
@@ -2142,13 +2190,20 @@
             g.beginPath();
             g.ellipse(24, 39, 15, 5, 0, 0, Math.PI * 2);
             g.fill();
-            g.fillStyle = '#c084fc';
+            // 빨간색 본체
+            g.fillStyle = '#ef4444';
             g.beginPath();
             g.arc(24, 26, 15, 0, Math.PI * 2);
             g.fill();
             g.lineWidth = 2;
-            g.strokeStyle = '#581c87';
+            g.strokeStyle = '#991b1b';
             g.stroke();
+            // 상단 입체 하이라이트
+            g.fillStyle = '#f87171';
+            g.beginPath();
+            g.arc(20, 18, 5, 0, Math.PI * 2);
+            g.fill();
+            // 눈과 볼터치
             g.fillStyle = '#ffffff';
             g.beginPath();
             g.arc(19, 23, 4, 0, Math.PI * 2);
@@ -2159,7 +2214,7 @@
             g.arc(19, 23, 2, 0, Math.PI * 2);
             g.arc(29, 23, 2, 0, Math.PI * 2);
             g.fill();
-            g.fillStyle = '#f472b6';
+            g.fillStyle = '#fecaca';
             g.fillRect(13, 27, 4, 2);
             g.fillRect(31, 27, 4, 2);
             tileSprites['block_' + BLOCK.NUMBERBLOB] = c;
@@ -2432,6 +2487,136 @@
         return '🌲 푸른 숲과 평원';
     }
 
+    // 🏢 넘버블록스 바이옴 중앙 광장(820, 160) 초대형 복합 빌딩 설계 함수 (33x33 규모)
+    function getNumberblocksMegaBuildingTile(x, y) {
+        // 빌딩 외부 산책로 테두리 (X: 802~838, Y: 142~178)
+        if (x < 802 || x > 838 || y < 142 || y > 178) return null;
+        if (x < 804 || x > 836 || y < 144 || y > 176) {
+            return { floor: FLOOR.NUMBER_LAND, block: BLOCK.AIR };
+        }
+
+        const k = idx(x, y);
+
+        // 1) 바깥 외벽 (X = 804 또는 836, Y = 144 또는 176)
+        if (x === 804 || x === 836 || y === 144 || y === 176) {
+            // 남·북 중앙 정문 (스마트 자동문 3칸)
+            if ((y === 176 || y === 144) && x >= 819 && x <= 821) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.AUTO_DOOR };
+            }
+            // 서·동 측문 (밀어서 여는 나무 문 3칸)
+            if ((x === 804 || x === 836) && y >= 159 && y <= 161) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.DOOR_CLOSED };
+            }
+            // 네 모서리 및 4칸 간격 무지개 기둥
+            if ((x === 804 || x === 836) && (y === 144 || y === 176)) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.RAINBOW_BLOCK };
+            }
+            if ((x - 804) % 4 === 0 && (y - 144) % 4 === 0) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.RAINBOW_BLOCK };
+            }
+            // 채광용 통유리창
+            if ((x - 804) % 2 === 1 || (y - 144) % 2 === 1) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.GLASS };
+            }
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.STONE_BRICKS };
+        }
+
+        // 2) 건물 내부 층간/구역 격벽 (Y = 153 상층 홀, Y = 167 하층 홀)
+        if (y === 153 || y === 167) {
+            // 중앙 통로 자동문 & 좌우 에스컬레이터/무빙워크 통로 개방
+            if (x >= 819 && x <= 821) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.AUTO_DOOR };
+            }
+            if (x === 814 || x === 815 || x === 825 || x === 826) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.AIR };
+            }
+            if (x === 809 || x === 831) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.DOOR_CLOSED };
+            }
+            if (x % 3 === 0) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.GLASS };
+            }
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.STONE_BRICKS };
+        }
+
+        // 3) 좌·우 윙(Wing) 내부 격벽 (X = 812, X = 828)
+        if ((x === 812 || x === 828) && y > 153 && y < 167) {
+            if (y >= 159 && y <= 161) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.AUTO_DOOR };
+            }
+            if (y === 156 || y === 164) {
+                return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.DOOR_CLOSED };
+            }
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.GLASS };
+        }
+
+        // 4) 🛗 엘리베이터 타워 (4대 코너 홀 + 중앙 스카이 로비)
+        if ((x === 807 && y === 147) || (x === 833 && y === 147) ||
+            (x === 807 && y === 173) || (x === 833 && y === 173) ||
+            (x === 820 && y === 147)) {
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.ELEVATOR };
+        }
+
+        // 5) 🪜 에스컬레이터 라인 (서쪽: 위쪽 방향 ▲ / 동쪽: 아래쪽 방향 ▼)
+        if (x === 814 && y >= 151 && y <= 156) {
+            blockDirMap.set(k, 'up');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.ESCALATOR };
+        }
+        if (x === 826 && y >= 151 && y <= 156) {
+            blockDirMap.set(k, 'down');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.ESCALATOR };
+        }
+        if (x === 814 && y >= 164 && y <= 169) {
+            blockDirMap.set(k, 'up');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.ESCALATOR };
+        }
+        if (x === 826 && y >= 164 && y <= 169) {
+            blockDirMap.set(k, 'down');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.ESCALATOR };
+        }
+
+        // 6) ⏩ 무빙워크 고속 트랙 (남북 및 동서 방향 양방향 라인)
+        if (x === 819 && y >= 168 && y <= 174) {
+            blockDirMap.set(k, 'up');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+        if (x === 821 && y >= 168 && y <= 174) {
+            blockDirMap.set(k, 'down');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+        if (y === 159 && x >= 806 && x <= 811) {
+            blockDirMap.set(k, 'right');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+        if (y === 161 && x >= 806 && x <= 811) {
+            blockDirMap.set(k, 'left');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+        if (y === 159 && x >= 829 && x <= 834) {
+            blockDirMap.set(k, 'left');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+        if (y === 161 && x >= 829 && x <= 834) {
+            blockDirMap.set(k, 'right');
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.MOVING_WALK };
+        }
+
+        // 7) 💡 스마트 센서등 (복도 및 로비 주요 지점마다 자동 점등)
+        if ((x === 817 || x === 823) && (y === 149 || y === 157 || y === 163 || y === 171)) {
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.SENSOR_LIGHT };
+        }
+        if ((x === 808 || x === 832) && (y === 150 || y === 160 || y === 170)) {
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.SENSOR_LIGHT };
+        }
+
+        // 8) 중앙 로비 황금/무지개 장식 기둥
+        if ((x === 817 || x === 823) && (y === 158 || y === 162)) {
+            return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.GOLD_BLOCK };
+        }
+
+        return { floor: FLOOR.PLAZA_FLOOR, block: BLOCK.AIR };
+    }
+
     // Generate a 10x10 chunk on demand in microseconds (including Numberblocks Biome!)
     function ensureChunkGenerated(cx, cy) {
         if (cx < 0 || cy < 0 || cx >= 100 || cy >= 100) return;
@@ -2453,14 +2638,12 @@
                 }
 
                 const distSpawn = Math.hypot(x - SPAWN_X, y - SPAWN_Y);
-                // 1. Central Spawn Plaza (500, 500)
+                // 1. Central Spawn Plaza (500, 500) - 작업대(CRAFT_TABLE) 제거 완료
                 if (distSpawn < 8.5) {
                     world.floors[i] = FLOOR.PLAZA_FLOOR;
                     world.blocks[i] = BLOCK.AIR;
                     if ((x === SPAWN_X - 3 || x === SPAWN_X + 3) && (y === SPAWN_Y - 3 || y === SPAWN_Y + 3)) {
                         world.blocks[i] = BLOCK.TORCH;
-                    } else if (x === SPAWN_X + 2 && y === SPAWN_Y) {
-                        world.blocks[i] = BLOCK.CRAFT_TABLE;
                     } else if (x === SPAWN_X - 2 && y === SPAWN_Y) {
                         world.blocks[i] = BLOCK.GOLD_BLOCK;
                     } else if ((x === SPAWN_X && y === SPAWN_Y - 4) || (x === SPAWN_X && y === SPAWN_Y + 4) ||
@@ -2481,17 +2664,20 @@
 
                 // 🔢 Biome 0: NE Numberblocks Land (x > 660, y < 300)
                 if (isNumberblocksBiomeAt(x, y)) {
-                    world.floors[i] = FLOOR.NUMBER_LAND;
-                    // 랜드마크 중심부(820, 160)는 광장처럼 비워둠
-                    if (Math.hypot(x - 820, y - 160) < 5) {
-                        world.blocks[i] = (x === 820 && y === 157) ? BLOCK.NUMBER_HOUSE : BLOCK.AIR;
+                    // 중앙 광장(820, 160) 거대 복합 건축물 우선 배치
+                    const megaTile = getNumberblocksMegaBuildingTile(x, y);
+                    if (megaTile) {
+                        world.floors[i] = megaTile.floor;
+                        world.blocks[i] = megaTile.block;
                         continue;
                     }
+
+                    world.floors[i] = FLOOR.NUMBER_LAND;
+                    // ★ 넘버블록스 집(NUMBER_HOUSE) 완전 제거 & 넘버블롭스(NUMBERBLOB) 확률을 기존(0.05)의 1/10인 0.005로 축소
                     if (detail < 0.04) world.blocks[i] = BLOCK.MAGIC_CRYSTAL;
                     else if (detail < 0.095) world.blocks[i] = BLOCK.NUMBERBLOCK;
-                    else if (detail < 0.145) world.blocks[i] = BLOCK.NUMBERBLOB;
-                    else if (detail < 0.17) world.blocks[i] = BLOCK.NUMBER_HOUSE;
-                    else if (detail < 0.19) world.blocks[i] = BLOCK.RAINBOW_BLOCK;
+                    else if (detail < 0.100) world.blocks[i] = BLOCK.NUMBERBLOB;
+                    else if (detail < 0.120) world.blocks[i] = BLOCK.RAINBOW_BLOCK;
                     else world.blocks[i] = BLOCK.AIR;
                     continue;
                 }
@@ -2680,7 +2866,9 @@
         diamond: 0,
         obsidian: 0,
         sand: 2,
-        circle: 0
+        circle: 0,
+        numberblock: 0,
+        numberblob: 0
     };
 
     const blockInventory = {
@@ -2747,9 +2935,9 @@
     const MICRO_GOAL_TYPES = {
         speed: {
             id: 'speed',
-            title: '덧셈 마법 3번 성공 → 💎다이아x4 + ⚡광속버프',
+            title: '덧셈 마법 3번 성공 → 💎다이아x6 + 🥇황금x2',
             target: 3,
-            rewardDesc: '다이아몬드 4개 + 45초 번개 채굴 2.5배 버프'
+            rewardDesc: '다이아몬드 6개 + 황금 2개'
         },
         rainbow: {
             id: 'rainbow',
@@ -3940,9 +4128,6 @@
                     resources.gold = (resources.gold || 0) + bState.dropGold;
                     blockInventory.rainbowBlock = (blockInventory.rainbowBlock || 0) + 5;
 
-                    mathFlowState.buffRemainingSec = Math.min(90, mathFlowState.buffRemainingSec + 35);
-                    mathFlowState.buffMaxSec = Math.max(45, mathFlowState.buffRemainingSec);
-
                     mobBattleMsg = ` 🎉 [몬스터 처치!] ${bState.icon} ${bState.name}을(를) 물리치고 ⭕써클 ${circleGain}개, 💎다이아 ${totalDia}개, 🥇금 ${bState.dropGold}개를 획득했어요!`;
                 } else {
                     resources.gold = (resources.gold || 0) + 1;
@@ -3958,8 +4143,8 @@
                 unlockBadge('micro_champ');
                 if (activeGoal.id === 'speed') {
                     resources.diamond += 6;
-                    mathFlowState.buffRemainingSec = 60;
-                    microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 6개 + 60초 광속 버프!';
+                    resources.gold += 2;
+                    microGoalCompleteMsg = ' 🌟 [초단기 미션 완수!] 보너스 다이아 6개 + 황금 2개 획득!';
                 } else if (activeGoal.id === 'rainbow') {
                     blockInventory.rainbowBlock += 15;
                     resources.wood += 6;
@@ -4880,7 +5065,6 @@
         return distTiles <= REACH_TILES;
     }
 
-    // [교체 5-B] updateMining 메서드 (manual_only 설정 시 강제 모달 오픈 방지)
     function updateMining(dt, targetTx, targetTy) {
         if (!isTargetInRange(targetTx, targetTy)) {
             resetMiningState();
@@ -4889,6 +5073,15 @@
 
         const blockId = getBlockAt(targetTx, targetTy);
         const floorId = getFloorAt(targetTx, targetTy);
+
+        // 🔢 넘버블록스 또는 🔴 넘버블롭스 클릭 시 채굴이 아닌 즉시 아이템 습득!
+        if (blockId === BLOCK.NUMBERBLOCK || blockId === BLOCK.NUMBERBLOB) {
+            resetMiningState();
+            isLeftMouseDown = false;
+            touchDirs.mine = false;
+            pickupNumberEntityAt(targetTx, targetTy);
+            return;
+        }
 
         // 👾 타겟이 덧셈 몬스터이고 수동 전용(manual_only) 모드가 아닐 때만 즉시 3문제 몹 배틀 진입
         if (blockId === BLOCK.MAGIC_CRYSTAL && mathFlowState.triggerMode !== 'manual_only') {
@@ -4950,9 +5143,7 @@
         const tcy = targetTy * TILE_SIZE + TILE_SIZE / 2;
         localPlayer.angle = Math.atan2(tcy - localPlayer.y, tcx - localPlayer.x);
 
-        const basePickSpeed = PICKAXE_TIERS[localPlayer.pickaxeTier].speed;
-        const mathBuffMult = mathFlowState.buffRemainingSec > 0 ? 2.5 : 1.0;
-        const pickSpeed = basePickSpeed * mathBuffMult;
+        const pickSpeed = PICKAXE_TIERS[localPlayer.pickaxeTier].speed;
         miningState.progress += dt * 78 * pickSpeed;
 
         miningState.hitSoundTimer -= dt;
@@ -4988,11 +5179,10 @@
             applyWorldModification(tx, ty, undefined, BLOCK.AIR, true);
             spawnParticles(wx, wy, info.particleColor || '#ffffff', 16);
 
-            const buffBonus = mathFlowState.buffRemainingSec > 0 ? 2 : 1;
             if (info.dropType === 'res') {
-                const gain = info.dropCount * buffBonus;
+                const gain = info.dropCount;
                 resources[info.dropKey] = (resources[info.dropKey] || 0) + gain;
-                spawnFloatingText(wx, wy - 10, `+${gain} ${info.dropLabel}${buffBonus > 1 ? ' (⚡버프2배!)' : ''}`, '#fde047');
+                spawnFloatingText(wx, wy - 10, `+${gain} ${info.dropLabel}`, '#fde047');
             } else if (info.dropType === 'item') {
                 blockInventory[info.dropKey] = (blockInventory[info.dropKey] || 0) + info.dropCount;
                 spawnFloatingText(wx, wy - 10, `+${info.dropCount} ${info.dropLabel}`, '#4ade80');
@@ -5007,7 +5197,6 @@
                 effectColor: info.particleColor
             });
 
-            // ③ Autonomy-Respected Math Trigger on Magic Crystal or Rare Ores
             if (blockId === BLOCK.MAGIC_CRYSTAL && mathFlowState.triggerMode !== 'manual_only') {
                 openMathStudioModal('✨ 덧셈 마법 크리스탈을 발견했어요! 에너지를 충전해 볼까요?', tx, ty);
             } else if (mathFlowState.triggerMode === 'all_ores' &&
@@ -5390,6 +5579,22 @@
         const nty = Math.floor(localPlayer.y / TILE_SIZE);
         document.getElementById('coordsDisplay').textContent = `X:${ntx} Y:${nty}`;
         document.getElementById('biomeBadge').textContent = getBiomeNameAt(ntx, nty);
+
+        // ★ 캐릭터 주변(0.85타일 이내)의 넘버블록스·넘버블롭스에 닿으면 즉시 아이템 습득!
+        for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+                const cx = ntx + ox;
+                const cy = nty + oy;
+                if (!inBounds(cx, cy)) continue;
+                const cb = getBlockAt(cx, cy);
+                if (cb === BLOCK.NUMBERBLOCK || cb === BLOCK.NUMBERBLOB) {
+                    const dist = Math.hypot(localPlayer.x - (cx * TILE_SIZE + 24), localPlayer.y - (cy * TILE_SIZE + 24));
+                    if (dist <= TILE_SIZE * 0.85) {
+                        pickupNumberEntityAt(cx, cy);
+                    }
+                }
+            }
+        }
 
         // 현재 유저 화면(뷰포트) 내의 몹 & 넘버블록스 이동 업데이트 후 근접 조우 체크
         updateViewportMobs(dt);
@@ -5947,6 +6152,13 @@
             const mob = getMobDataAt(hover.tx, hover.ty);
             nameEl.textContent = `👾 [Lv.${mob.level}] ${mob.name} (체력 ${mob.hp}/${mob.maxHp})`;
             hintEl.textContent = inRange ? '⚔️ 좌클릭: 덧셈 공격!' : '⚠️ 사거리 밖';
+        } else if (b === BLOCK.NUMBERBLOCK) {
+            const meta = ensureNbMeta(hover.tx, hover.ty, BLOCK.NUMBERBLOCK);
+            nameEl.textContent = `🔢 넘버블록 [숫자 ${meta.val}] (현재 누적: ${resources.numberblock || 0})`;
+            hintEl.textContent = inRange ? `✋ 가까이 가거나 클릭: +${meta.val} 습득!` : '⚠️ 사거리 밖';
+        } else if (b === BLOCK.NUMBERBLOB) {
+            nameEl.textContent = `🔴 빨간 넘버블롭 (현재 누적: ${resources.numberblob || 0}개)`;
+            hintEl.textContent = inRange ? '✋ 가까이 가거나 클릭: +1 습득!' : '⚠️ 사거리 밖';
         } else if (b !== BLOCK.AIR) {
             nameEl.textContent = `🎯 ${BLOCK_INFO[b].name}`;
             hintEl.textContent = inRange ? '좌클릭 홀드: 채굴' : '⚠️ 사거리 밖';
@@ -6015,18 +6227,6 @@
 
             const targetDark = isNight ? 0.78 : 0.0;
             darknessAlpha += (targetDark - darknessAlpha) * dt * 3;
-
-            // Update active Math Lightning Mining Buff timer bar
-            const buffBox = document.getElementById('mathBuffBarContainer');
-            if (mathFlowState.buffRemainingSec > 0) {
-                mathFlowState.buffRemainingSec = Math.max(0, mathFlowState.buffRemainingSec - dt);
-                buffBox.classList.remove('hidden');
-                document.getElementById('mathBuffTimerText').textContent = `${Math.ceil(mathFlowState.buffRemainingSec)}초`;
-                const pct = Math.min(100, (mathFlowState.buffRemainingSec / mathFlowState.buffMaxSec) * 100);
-                document.getElementById('mathBuffProgressFill').style.width = `${pct}%`;
-            } else {
-                buffBox.classList.add('hidden');
-            }
 
             netSyncAccum += dt;
             if (netSyncAccum >= 0.07) {
@@ -6487,7 +6687,7 @@
                 clickActionMode === 'build' ? '🧱 좌클릭: 건설 전용' : '🖱️ 좌:채굴/우:건설';
         }
 
-        const defaultRes = { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0 };
+        const defaultRes = { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0, numberblock: 0, numberblob: 0 };
         Object.keys(defaultRes).forEach(k => {
             resources[k] = (profile.resources && typeof profile.resources[k] === 'number') ? profile.resources[k] : defaultRes[k];
         });
@@ -6531,29 +6731,63 @@
         drawRadarMinimap();
     }
 
-    // ★ 화면 잘림 방지 반응형 레이아웃 + 태블릿/모바일 화살표 방향키 표시 + 작은 화면 상단 보조창 자동 접기
     function setupResponsiveAndCleanUI() {
-        // 1) 깃허브 배포 안내 및 '✨ 덧셈 마법 충전 (Q)' 버튼 제거
+        // 1) 깃허브 배포 안내, '✨ 덧셈 마법 충전 (Q)' 버튼, 번개 곡괭이 버프 바 제거
         const ghBtn = document.getElementById('btnOpenGithubGuide');
         if (ghBtn) ghBtn.remove();
         const ghModal = document.getElementById('githubGuideModal');
         if (ghModal) ghModal.remove();
         const mathStudioBtn = document.getElementById('btnOpenMathStudio');
         if (mathStudioBtn) mathStudioBtn.remove();
+        const buffBar = document.getElementById('mathBuffBarContainer');
+        if (buffBar) buffBar.remove();
 
-        // 2) 자원 가방에 '⭕써클' 표시 슬롯 동적 추가
+        const speedGoalBtn = document.querySelector('.goal-select-btn[data-goal="speed"]');
+        if (speedGoalBtn) speedGoalBtn.textContent = '💎 다이아x6+황금x2';
+
+        // 2) 자원 가방에 '⭕써클', '🔢넘버블록(누적합)', '🔴넘버블롭' 표시 슬롯 동적 추가
         const sandEl = document.getElementById('res_sand');
         if (sandEl && !document.getElementById('res_circle')) {
             const gridWrap = sandEl.parentNode.parentNode;
-            gridWrap.className = 'grid grid-cols-5 sm:grid-cols-9 gap-1 text-center text-xs';
-            const circleCard = document.createElement('div');
-            circleCard.className = 'bg-pink-950/90 rounded p-1 border border-pink-400 col-span-2 sm:col-span-1';
-            circleCard.title = '몬스터 처치 시 1~3개 드롭! 모든 도구 제작 및 통행권(30개) 제작에 사용됩니다.';
-            circleCard.innerHTML = `
-                <div class="text-[10px] text-pink-300 font-bold">⭕써클</div>
-                <div id="res_circle" class="font-black text-amber-300">0</div>
-            `;
-            gridWrap.appendChild(circleCard);
+            gridWrap.className = 'grid grid-cols-4 sm:grid-cols-6 gap-1 text-center text-xs';
+
+            const extraCards = [
+                {
+                    id: 'res_circle',
+                    label: '⭕써클',
+                    cls: 'bg-pink-950/90 border-pink-400',
+                    labelCls: 'text-pink-300',
+                    valCls: 'text-amber-300',
+                    title: '몬스터 처치 시 1~3개 드롭! 모든 제작 및 통행권(30개) 제작에 사용됩니다.'
+                },
+                {
+                    id: 'res_numberblock',
+                    label: '🔢넘버블록',
+                    cls: 'bg-indigo-950/90 border-indigo-400',
+                    labelCls: 'text-indigo-200',
+                    valCls: 'text-yellow-300',
+                    title: '습득한 넘버블록스의 숫자가 더해져 누적된 총합입니다! (예: 10+4+3=17)'
+                },
+                {
+                    id: 'res_numberblob',
+                    label: '🔴넘버블롭',
+                    cls: 'bg-red-950/90 border-red-400',
+                    labelCls: 'text-red-200',
+                    valCls: 'text-white',
+                    title: '습득한 빨간 넘버블롭스의 누적 개수입니다!'
+                }
+            ];
+
+            extraCards.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `${item.cls} rounded p-1 border`;
+                card.title = item.title;
+                card.innerHTML = `
+                    <div class="text-[10px] ${item.labelCls} font-bold">${item.label}</div>
+                    <div id="${item.id}" class="font-black ${item.valCls}">0</div>
+                `;
+                gridWrap.appendChild(card);
+            });
         }
 
         // 3) 전체 지도(M) 모달에 [🔢 넘버블록스 랜드] 순간이동 버튼 추가
@@ -6810,8 +7044,8 @@
             const isSelected = (p.id === currentProfileId) || (!currentProfileId && p.id === savedActiveId);
             const ptx = Math.floor((p.x || SPAWN_X * TILE_SIZE) / TILE_SIZE);
             const pty = Math.floor((p.y || SPAWN_Y * TILE_SIZE) / TILE_SIZE);
-            const circleCnt = p.resources?.circle || 0;
             const solvedCnt = p.mathFlow?.growth?.totalSolved || 0;
+            const hasPass = !!p.mathFlow?.numberblocksUnlocked;
 
             return `
                 <div data-pid="${p.id}" class="profile-card cursor-pointer p-2 rounded-lg border-2 transition flex items-center justify-between gap-2 ${
@@ -6826,9 +7060,10 @@
                             <div class="flex items-center gap-1.5">
                                 <span class="font-black text-xs sm:text-sm text-white truncate">${escapeHtml(p.name)}</span>
                                 <span class="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-[10px] font-black">Lv.${p.mathLevel || 1}</span>
+                                ${hasPass ? '<span class="text-[10px] text-pink-300 font-bold">🎫통행권</span>' : ''}
                             </div>
                             <div class="text-[10px] text-gray-300 mt-0.5">
-                                📍(${ptx},${pty}) · ⭕써클 ${circleCnt}/50 · ✨해결 ${solvedCnt}문제
+                                📍(${ptx},${pty}) · ✨해결 ${solvedCnt}문제
                             </div>
                         </div>
                     </div>
@@ -6933,7 +7168,7 @@
             localPlayer.selectedSlot = 0;
             clickActionMode = 'mine';
 
-            Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0 });
+            Object.assign(resources, { wood: 6, cobble: 6, coal: 3, iron: 0, gold: 0, diamond: 0, obsidian: 0, sand: 2, circle: 0, numberblock: 0, numberblob: 0 });
             Object.assign(blockInventory, { planks: 16, cobbleWall: 12, bricks: 6, glass: 4, torch: 8, door: 2, craftTable: 1, goldBlock: 1, rainbowBlock: 6, sensorLight: 1, autoDoor: 1, movingWalk: 2, escalator: 1, elevator: 1 });
 
             mathFlowState.level = initLv;
@@ -6970,7 +7205,7 @@
         }
         const ptx = Math.floor(localPlayer.x / TILE_SIZE);
         const pty = Math.floor(localPlayer.y / TILE_SIZE);
-        addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 시작합니다!`, '#34d399', true);
+        addChatMessage('시스템', `🌍 [${localPlayer.name}] 캐릭터로 (X:${ptx}, Y:${pty})에서 탐험을 시작합니다! 제작대에서 ⭕써클 30개로 [🎫 넘버블록스 바이옴 통행권]을 제작해 보세요!`, '#34d399', true);
     }
         
     // updateResourceUI 호출 시 '⭕써클' 수량 및 통행권 보유 배지 동기화 + 프로필 자동 저장
